@@ -1,0 +1,20 @@
+.navbar {
+
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 1em;
+    position: sticky;
+    top: 0;
+    padding: 1em;
+
+    & a {
+        text-decoration: none;
+
+    }
+
+    & a.active {
+        color: rgb(34 197 94);
+
+    }
+}
