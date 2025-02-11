@@ -1,9 +1,12 @@
 const app = require("express")()
 const port = 4040;
 const mongoose = require("mongoose")
+const cors = require('cors');
+
 
 app.use(require("express").json())
 app.use(require("express").urlencoded({ extended: true }))
+app.use(cors())
 
 async function connecting() {
     try {
@@ -17,6 +20,6 @@ connecting()
 
 app.use("/bookings", require("./routes/bookings"))
 
-app.use(require("cors")())
+
 
 app.listen(port, () => console.log(`listening on port : ${port}`))

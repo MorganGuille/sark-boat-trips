@@ -8,20 +8,22 @@ import '../css/myCalendar.css'
 function MyCalendar() {
 
     const [date, setDate] = useState(new Date())
-    const [availability, setAvailability] = useState()
+    const [availability, setAvailability] = useState(null)
 
-    const getAvailability = async (req, res) => {
+    const getAvailability = async (date) => {
 
-        console.log("this is the date:", date)
+        console.log(date)
 
-        axios.get('http://localhost:4040/availability/', {
-            params: {
-                date
-            }
-        })
+        let formattedDate = date.toISOString().slice(0, 10)
+
+        console.log("this is the date:", formattedDate)
 
         try {
-            setAvailability(res.data)
+            console.log("trying")
+            const res = await axios.get(`http://localhost:4040/bookings/availability/${formattedDate}`)
+            setAvailability(res.data.data)
+            console.log(res.data)
+            console.error
         }
         catch (error) {
             console.log(error)
@@ -30,13 +32,14 @@ function MyCalendar() {
 
     const onChange = date => {
         setDate(date)
+        getAvailability(date)
 
 
     }
 
     return (<>
         <section className="calendar">
-            <Calendar onChange={() => { onChange(), getAvailability() }} value={date} />
+            <Calendar onChange={onChange} value={date} />
             <div className='calendarDisplay'>
                 <p>Seats availiable</p>
                 <p>{availability}</p>
