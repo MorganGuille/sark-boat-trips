@@ -4,6 +4,7 @@ const addbooking = async (req, res) => {
 
     let { date, firstName, lastName, phone, adults, children, email } = req.body
 
+
     let array = await Bookings.find({ date: date })
 
     let total = 0
@@ -11,21 +12,13 @@ const addbooking = async (req, res) => {
         total += (element.adults + element.children)
 
     });
-    let availability = (8 - total)
-    console.log(total)
-    console.log(availability)
-    console.log("Adults:", adults);
-    console.log("Children:", children);
+    let availability = (24 - total)
 
-
-
-    if (availability >= (adults + children)) {
+    if (availability >= (Number(adults) + Number(children))) {
 
         try {
-
             let newBooking = await Bookings.create(req.body);
             res.send({ ok: true, data: `Booking for ${firstName} ${lastName} on ${date} added successfully` })
-
         }
         catch (e) {
             res.send({ ok: false, data: e })
@@ -50,13 +43,10 @@ const deletebooking = async (req, res) => {
     }
 }
 
-
-
 const checkdate = async (req, res) => {
     let date = req.params.date
-    console.log(date)
     try {
-        console.log("trying")
+
         let bookings = await Bookings.find({ date: date })
         res.send({ ok: true, data: bookings })
     }
@@ -65,6 +55,26 @@ const checkdate = async (req, res) => {
     }
 }
 
+const checkAvail = async (req, res) => {
+    let date = req.params.date
 
-module.exports = { addbooking, deletebooking, checkdate }
+    let array = await Bookings.find({ date: date })
+
+    let total = 0
+    array.forEach(element => {
+        total += (element.adults + element.children)
+
+    });
+    let availability = (24 - total)
+
+    try {
+        res.send({ ok: true, data: availability })
+    }
+    catch (e) {
+        res.send({ ok: false, data: `Error`, e })
+    }
+}
+
+
+module.exports = { addbooking, deletebooking, checkdate, checkAvail }
 
