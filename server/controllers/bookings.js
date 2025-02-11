@@ -2,15 +2,29 @@ const Bookings = require("../models/bookings");
 
 const addbooking = async (req, res) => {
 
-    let { date, firstName, lastName, phone, adults, children } = req.body
+    let { date, firstName, lastName, phone, adults, children, email } = req.body
+
+    let totaladults = Bookings.aggregate(
+        [
+            {
+                $group:
+                {
+                    date: date,
+                    totalAdults: { $sum: adults },
+                }
+            }
+        ])
+
+    console.log(totaladults[])
 
     try {
+
         let newBooking = await Bookings.create(req.body);
         res.send({ ok: true, data: `Booking for ${firstName} ${lastName} on ${date} added successfully` })
-        console.log(newBooking)
+
     }
-    catch {
-        res.send({ ok: false, data: `Error` })
+    catch (e) {
+        res.send({ ok: false, data: e })
     }
 }
 
