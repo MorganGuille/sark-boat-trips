@@ -4,27 +4,35 @@ const addbooking = async (req, res) => {
 
     let { date, firstName, lastName, phone, adults, children, email } = req.body
 
-    let totaladults = Bookings.aggregate(
-        [
-            {
-                $group:
-                {
-                    date: date,
-                    totalAdults: { $sum: adults },
-                }
-            }
-        ])
+    let array = await Bookings.find({ date: date })
 
-    console.log(totaladults[])
+    let total = 0
+    array.forEach(element => {
+        total += (element.adults + element.children)
 
-    try {
+    });
+    let availability = (8 - total)
+    console.log(total)
+    console.log(availability)
+    console.log("Adults:", adults);
+    console.log("Children:", children);
 
-        let newBooking = await Bookings.create(req.body);
-        res.send({ ok: true, data: `Booking for ${firstName} ${lastName} on ${date} added successfully` })
 
+
+    if (availability >= (adults + children)) {
+
+        try {
+
+            let newBooking = await Bookings.create(req.body);
+            res.send({ ok: true, data: `Booking for ${firstName} ${lastName} on ${date} added successfully` })
+
+        }
+        catch (e) {
+            res.send({ ok: false, data: e })
+        }
     }
-    catch (e) {
-        res.send({ ok: false, data: e })
+    else {
+        res.send({ ok: false, data: 'no spaces available!' })
     }
 }
 
