@@ -15,6 +15,7 @@ async function connecting() {
 }
 connecting()
 
+app.use("/bookings", require("./routes/bookings"))
 
 app.use(require("cors")())
 
