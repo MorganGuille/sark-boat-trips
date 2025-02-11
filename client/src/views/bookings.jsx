@@ -1,10 +1,12 @@
 import React from 'react'
-
+import MyCalendar from '../components/myCalendar'
+import '../css/bookings.css'
 
 function Bookings() {
     return (<>
-        <section id="bookings">
+        <section className="bookings">
             <h1>Bookings</h1>
+            <MyCalendar />
         </section>
 
     </>

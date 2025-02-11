@@ -1,0 +1,15 @@
+.calendarDisplay {
+    width: 350px;
+    height: 3em;
+    background-color: white;
+    margin-top: 1em;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+
+    & p {
+        margin-left: 1em;
+        margin-right: 1em;
+    }
+}
