@@ -14,6 +14,10 @@
     }
 }
 
+.react-calendar {
+    border-radius: 0.2em;
+}
+
 
 .react-calendar__tile--now {
     /* Style for the current date */
@@ -45,4 +49,8 @@
     background: #007bff;
     /* Example blue */
     color: white;
+}
+
+abbr[title] {
+    text-decoration: none;
 }

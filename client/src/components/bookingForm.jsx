@@ -4,27 +4,22 @@ import axios from 'axios'
 
 function BookingForm({ selectedDate }) {
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault()
-
-        console.log(e)
-        console.log(e.target.firstName.value)
         let newBooking = {
             firstName: e.target.firstName.value,
             lastName: e.target.lastName.value,
             email: e.target.email.value,
             adults: e.target.adults.value,
-            Children: e.target.children.value,
-            date: selectedDate
+            children: e.target.children.value,
+            date: selectedDate,
+            accommodation: e.target.accommodation.value,
+            message: e.target.message.value
         }
-        console.log(newBooking)
-        console.log(selectedDate)
-        axios.post('http://localhost:4040/bookings/add', newBooking)
+
+        let response = await axios.post('http://localhost:4040/bookings/add', newBooking)
+        console.log(response)
     }
-
-
-
-
 
 
     return (
@@ -70,13 +65,13 @@ function BookingForm({ selectedDate }) {
                                 required />
                             <span></span>
                         </p>
-                        {/* <p>
+                        <p>
                             <label htmlFor="accommodation">
                                 <span>Name of accommodation</span>
                             </label>
                             <input type="text" id="accommodation" name="useraccom"
                                 placeholder="Where are you staying on Sark?" />
-                        </p> */}
+                        </p>
                     </fieldset>
                 </section>
 
@@ -113,7 +108,7 @@ function BookingForm({ selectedDate }) {
                         <p>
                             <label htmlFor="message">
                             </label>
-                            <textarea cols="40" rows="4" defaultValue={'Any further info'} />
+                            <textarea id='message' name='message' cols="40" rows="4" placeholder={'Any further info'} />
                         </p>
                     </fieldset>
                 </section>

@@ -5,17 +5,25 @@ import '../css/bookings.css'
 
 function Bookings() {
 
-    const [selectedDate, setSelectedDate] = useState({})
+    const formatDate = (date) => {
+        const year = date.getFullYear();
+        const month = (`0${date.getMonth() + 1}`).slice(-2);
+        const day = (`0${date.getDate()}`).slice(-2);
+        return `${year}-${month}-${day}`;
+    };
+
+    const [selectedDate, setSelectedDate] = useState(formatDate(new Date()))
 
     return (<>
         <section className="bookings">
-            <h1>Bookings</h1>
-            <MyCalendar setSelectedDate={setSelectedDate} />
+            <div>
+                <p className='textArea'>Please use the calendar to select a date and then fill out the form to make a booking</p>
+                <MyCalendar setSelectedDate={setSelectedDate} />
+                <p className='textArea'>We dont require a deposit for bookings, so please let us know ASAP if you cannot make it!</p>
+            </div>
             <BookingForm selectedDate={selectedDate} />
         </section>
-
     </>
-
     )
 }
 

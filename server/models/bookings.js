@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const bookingsSchema = new mongoose.Schema({
     date: {
-        type: Date,
+        type: String,
         required: true,
     },
     firstName: {
@@ -27,7 +27,12 @@ const bookingsSchema = new mongoose.Schema({
     },
     children: {
         type: Number,
-
+    },
+    accommodation: {
+        type: String,
+    },
+    message: {
+        type: String,
     }
 });
 
