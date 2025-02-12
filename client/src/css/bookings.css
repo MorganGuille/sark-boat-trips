@@ -5,6 +5,6 @@
     flex-direction: column;
     /* color: white; */
     align-items: center;
-    justify-content: center;
+    padding-top: 5em;
     background-color: grey;
 }

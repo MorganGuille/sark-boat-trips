@@ -71,6 +71,7 @@ function MyCalendar() {
     return (
         <section className="calendar">
             <Calendar
+                onActiveStartDateChange={({ activeStartDate }) => onChange(activeStartDate)}
                 onChange={onChange}
                 value={date}
                 tileClassName={setTileClassName}
