@@ -1,0 +1,18 @@
+.bookingForm {
+    width: 350px;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    justify-content: center;
+
+    & p {
+        width: 350px;
+        display: flex;
+        flex-direction: column;
+        gap: 0.2em;
+    }
+}
