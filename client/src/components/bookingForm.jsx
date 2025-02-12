@@ -1,7 +1,8 @@
 import React, { Children } from 'react'
 import '../css/bookingForm.css'
+import axios from 'axios'
 
-function BookingForm() {
+function BookingForm({ selectedDate }) {
 
     const handleSubmit = (e) => {
         e.preventDefault()
@@ -13,9 +14,12 @@ function BookingForm() {
             lastName: e.target.lastName.value,
             email: e.target.email.value,
             adults: e.target.adults.value,
-            Children: e.target.children.value
+            Children: e.target.children.value,
+            date: selectedDate
         }
         console.log(newBooking)
+        console.log(selectedDate)
+        axios.post('http://localhost:4040/bookings/add', newBooking)
     }
 
 

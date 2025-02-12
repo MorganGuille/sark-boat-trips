@@ -4,7 +4,7 @@ import axios from 'axios';
 import 'react-calendar/dist/Calendar.css';
 import '../css/myCalendar.css';
 
-function MyCalendar() {
+function MyCalendar({ setSelectedDate }) {
     const [date, setDate] = useState(new Date());
     const [availability, setAvailability] = useState({});
 
@@ -45,6 +45,7 @@ function MyCalendar() {
 
     const onChange = (date) => {
         setDate(date);
+        setSelectedDate(formatDate(date))
     };
 
     const setTileClassName = ({ date, view }) => {
