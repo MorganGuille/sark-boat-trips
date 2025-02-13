@@ -14,15 +14,14 @@
         font-weight: 600;
         text-decoration: none;
         color: rgb(204, 204, 204);
-
     }
 
     & a.active {
         color: rgb(255, 255, 255);
-
     }
 
     & a:hover {
         color: rgb(255, 255, 255);
+        transform: scale(1.1);
     }
 }
