@@ -72,3 +72,22 @@ button:hover {
         width: 100%;
     }
 }
+
+.section4 {
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    max-width: 60%;
+    margin: 2em auto;
+
+    & .grid1 {
+        display: grid;
+        grid-template-columns: auto auto;
+        gap: 3em;
+        padding: 2em;
+        text-align: start;
+
+    }
+}

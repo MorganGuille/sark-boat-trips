@@ -1,5 +1,6 @@
 import React from 'react'
 import Slideshow from '../components/slideshow'
+import Reviews from '../components/reviews'
 
 
 import '../css/home.css'
@@ -67,6 +68,71 @@ function Home() {
             </div>
             <img src={"../src/assets/images/charters.jpg"} alt='Charter trip inside cave' />
         </section>
+        <section className="section4">
+            <h2>SARK ISLAND</h2>
+
+            <div class="grid1 content">
+                <div>
+                    <h3>Sark is the crown jewel of the Channel Islands, nestled in between Guernsey and Jersey.</h3>
+                    <p>Sark offers a truly unique holiday experience for those wanting to escape the bright lights and
+                        noise
+                        of
+                        the city. A visit to our car-free island is like a step back in time and visitors are sure to be
+                        blown
+                        away by the stunning scenery, bays, coastal paths and cliff top views.</p>
+                    <p>Sark is also the world's first 'Dark Sky' Island, offering spectacular star gazing throughout the
+                        year
+                        and the Goliout headland is a world recognized Ramsar site</p>
+                    <p>The Island's 22 mile coastline is a treasure trove of small coves, creeks, caves, inlets and
+                        bays,
+                        all
+                        teaming with sea life both above and below the water. </p>
+                </div>
+
+                <div>
+                    <h3>Did you know?:</h3>
+                    <p>Sark has a tidal range of around 10m. which means no trip around the island will be the same, on
+                        some
+                        tides we can access caves, on others we can get within touching distance of some of the
+                        off-shore
+                        rocks.
+                    </p>
+                    <p>On a ‘Spring low’ tide we can show you some of the many scrambling routes on Sark.</p>
+                </div>
+            </div>
+
+            <div className="grid1 content">
+                <div>
+                    <h2>GETTING HERE</h2>
+                    <p>Just a 50 minute boat ride from Guernsey, Sark feels an entire world away. Several ferries run
+                        daily during summer with daily trips during off season.</p>
+                    <p>Visit the Isle of Sark shipping website for more info and online booking</p>
+                    <a href="https://www.sarkshipping.gg" target="_blank">
+                        <p>www.sarkshipping.gg</p>
+                    </a>
+                </div>
+                <div>
+                    <img width="500px" height="auto" src={"../src/assets/images/isle-of-sark-shipping-company.jpg"} />
+                </div>
+            </div>
+
+            <h2>WHERE TO STAY</h2>
+            <div className="grid1 content">
+                <div>
+                    <h2>Sue's bnb</h2>
+                    <p>We also offer 4* accommodation on the island at Sue’s BnB,</p>
+                    <p>‘Sue's B&B is the perfect place for settling into Sark life. Relax in the award winning garden on
+                        sunny days or use it as a base to explore the sandy beaches and hidden caves and at night
+                        explore the galaxy with our telescope’</p>
+                    <p>Book by calling +44 1481 832107 or emailing suebnbsark@gmail.com</p>
+                </div>
+                <img width="500px" height="auto" src={"../src/assets/images/SuesbnbextGeorge.jpg"} />
+            </div>
+        </section>
+
+        <Reviews />
+
+
 
 
     </>
