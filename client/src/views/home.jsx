@@ -1,6 +1,7 @@
 import React from 'react'
 import Slideshow from '../components/slideshow'
 
+
 import '../css/home.css'
 
 function Home() {
@@ -25,8 +26,7 @@ function Home() {
             <h3>BOAT TRIPS WITH SARK LOCALS</h3>
             <button>Book now</button>
         </section>
-        <section className='section2'>
-
+        <section id='theTour' className='theTour'>
             <div className="content">
                 <h2>THE TOUR</h2>
                 <p>Departing from the ‘Creux’ Harbour, the original fishing port on Sark we will take a leisurely two
@@ -48,9 +48,25 @@ function Home() {
                     is a toilet and full safety equipment including life jackets and lifeboats for all passengers and
                     crew.</p>
             </div>
-
         </section >
         <Slideshow images={images} />
+        <section className="section3">
+            <div className="content">
+                <h2>CHARTERS</h2>
+                <p>If you are a larger group and/or would just like the boat to yourself we can also arrange charter
+                    trips.
+                    We can also do specific tours, such as a 1 hr trip to see the sea birds of L’Etac, an early morning
+                    or
+                    late evening trip, or perhaps you fancy a trip around to one of Sark’s secluded bays. We can provide
+                    SUP’s, snorkeling gear and even a packed lunch. Please contact us by email to
+                    sarkboattrips@gmail.com or
+                    by calling +44 7911 764 246 and we will arrange a tour to suit you.</p>
+                <br />
+                <p>For more information and ideas</p>
+                <button>Click Here</button>
+            </div>
+            <img src={"../src/assets/images/charters.jpg"} alt='Charter trip inside cave' />
+        </section>
 
 
     </>

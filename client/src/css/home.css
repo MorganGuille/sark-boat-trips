@@ -3,7 +3,9 @@
     padding: 0;
 }
 
-
+html {
+    scroll-behavior: smooth;
+}
 
 h1 {
     font-size: 5em;
@@ -30,7 +32,6 @@ button:hover {
 }
 
 .hero-banner {
-
     background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url(../assets/images/hero-banner.jpg);
     background-position: left;
     background-repeat: no-repeat;
@@ -46,7 +47,16 @@ button:hover {
 
 }
 
-.section2 {
+.theTour {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    max-width: 60%;
+    margin: 2em auto;
+}
+
+.section3 {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -54,4 +64,11 @@ button:hover {
     max-width: 60%;
     margin: 2em auto;
 
+    & button {
+        margin: 1em;
+    }
+
+    & img {
+        width: 100%;
+    }
 }

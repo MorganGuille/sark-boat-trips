@@ -1,6 +1,8 @@
 import React from 'react'
-import { NavLink } from 'react-router'
+// import { NavLink } from 'react-router'
+import { Link, NavLink } from 'react-router-dom';
 import '../css/navbar.css'
+
 
 
 function Navbar() {
@@ -10,6 +12,10 @@ function Navbar() {
 
             <NavLink to={'./'}>SARK BOAT TRIPS</NavLink>
             <NavLink to={'./Bookings'}>BOOKINGS</NavLink>
+            <Link to={'#theTour'} >THE TOUR</Link>
+
+
+
 
         </div>
 
