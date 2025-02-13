@@ -1,8 +1,24 @@
 import React from 'react'
+import Slideshow from '../components/slideshow'
 
 import '../css/home.css'
 
 function Home() {
+
+    const images = [
+        '../src/assets/images/gallery1.jpg',
+        '../src/assets/images/gallery2.jpg',
+        '../src/assets/images/gallery3.jpg',
+        '../src/assets/images/gallery4.jpg',
+        '../src/assets/images/gallery5.jpg',
+        '../src/assets/images/gallery6.jpg',
+        '../src/assets/images/gallery7.jpg',
+        '../src/assets/images/gallery8.jpeg',
+        '../src/assets/images/gallery9.jpeg',
+        '../src/assets/images/gallery10.jpeg',
+        '../src/assets/images/gallery11.jpg',
+    ]
+
     return (<>
         <section className="hero-banner">
             <h1>THE BEST WAY TO SEE SARK</h1>
@@ -34,6 +50,8 @@ function Home() {
             </div>
 
         </section >
+        <Slideshow images={images} />
+
 
     </>
 
