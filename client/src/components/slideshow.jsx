@@ -30,7 +30,7 @@ function Slideshow({ images, interval = 5000 }) {
             <div className="slider-container">
                 {images.map((image, index) => (
                     <div
-                        key={uuidv4()}
+                        key={index}
                         className={`slide ${index === currentIndex ? 'active' : ''}`}
                         style={{ backgroundImage: `url(${image})` }}
                     ></div>

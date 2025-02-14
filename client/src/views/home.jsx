@@ -24,8 +24,10 @@ function Home() {
 
     return (<>
         <section id='heroBanner' className="hero-banner">
-            <h1>THE BEST WAY TO SEE SARK</h1>
-            <h3>BOAT TRIPS WITH SARK LOCALS</h3>
+            <span>
+                <h1>THE BEST WAY TO SEE SARK</h1>
+                <h3>BOAT TRIPS WITH SARK LOCALS</h3>
+            </span>
             <button>Book now</button>
         </section>
         <section id='theTour' className='theTour'>
@@ -36,16 +38,16 @@ function Home() {
                     can see sea birds such as puffins, guillemots, razor-bills, cormorants and many others. There is
                     also the chance of seeing some of Sark’s other sea life such as dolphins and seals, even basking
                     sharks and sunfish.</p>
-                <br />
+
                 <p>We usually run two trips daily, at 11am and 2pm weather dependent. </p>
             </div>
             <div className="content">
                 <h2>THE BOAT</h2>
                 <p>Rebuilt in 2024, the Dorado is a purpose built Treeve Marine 25’ , one of the most successful British
                     built boats. She was commissioned in 1980 for Dominic Wakey who ran tours around the island until
-                    the mid 90’s when he refitted the Dorado as a fishing boat.
+                    the mid 90’s when he refitted the Dorado as a fishing boat.</p>
 
-                    After the loss of Non Pareil, our much loved wooden Sark built boat, we have restored the Dorado as
+                <p>After the loss of Non Pareil, our much loved wooden Sark built boat, we have restored the Dorado as
                     a tour boat once again! She is a 25ft GRP hull and comfortably carries up to 12 passengers. On board
                     is a toilet and full safety equipment including life jackets and lifeboats for all passengers and
                     crew.</p>
@@ -63,7 +65,7 @@ function Home() {
                     SUP’s, snorkeling gear and even a packed lunch. Please contact us by email to
                     sarkboattrips@gmail.com or
                     by calling +44 7911 764 246 and we will arrange a tour to suit you.</p>
-                <br />
+
                 <p>For more information and ideas</p>
                 <NavLink to={'./charters'}><button>Click Here</button></NavLink>
             </div>
@@ -72,7 +74,7 @@ function Home() {
         <section id='sarkIsland' className="sarkIsland">
             <h2>SARK ISLAND</h2>
 
-            <div className="grid1">
+            <div className="grid1 textGrid">
                 <div>
                     <h3>Sark is the crown jewel of the Channel Islands, nestled in between Guernsey and Jersey.</h3>
                     <p>Sark offers a truly unique holiday experience for those wanting to escape the bright lights and
@@ -107,6 +109,7 @@ function Home() {
                     <h2>GETTING HERE</h2>
                     <p>Just a 50 minute boat ride from Guernsey, Sark feels an entire world away. Several ferries run
                         daily during summer with daily trips during off season.</p>
+
                     <p>Visit the Isle of Sark shipping website for more info and online booking</p>
                     <a href="https://www.sarkshipping.gg" target="_blank">
                         <p>www.sarkshipping.gg</p>
@@ -117,17 +120,18 @@ function Home() {
                 </div>
             </div>
 
-            <h2>WHERE TO STAY</h2>
             <div className="grid1">
+                <div><img width="500px" height="auto" src={"../src/assets/images/SuesbnbextGeorge.jpg"} /></div>
                 <div>
                     <h2>SUE'S BNB</h2>
                     <p>We also offer 4* accommodation on the island at Sue’s BnB,</p>
                     <p>‘Sue's B&B is the perfect place for settling into Sark life. Relax in the award winning garden on
                         sunny days or use it as a base to explore the sandy beaches and hidden caves and at night
                         explore the galaxy with our telescope’</p>
+
                     <p>Book by calling +44 1481 832107 or emailing suebnbsark@gmail.com</p>
                 </div>
-                <img width="500px" height="auto" src={"../src/assets/images/SuesbnbextGeorge.jpg"} />
+
             </div>
         </section>
 

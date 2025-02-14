@@ -21,6 +21,10 @@ h3 {
     font-size: 1em;
 }
 
+p {
+    margin: 1em 0em;
+}
+
 button {
     padding: 1em 1.5em;
     border-radius: 0.5em;
@@ -44,7 +48,11 @@ button:hover {
     color: white;
     align-items: center;
     justify-content: center;
-    gap: 1em;
+    gap: 5em;
+
+    & span {
+        text-align: center;
+    }
 
 }
 
@@ -80,7 +88,7 @@ button:hover {
     flex-direction: column;
     align-items: center;
     text-align: center;
-    max-width: 60%;
+    max-width: 70%;
     margin: 2em auto;
 
     & .grid1 {

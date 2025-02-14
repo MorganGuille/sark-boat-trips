@@ -21,7 +21,7 @@
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
-    transition: 2s linear;
+    transition: 0.5s ease-in-out;
     visibility: hidden;
     opacity: 0;
 
