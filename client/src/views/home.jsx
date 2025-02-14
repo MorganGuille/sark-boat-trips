@@ -1,6 +1,7 @@
 import React from 'react'
 import Slideshow from '../components/slideshow'
 import Reviews from '../components/reviews'
+import { NavLink } from 'react-router'
 
 
 import '../css/home.css'
@@ -22,7 +23,7 @@ function Home() {
     ]
 
     return (<>
-        <section className="hero-banner">
+        <section id='heroBanner' className="hero-banner">
             <h1>THE BEST WAY TO SEE SARK</h1>
             <h3>BOAT TRIPS WITH SARK LOCALS</h3>
             <button>Book now</button>
@@ -51,7 +52,7 @@ function Home() {
             </div>
         </section >
         <Slideshow images={images} />
-        <section className="section3">
+        <section id='charters' className="section3">
             <div className="content">
                 <h2>CHARTERS</h2>
                 <p>If you are a larger group and/or would just like the boat to yourself we can also arrange charter
@@ -64,14 +65,14 @@ function Home() {
                     by calling +44 7911 764 246 and we will arrange a tour to suit you.</p>
                 <br />
                 <p>For more information and ideas</p>
-                <button>Click Here</button>
+                <NavLink to={'./charters'}><button>Click Here</button></NavLink>
             </div>
             <img src={"../src/assets/images/charters.jpg"} alt='Charter trip inside cave' />
         </section>
-        <section className="section4">
+        <section id='sarkIsland' className="section4">
             <h2>SARK ISLAND</h2>
 
-            <div class="grid1 content">
+            <div className="grid1 content">
                 <div>
                     <h3>Sark is the crown jewel of the Channel Islands, nestled in between Guernsey and Jersey.</h3>
                     <p>Sark offers a truly unique holiday experience for those wanting to escape the bright lights and
