@@ -37,8 +37,8 @@ function Slideshow({ images, interval = 5000 }) {
                 ))}
             </div>
             <div className="slider-controls">
-                <button onClick={goToPrevious}>Previous</button>
-                <button onClick={goToNext}>Next</button>
+                <button onClick={goToPrevious}>{`<`}</button>
+                <button onClick={goToNext}>{`>`}</button>
             </div>
         </div>
     )

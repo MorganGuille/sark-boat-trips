@@ -10,7 +10,7 @@ function Navbar() {
         <div className="navbar">
 
 
-            <a href='#heroBanner' >HOME</a>
+
             <a href='#theTour' >THE TOUR</a>
             <a href='#charters' >CHARTERS</a>
             <NavLink to={'./'}>SARK BOAT TRIPS</NavLink>

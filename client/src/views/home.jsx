@@ -52,7 +52,7 @@ function Home() {
             </div>
         </section >
         <Slideshow images={images} />
-        <section id='charters' className="section3">
+        <section id='charters' className="charters">
             <div className="content">
                 <h2>CHARTERS</h2>
                 <p>If you are a larger group and/or would just like the boat to yourself we can also arrange charter
@@ -69,10 +69,10 @@ function Home() {
             </div>
             <img src={"../src/assets/images/charters.jpg"} alt='Charter trip inside cave' />
         </section>
-        <section id='sarkIsland' className="section4">
+        <section id='sarkIsland' className="sarkIsland">
             <h2>SARK ISLAND</h2>
 
-            <div className="grid1 content">
+            <div className="grid1">
                 <div>
                     <h3>Sark is the crown jewel of the Channel Islands, nestled in between Guernsey and Jersey.</h3>
                     <p>Sark offers a truly unique holiday experience for those wanting to escape the bright lights and
@@ -102,7 +102,7 @@ function Home() {
                 </div>
             </div>
 
-            <div className="grid1 content">
+            <div className="grid1">
                 <div>
                     <h2>GETTING HERE</h2>
                     <p>Just a 50 minute boat ride from Guernsey, Sark feels an entire world away. Several ferries run
@@ -118,9 +118,9 @@ function Home() {
             </div>
 
             <h2>WHERE TO STAY</h2>
-            <div className="grid1 content">
+            <div className="grid1">
                 <div>
-                    <h2>Sue's bnb</h2>
+                    <h2>SUE'S BNB</h2>
                     <p>We also offer 4* accommodation on the island at Sue’s BnB,</p>
                     <p>‘Sue's B&B is the perfect place for settling into Sark life. Relax in the award winning garden on
                         sunny days or use it as a base to explore the sandy beaches and hidden caves and at night
@@ -132,6 +132,17 @@ function Home() {
         </section>
 
         <Reviews />
+
+        <section id="reservations" className="reservations">
+            <h2>RESERVATIONS</h2>
+            <h3>For bookings please email us using the form below</h3>
+            <p>You can also contact us for bookings by:</p>
+            <p>Phone + Whatsapp: +44 7911 764246</p>
+            <p>Email: sarkboattrips@gmail.com </p>
+            <p>Please note that we do not charge a deposit online - so if your plans change please let us know asap so
+                we can rearrange your seat. Payment is on the day, at the end of the trip - either in cash or by card.
+            </p>
+        </section>
 
 
 
