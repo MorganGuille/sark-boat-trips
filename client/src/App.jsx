@@ -4,7 +4,7 @@ import Home from './views/home';
 
 import './App.css'
 import Navbar from './components/navbar';
-import Bookings from './views/bookings';
+import Bookings from './components/bookings';
 import Charters from './components/charters'
 
 

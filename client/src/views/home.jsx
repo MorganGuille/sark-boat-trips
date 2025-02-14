@@ -1,6 +1,7 @@
 import React from 'react'
 import Slideshow from '../components/slideshow'
 import Reviews from '../components/reviews'
+import Bookings from '../components/bookings'
 import { NavLink } from 'react-router'
 
 
@@ -28,7 +29,7 @@ function Home() {
                 <h1>THE BEST WAY TO SEE SARK</h1>
                 <h3>BOAT TRIPS WITH SARK LOCALS</h3>
             </span>
-            <button>Book now</button>
+            <a href='#reservations' ><button>Book now</button></a>
         </section>
         <section id='theTour' className='theTour'>
             <div className="content">
@@ -139,17 +140,12 @@ function Home() {
 
         <section id="reservations" className="reservations">
             <h2>RESERVATIONS</h2>
-            <h3>For bookings please email us using the form below</h3>
-            <p>You can also contact us for bookings by:</p>
-            <p>Phone + Whatsapp: +44 7911 764246</p>
-            <p>Email: sarkboattrips@gmail.com </p>
             <p>Please note that we do not charge a deposit online - so if your plans change please let us know asap so
                 we can rearrange your seat. Payment is on the day, at the end of the trip - either in cash or by card.
             </p>
         </section>
 
-
-
+        <Bookings />
 
     </>
 

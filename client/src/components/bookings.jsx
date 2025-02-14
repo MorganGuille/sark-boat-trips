@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import MyCalendar from '../components/myCalendar'
-import BookingForm from '../components/bookingForm'
+import MyCalendar from './myCalendar'
+import BookingForm from './bookingForm'
 import '../css/bookings.css'
 
 function Bookings() {

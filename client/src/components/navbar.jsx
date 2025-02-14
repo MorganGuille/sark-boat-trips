@@ -1,22 +1,37 @@
-import React from 'react'
-import { NavLink } from 'react-router'
+import React, { useEffect } from 'react'
+import { NavLink, useLocation } from 'react-router'
 import '../css/navbar.css'
 
 
 
 function Navbar() {
+
+
+    let currentLoc = useLocation()
+
+    const checkPage = () => {
+        // let homepage = ['#theTour', '#charters', '#sarkIsland', '#reviews', '#reservations']
+        return currentLoc.pathname === '/charters'
+    }
+
+    useEffect(() => {
+        checkPage()
+    }, [currentLoc]);
+
     return (<>
 
         <div className="navbar">
 
 
 
-            <a href='#theTour' >THE TOUR</a>
-            <a href='#charters' >CHARTERS</a>
-            <NavLink to={'./'}>SARK BOAT TRIPS</NavLink>
-            <a href='#sarkIsland' >SARK ISLAND</a>
-            <a href='#reviews' >REVIEWS</a>
-            <NavLink to={'./bookings'}>RESERVATIONS</NavLink>
+            {!checkPage() ? (<a href='#theTour' >THE TOUR</a>) : (null)}
+            {!checkPage() ? (<a href='#charters' >CHARTERS</a>) : (null)}
+            {!checkPage() ? (<a href='#heroBanner'>HOME</a>) : (<NavLink to={'./'}>HOME</NavLink>)}
+            {!checkPage() ? (<a href='#sarkIsland' >SARK ISLAND</a>) : (null)}
+            {!checkPage() ? (<a href='#reviews' >REVIEWS</a>) : (null)}
+            {!checkPage() ? (<a href='#reservations' >RESERVATIONS</a>) : (null)}
+
+
 
 
 
