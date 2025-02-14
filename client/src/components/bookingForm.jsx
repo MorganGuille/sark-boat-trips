@@ -53,7 +53,7 @@ function BookingForm({ selectedDate }) {
                                 <span>Email: </span>
                                 <strong><span aria-label="required">*</span></strong>
                             </label>
-                            <input type="email" id="email" name="useremail" placeholder="yourname@email.com" required />
+                            <input type="email" id="email" name="useremail" placeholder="yourname@email.com" required autoComplete='true' />
                             <span></span>
                         </p>
                         <p>
@@ -62,7 +62,7 @@ function BookingForm({ selectedDate }) {
                                 <strong><span aria-label="required">*</span></strong>
                             </label>
                             <input type="tel" id="phone" name="userphone" placeholder="(Include country code)"
-                                required />
+                                required autoComplete='true' />
                             <span></span>
                         </p>
                         <p>
@@ -79,7 +79,7 @@ function BookingForm({ selectedDate }) {
                     <fieldset>
                         <legend>Booking Information</legend>
                         <p>
-                            <label htmlFor="Adults">
+                            <label htmlFor="adults">
                                 <span>Number of adults</span>
                                 <strong><span aria-label="required">*</span></strong>
                             </label>
@@ -88,7 +88,7 @@ function BookingForm({ selectedDate }) {
                             <span></span>
                         </p>
                         <p>
-                            <label htmlFor="Children">
+                            <label htmlFor="children">
                                 <span>Number of children</span>
                             </label>
                             <input type="number" min="1" max="12" id="children" name="children" placeholder="including infants"

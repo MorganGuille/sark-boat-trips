@@ -9,6 +9,12 @@
 
     & button {
         border-radius: 0;
+
+    }
+
+    & button:hover {
+        transform: scale(1);
+        transition: none;
     }
 
 }
