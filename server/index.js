@@ -2,6 +2,8 @@ const app = require("express")()
 const port = 4040;
 const mongoose = require("mongoose")
 const cors = require('cors');
+require('dotenv').config()
+
 
 
 app.use(require("express").json())
@@ -15,6 +17,7 @@ async function connecting() {
     } catch (error) {
         console.log('ERROR: Seems like your DB is not running, please start it up !!!');
     }
+    console.log(process.env.admin_password)
 }
 connecting()
 
