@@ -1,8 +1,10 @@
-import React from 'react'
+import { useState } from 'react'
 import '../css/bookingForm.css'
 import axios from 'axios'
 
 function BookingForm({ selectedDate }) {
+
+    let [showResponse, setResponse] = useState(null)
 
     const handleSubmit = async (e) => {
         e.preventDefault()
@@ -17,8 +19,13 @@ function BookingForm({ selectedDate }) {
             message: e.target.message.value
         }
 
-        let response = await axios.post('http://localhost:4040/bookings/add', newBooking)
-        console.log(response)
+        try {
+            let response = await axios.post('http://localhost:4040/bookings/add', newBooking)
+            console.log(response.data)
+            setResponse(response.data.data)
+        } catch (error) {
+            console.log(error)
+        }
     }
 
 
@@ -32,6 +39,9 @@ function BookingForm({ selectedDate }) {
                 <section>
                     <fieldset>
                         <legend>Contact Information</legend>
+                        <p>
+                            <span style={{ backgroundColor: 'lightgreen' }}>{`You are booking for ${selectedDate}`}</span>
+                        </p>
                         <p>
                             <label htmlFor="firstName">
                                 <span>First Name</span>
@@ -91,7 +101,7 @@ function BookingForm({ selectedDate }) {
                             <label htmlFor="children">
                                 <span>Number of children</span>
                             </label>
-                            <input type="number" min="1" max="12" id="children" name="children" placeholder="including infants"
+                            <input type="number" min="0" max="12" id="children" name="children" placeholder="including infants"
                                 required />
                             <span></span>
                         </p>
@@ -120,6 +130,10 @@ function BookingForm({ selectedDate }) {
 
 
             </form>
+            {showResponse != null ?
+                <div className='responseDisplay'>
+                    <span>{showResponse}<button onClick={() => setResponse(null)}>click here</button></span>
+                </div> : null}
         </section>
     )
 }

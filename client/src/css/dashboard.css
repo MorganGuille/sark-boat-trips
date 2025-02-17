@@ -44,8 +44,6 @@ input {
     flex-direction: column;
     align-items: center;
     /* max-width: 90vw; */
-
-
 }
 
 
@@ -66,4 +64,10 @@ th {
 .message {
     overflow-wrap: normal;
     overflow-y: scroll;
+}
+
+.deleteBooking {
+    display: flex;
+    flex-direction: row;
+    margin-top: 1em;
 }

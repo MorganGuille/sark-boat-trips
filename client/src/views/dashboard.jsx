@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import MyCalendar from '../components/myCalendar'
+import BookingForm from '../components/bookingForm'
 import axios from 'axios'
 
 import '../css/dashboard.css'
@@ -10,6 +11,10 @@ function Dashboard() {
     const [loggedin, setLoggedIn] = useState(false)
     const [selectedDate, setSelectedDate] = useState()
     const [bookings, setBookings] = useState([])
+    const [search, setSearch] = useState("")
+    const [deleted, setDeleted] = useState("")
+
+
 
     // log in / out logic below
 
@@ -38,7 +43,34 @@ function Dashboard() {
         } catch (error) {
             console.error(error);
         }
+    }
 
+    const getBookingsByLastName = async (e) => {
+        e.preventDefault()
+        setSearch(e.target.lastName.value)
+        try {
+            const res = await axios.get(`http://localhost:4040/bookings/search/${search}`);
+            setBookings(res.data.data)
+
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    const deleteBooking = async (e) => {
+        e.preventDefault()
+        let booking = {
+            date: e.target.date.value,
+            lastName: e.target.lastName.value
+        }
+
+        try {
+            const res = await axios.post(`http://localhost:4040/bookings/delete`, booking)
+            setDeleted(res.data.data)
+
+        } catch (error) {
+            console.log(error)
+        }
     }
 
 
@@ -54,43 +86,60 @@ function Dashboard() {
             </div>
         </form> : null}
         {loggedin ? <p className='logged'>logged in</p> : <p className='notLogged'>Please log in</p>}
-        <div>
-            {loggedin ? <div className='bookingsDisplay' >
-                <MyCalendar setSelectedDate={setSelectedDate} />
-                <div className='bookingsTable'>
-                    <button onClick={getBookingsByDate}>Get bookings by date</button>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>First Name</th>
-                                <th>Last Name</th>
-                                <th>Email</th>
-                                <th>Adults</th>
-                                <th>Children</th>
-                                <th>Accommodation</th>
-                                <th>Message</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {bookings.map((ele, i) => {
-                                return <>
-                                    <tr key={i}>
-                                        <td>{ele.firstName}</td>
-                                        <td>{ele.lastName}</td>
-                                        <td>{ele.email}</td>
-                                        <td>{ele.adults}</td>
-                                        <td>{ele.children}</td>
-                                        <td>{ele.accommodation}</td>
-                                        <td className='message'>{ele.message}</td>
-                                    </tr>
-                                </>
-                            })}
-                        </tbody>
-                    </table >
-                </div>
-            </div> : null
-            }
-        </div >
+
+        {loggedin ? <div className='bookingsDisplay' >
+            <MyCalendar setSelectedDate={setSelectedDate} />
+            <div className='bookingsTable'>
+
+
+                <button onClick={getBookingsByDate}>Get bookings by date</button>
+                <form id='bookingsearch' onSubmit={getBookingsByLastName}>
+                    <input type='text' id="lastName" name="lastName" placeholder='get bookings by last name' />
+                </form>
+
+                {bookings.length != 0 ? <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>First Name</th>
+                            <th>Last Name</th>
+                            <th>Email</th>
+                            <th>Adults</th>
+                            <th>Children</th>
+                            <th>Accommodation</th>
+                            <th>Message</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {bookings.map((ele, i) => {
+                            return <>
+                                <tr key={i}>
+                                    <td>{ele.date}</td>
+                                    <td>{ele.firstName}</td>
+                                    <td>{ele.lastName}</td>
+                                    <td>{ele.email}</td>
+                                    <td>{ele.adults}</td>
+                                    <td>{ele.children}</td>
+                                    <td>{ele.accommodation}</td>
+                                    <td className='message'>{ele.message}</td>
+                                </tr>
+                            </>
+                        })}
+                    </tbody>
+                </table > : null}
+
+                <form id='deleteBooking' onSubmit={deleteBooking} className='deleteBooking' >
+                    <input type='text' id="lastName" name="lastName" placeholder='Lastname' />
+                    <input type='text' id="date" name="date" placeholder='Date yyyy-mm-dd' />
+                    <button style={{ backgroundColor: 'lightcoral' }}>Delete this booking</button>
+                    {deleted ? <div>{deleted}</div> : null}
+                </form>
+
+                <BookingForm selectedDate={selectedDate} />
+            </div>
+        </div> : null
+        }
+
     </section >
     )
 }
@@ -106,17 +155,3 @@ export default Dashboard
 // accommodation: e.target.accommodation.value,
 // message: e.target.message.value
 
-
-// {bookings.map((ele, i) => {
-//     return <>
-//         <table>
-//             <tbody>
-//                 <tr key={i}>
-//                     <td>{ele.firstName}</td>
-//                     <td>{ele.lastName}</td>
-//                     <td>{ele.email}</td>
-//                 </tr>
-//             </tbody>
-//         </table>
-//     </>
-// })}

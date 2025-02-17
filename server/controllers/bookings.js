@@ -20,8 +20,9 @@ const addbooking = async (req, res) => {
             let newBooking = await Bookings.create(req.body);
             res.send({ ok: true, data: `Booking for ${firstName} ${lastName} on ${date} added successfully` })
         }
-        catch (e) {
-            res.send({ ok: false, data: e })
+        catch (error) {
+            res.send({ ok: false, data: "check console for errors" })
+            console.log(error)
         }
     }
     else {
@@ -31,10 +32,10 @@ const addbooking = async (req, res) => {
 
 const deletebooking = async (req, res) => {
     console.log("accessed")
-    let { date, lastName, phone, } = req.body
+    let { date, lastName } = req.body
     console.log(req.body)
     try {
-        let delBooking = await Bookings.deleteOne({ date: date, lastName: lastName, phone: phone });
+        let delBooking = await Bookings.deleteOne({ date: date, lastName: lastName });
         res.send({ ok: true, data: `Booking for ${lastName} on ${date} deleted successfully` })
         console.log(delBooking)
     }
@@ -75,6 +76,19 @@ const checkAvail = async (req, res) => {
     }
 }
 
+const search = async (req, res) => {
 
-module.exports = { addbooking, deletebooking, checkdate, checkAvail }
+    let search = req.params.search
+
+    let bookings = await Bookings.find({ lastName: search })
+    try {
+        res.send({ ok: true, data: bookings })
+    } catch (error) {
+        console.log(error)
+    }
+
+}
+
+
+module.exports = { addbooking, deletebooking, checkdate, checkAvail, search }
 
