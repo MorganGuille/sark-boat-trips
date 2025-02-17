@@ -13,8 +13,6 @@
         border-radius: 0.5em;
         cursor: pointer;
     }
-
-
 }
 
 input {
@@ -22,7 +20,14 @@ input {
     margin: 0.5em;
 }
 
+.bookingsDisplay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
 .logged {
+    width: 10em;
     background-color: aquamarine;
     padding: 0.2em;
     border-radius: 0.5em;
@@ -32,4 +37,33 @@ input {
     background-color: lightcoral;
     padding: 0.2em;
     border-radius: 0.5em;
+}
+
+.bookingsTable {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* max-width: 90vw; */
+
+
+}
+
+
+table {
+    border-collapse: collapse;
+}
+
+td,
+th {
+    text-align: center;
+    border: solid black 1px;
+    height: 2em;
+    padding: 1em;
+
+
+}
+
+.message {
+    overflow-wrap: normal;
+    overflow-y: scroll;
 }
