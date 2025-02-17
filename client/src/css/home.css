@@ -25,21 +25,6 @@ p {
     margin: 1em 0em;
 }
 
-button {
-    padding: 1em 1.5em;
-    border-radius: 0.5em;
-    border: none;
-    transition: 0.5s ease-in-out;
-
-}
-
-button:hover {
-    cursor: pointer;
-    transform: scale(1.1);
-
-
-}
-
 .hero-banner {
     background-image: linear-gradient(rgba(0, 0, 0, 0.144), rgba(0, 0, 0, 0.3)), url(../assets/images/hero-banner.jpg);
     background-position: left;
@@ -59,9 +44,18 @@ button:hover {
     }
 
     & button {
+        padding: 1em 1.5em;
+        border-radius: 0.5em;
+        border: none;
+        transition: 0.5s ease-in-out;
         animation: pulse 2s infinite;
     }
 
+    & button:hover {
+        cursor: pointer;
+        transform: scale(1.1);
+        animation: none;
+    }
 }
 
 .theTour {
@@ -82,7 +76,18 @@ button:hover {
     margin: 2em auto;
 
     & button {
+        padding: 1em 1.5em;
+        border-radius: 0.5em;
+        border: none;
+        transition: 0.5s ease-in-out;
+        background-color: #1087ff;
+        color: white;
         margin: 1em;
+    }
+
+    & button:hover {
+        cursor: pointer;
+        transform: scale(1.1);
     }
 
     & img {
@@ -109,30 +114,22 @@ button:hover {
     }
 }
 
-.reservations {
 
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    max-width: 60%;
-    margin: 2em auto;
-}
 
 
 @keyframes pulse {
     0% {
         transform: scale(0.95);
-        box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.7);
+        /* box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.7); */
     }
 
     70% {
         transform: scale(1.05);
-        box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
+        /* box-shadow: 0 0 0 10px rgba(0, 0, 0, 0); */
     }
 
     100% {
         transform: scale(0.95);
-        box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+        /* box-shadow: 0 0 0 0 rgba(0, 0, 0, 0); */
     }
 }

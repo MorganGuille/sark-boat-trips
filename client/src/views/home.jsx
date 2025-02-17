@@ -2,6 +2,7 @@ import React from 'react'
 import Slideshow from '../components/slideshow'
 import Reviews from '../components/reviews'
 import Bookings from '../components/bookings'
+import Footer from '../components/footer'
 import { NavLink } from 'react-router'
 
 
@@ -138,14 +139,11 @@ function Home() {
 
         <Reviews />
 
-        <section id="reservations" className="reservations">
-            <h2>RESERVATIONS</h2>
-            <p>Please note that we do not charge a deposit online - so if your plans change please let us know asap so
-                we can rearrange your seat. Payment is on the day, at the end of the trip - either in cash or by card.
-            </p>
-        </section>
-
         <Bookings />
+
+        <Footer />
+
+
 
     </>
 
