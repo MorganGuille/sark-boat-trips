@@ -4,7 +4,6 @@ const mongoose = require("mongoose")
 const cors = require('cors');
 require('dotenv').config()
 let adminPassword = process.env.admin_password;
-console.log(adminPassword)
 
 
 
@@ -25,6 +24,7 @@ async function connecting() {
 connecting()
 
 app.use("/bookings", require("./routes/bookings"))
+app.use("/admin", require("./routes/admin"))
 
 
 
