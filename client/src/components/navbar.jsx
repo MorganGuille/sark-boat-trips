@@ -28,7 +28,7 @@ function Navbar() {
 
     const checkPage = () => {
         // let homepage = ['#theTour', '#charters', '#sarkIsland', '#reviews', '#reservations']
-        return currentLoc.pathname === '/charters'
+        return currentLoc.pathname === '/charters' || currentLoc.pathname === '/dashboard'
     }
 
     useEffect(() => {
