@@ -14,7 +14,7 @@ const bookingsSchema = new mongoose.Schema({
         required: true,
     },
     phone: {
-        type: Number,
+        type: String,
         requaired: true,
     },
     email: {

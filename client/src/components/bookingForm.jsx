@@ -12,6 +12,7 @@ function BookingForm({ selectedDate }) {
             firstName: e.target.firstName.value,
             lastName: e.target.lastName.value,
             email: e.target.email.value,
+            phone: e.target.phone.value,
             adults: e.target.adults.value,
             children: e.target.children.value,
             date: selectedDate,

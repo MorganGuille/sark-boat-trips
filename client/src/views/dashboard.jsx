@@ -104,6 +104,7 @@ function Dashboard() {
                             <th>First Name</th>
                             <th>Last Name</th>
                             <th>Email</th>
+                            <th>Phone</th>
                             <th>Adults</th>
                             <th>Children</th>
                             <th>Accommodation</th>
@@ -118,6 +119,7 @@ function Dashboard() {
                                     <td>{ele.firstName}</td>
                                     <td>{ele.lastName}</td>
                                     <td>{ele.email}</td>
+                                    <td>{ele.phone}</td>
                                     <td>{ele.adults}</td>
                                     <td>{ele.children}</td>
                                     <td>{ele.accommodation}</td>

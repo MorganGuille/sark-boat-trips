@@ -17,7 +17,17 @@ const checklogin = async (req, res) => {
     }
 }
 
+const deleteAll = async (req, res) => {
+    try {
+        const result = await Bookings.deleteMany({});
+        res.status(200).json({ message: `${result.deletedCount} records deleted.` });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to clear records." });
+    }
+};
 
 
 
-module.exports = { checklogin }
+
+module.exports = { checklogin, deleteAll }
