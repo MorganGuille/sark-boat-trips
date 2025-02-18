@@ -17,6 +17,28 @@ const checklogin = async (req, res) => {
     }
 }
 
+const updateBooking = async (req, res) => {
+    const { date, firstName, lastName, phone, adults, children, email, accommodation, message } = req.body;
+    const bookingId = req.params.id;
+
+    try {
+        const updatedBooking = await Bookings.findOneAndUpdate(
+            { _id: bookingId },
+            { date, firstName, lastName, phone, adults, children, email, accommodation, message },
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedBooking) {
+            return res.status(404).send({ ok: false, data: 'Booking not found!' });
+        }
+
+        res.send({ ok: true, data: `Booking for ${firstName} ${lastName} on ${date} updated successfully` });
+    } catch (error) {
+        res.status(500).send({ ok: false, data: "Error updating booking", error });
+        console.log(error);
+    }
+}
+
 const deleteAll = async (req, res) => {
     try {
         const result = await Bookings.deleteMany({});
@@ -30,4 +52,4 @@ const deleteAll = async (req, res) => {
 
 
 
-module.exports = { checklogin, deleteAll }
+module.exports = { checklogin, deleteAll, updateBooking }

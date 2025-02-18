@@ -14,7 +14,7 @@ app.use(cors())
 
 async function connecting() {
     try {
-        await mongoose.connect('mongodb://localhost:27017/bookings')
+        await mongoose.connect('mongodb://localhost:27017/bookingsdb')
         console.log('Connected to the DB')
     } catch (error) {
         console.log('ERROR: Seems like your DB is not running, please start it up !!!');

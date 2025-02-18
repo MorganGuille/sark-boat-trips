@@ -8,6 +8,7 @@ const bookingsSchema = new mongoose.Schema({
     firstName: {
         type: String,
         required: true,
+        unique: false,
     },
     lastName: {
         type: String,
@@ -15,7 +16,7 @@ const bookingsSchema = new mongoose.Schema({
     },
     phone: {
         type: String,
-        requaired: true,
+        required: true,
     },
     email: {
         type: String,

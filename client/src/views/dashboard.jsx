@@ -74,6 +74,8 @@ function Dashboard() {
     }
 
 
+
+
     return (<section className='dashboard'>
         {loggedin ? <button className='logoutButton' onClick={Logout}>Log Out</button> : null}
         <div>Admin panel</div>
@@ -100,6 +102,7 @@ function Dashboard() {
                 {bookings.length != 0 ? <table>
                     <thead>
                         <tr>
+                            <th>_id</th>
                             <th>Date</th>
                             <th>First Name</th>
                             <th>Last Name</th>
@@ -115,6 +118,7 @@ function Dashboard() {
                         {bookings.map((ele, i) => {
                             return <>
                                 <tr key={i}>
+                                    <td>{ele._id}</td>
                                     <td>{ele.date}</td>
                                     <td>{ele.firstName}</td>
                                     <td>{ele.lastName}</td>

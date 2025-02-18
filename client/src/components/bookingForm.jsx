@@ -1,8 +1,15 @@
 import { useState } from 'react'
+import { useLocation } from 'react-router'
 import '../css/bookingForm.css'
 import axios from 'axios'
 
 function BookingForm({ selectedDate }) {
+
+    let currentLoc = useLocation()
+
+    const checkPage = () => {
+        return currentLoc.pathname === '/dashboard'
+    }
 
     let [showResponse, setResponse] = useState(null)
 
@@ -24,6 +31,35 @@ function BookingForm({ selectedDate }) {
             let response = await axios.post('http://localhost:4040/bookings/add', newBooking)
             console.log(response.data)
             setResponse(response.data.data)
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    const updateBooking = async (e) => {
+        e.preventDefault()
+
+        console.log(e.target)
+
+        let bookingId = e.target._id.value
+
+        let updatedBooking = {
+            firstName: e.target.firstName.value,
+            lastName: e.target.lastName.value,
+            email: e.target.email.value,
+            phone: e.target.phone.value,
+            adults: e.target.adults.value,
+            children: e.target.children.value,
+            date: e.target.date.value,
+            accommodation: e.target.accommodation.value,
+            message: e.target.message.value
+        }
+
+        try {
+            const response = await axios.put(`http://localhost:4040/admin/update/${bookingId}`, updatedBooking)
+            console.log(response.data)
+            setResponse(response.data.data)
+
         } catch (error) {
             console.log(error)
         }
@@ -121,20 +157,36 @@ function BookingForm({ selectedDate }) {
                             </label>
                             <textarea id='message' name='message' cols="40" rows="4" placeholder={'Any further info'} />
                         </p>
+                        {checkPage() ? <div>
+                            <p>
+                                <label htmlFor="New date">
+                                    <span>New date for Booking</span>
+                                </label>
+                                <input type="text" id="date" name="updatedate"
+                                    placeholder="yyyy-mm-dd" />
+                            </p><p>
+                                <label htmlFor="_id">
+                                    <span>Enter booking _id</span>
+                                </label>
+                                <input type="text" id="_id" name="booking _id"
+                                    placeholder="booking_id" />
+                            </p>
+                        </div> : null}
+
                     </fieldset>
                 </section>
                 <div>
                     <button type="submit">Submit</button>
                     <button type="reset">Reset form</button>
+                    {checkPage() ? <button onClick={updateBooking}>Update</button> : null}
                 </div>
 
 
 
             </form>
             {showResponse != null ?
-                <div className='responseDisplay'>
-                    <span>{showResponse}<button onClick={() => setResponse(null)}>click here</button></span>
-                </div> : null}
+                <div className='responseDisplay'><h3>{showResponse}</h3><button onClick={() => setResponse(null)}>Confirm</button></div>
+                : null}
         </section>
     )
 }

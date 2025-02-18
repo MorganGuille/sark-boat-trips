@@ -1,5 +1,7 @@
 const Bookings = require("../models/bookings");
 
+
+
 const addbooking = async (req, res) => {
 
     let { date, firstName, lastName, phone, adults, children, email } = req.body
@@ -18,7 +20,7 @@ const addbooking = async (req, res) => {
 
         try {
             let newBooking = await Bookings.create(req.body);
-            res.send({ ok: true, data: `Booking for ${firstName} ${lastName} on ${date} added successfully` })
+            res.send({ ok: true, data: `Thanks ${firstName}, your booking for ${adults} adults and ${children} children on ${date} added successfully` })
         }
         catch (error) {
             res.send({ ok: false, data: "check console for errors" })
@@ -39,8 +41,9 @@ const deletebooking = async (req, res) => {
         res.send({ ok: true, data: `Booking for ${lastName} on ${date} deleted successfully` })
         console.log(delBooking)
     }
-    catch {
-        res.send({ ok: false, data: `Error` })
+    catch (error) {
+        res.send({ ok: false, data: "check console for errors" })
+        console.log(error)
     }
 }
 
@@ -51,8 +54,9 @@ const checkdate = async (req, res) => {
         let bookings = await Bookings.find({ date: date })
         res.send({ ok: true, data: bookings })
     }
-    catch {
-        res.send({ ok: false, data: `Error` })
+    catch (error) {
+        res.send({ ok: false, data: "check console for errors" })
+        console.log(error)
     }
 }
 
@@ -71,8 +75,9 @@ const checkAvail = async (req, res) => {
     try {
         res.send({ ok: true, data: availability })
     }
-    catch (e) {
-        res.send({ ok: false, data: `Error`, e })
+    catch (error) {
+        res.send({ ok: false, data: "check console for errors" })
+        console.log(error)
     }
 }
 
@@ -84,6 +89,7 @@ const search = async (req, res) => {
     try {
         res.send({ ok: true, data: bookings })
     } catch (error) {
+        res.send({ ok: false, data: "check console for errors" })
         console.log(error)
     }
 
