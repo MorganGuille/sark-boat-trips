@@ -18,13 +18,13 @@ const checklogin = async (req, res) => {
 }
 
 const updateBooking = async (req, res) => {
-    const { date, firstName, lastName, phone, adults, children, email, accommodation, message } = req.body;
+    const { date, timeslot, firstName, lastName, phone, adults, children, email, accommodation, message } = req.body;
     const bookingId = req.params.id;
 
     try {
         const updatedBooking = await Bookings.findOneAndUpdate(
             { _id: bookingId },
-            { date, firstName, lastName, phone, adults, children, email, accommodation, message },
+            { date, timeslot, firstName, lastName, phone, adults, children, email, accommodation, message },
             { new: true, runValidators: true }
         );
 
@@ -39,18 +39,18 @@ const updateBooking = async (req, res) => {
     }
 }
 
-// const deleteAll = async (req, res) => {
-//     try {
-//         const result = await Bookings.deleteMany({});
-//         res.status(200).json({ message: `${result.deletedCount} records deleted.` });
-//     } catch (err) {
-//         console.error(err);
-//         res.status(500).json({ error: "Failed to clear records." });
-//     }
-// };
+const deleteAll = async (req, res) => {
+    try {
+        const result = await Bookings.deleteMany({});
+        res.status(200).json({ message: `${result.deletedCount} records deleted.` });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to clear records." });
+    }
+};
 
 
 
 
-module.exports = { checklogin, updateBooking }
+module.exports = { checklogin, deleteAll, updateBooking }
 

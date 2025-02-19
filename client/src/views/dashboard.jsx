@@ -104,6 +104,7 @@ function Dashboard() {
                         <tr>
                             <th>_id</th>
                             <th>Date</th>
+                            <th>Timeslot</th>
                             <th>First Name</th>
                             <th>Last Name</th>
                             <th>Email</th>
@@ -120,6 +121,7 @@ function Dashboard() {
                                 <tr key={i}>
                                     <td>{ele._id}</td>
                                     <td>{ele.date}</td>
+                                    <td>{ele.timeslot}</td>
                                     <td>{ele.firstName}</td>
                                     <td>{ele.lastName}</td>
                                     <td>{ele.email}</td>

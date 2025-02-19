@@ -17,6 +17,7 @@ function BookingForm({ selectedDate }) {
     const handleSubmit = async (e) => {
         e.preventDefault()
         let newBooking = {
+            timeslot: e.target.timeslot.value,
             firstName: e.target.firstName.value,
             lastName: e.target.lastName.value,
             email: e.target.email.value,
@@ -27,6 +28,9 @@ function BookingForm({ selectedDate }) {
             accommodation: e.target.accommodation.value,
             message: e.target.message.value
         }
+
+        console.log(newBooking)
+
 
         try {
             let response = await axios.post('http://localhost:4040/bookings/add', newBooking)
@@ -46,6 +50,7 @@ function BookingForm({ selectedDate }) {
         let bookingId = e.target._id.value
 
         let updatedBooking = {
+            timeslot: e.target.timeslot.value,
             firstName: e.target.firstName.value,
             lastName: e.target.lastName.value,
             email: e.target.email.value,
@@ -104,12 +109,23 @@ function BookingForm({ selectedDate }) {
                             <span style={{ backgroundColor: 'lightgreen' }}>{`You are booking for ${selectedDate}`}</span>
                         </p>
                         <p>
+                            <label htmlFor="timeslot">
+                                <span>Preferred time</span>
+                                <strong><span aria-label="required">*</span></strong>
+                            </label>
+                            <select id="timeslot" name="timeslot" required>
+                                <option value="11am">11am</option>
+                                <option value="2pm">2pm</option>
+                            </select>
+                        </p>
+
+                        <p>
                             <label htmlFor="firstName">
                                 <span>First Name</span>
                                 <strong><span aria-label="Required">*</span></strong>
                             </label>
                             <input type="text" id="firstName" name="firstName" placeholder="John" required />
-                            <span></span>
+
                         </p>
                         <p>
                             <label htmlFor="lastName">
@@ -117,7 +133,7 @@ function BookingForm({ selectedDate }) {
                                 <strong><span aria-label="Required">*</span></strong>
                             </label>
                             <input type="text" id="lastName" name="lastName" placeholder="Smith" required />
-                            <span></span>
+
                         </p>
                         <p>
                             <label htmlFor="email">
@@ -125,7 +141,7 @@ function BookingForm({ selectedDate }) {
                                 <strong><span aria-label="required">*</span></strong>
                             </label>
                             <input type="email" id="email" name="useremail" placeholder="yourname@email.com" required autoComplete='true' />
-                            <span></span>
+
                         </p>
                         <p>
                             <label htmlFor="phone">
@@ -134,7 +150,7 @@ function BookingForm({ selectedDate }) {
                             </label>
                             <input type="tel" id="phone" name="userphone" placeholder="(Include country code)"
                                 required autoComplete='true' />
-                            <span></span>
+
                         </p>
                         <p>
                             <label htmlFor="accommodation">
@@ -156,7 +172,7 @@ function BookingForm({ selectedDate }) {
                             </label>
                             <input type="number" min="1" max="12" id="adults" name="adults" placeholder="max 12"
                                 required />
-                            <span></span>
+
                         </p>
                         <p>
                             <label htmlFor="children">
@@ -164,18 +180,9 @@ function BookingForm({ selectedDate }) {
                             </label>
                             <input type="number" min="0" max="12" id="children" name="children" placeholder="including infants"
                                 required />
-                            <span></span>
+
                         </p>
-                        {/* <p>
-                            <label htmlFor="time">
-                                <span>Preferred time</span>
-                                <strong><span aria-label="required">*</span></strong>
-                            </label>
-                            <select id="time" name="triptime">
-                                <option value="11am">11am</option>
-                                <option value="2px">2pm</option>
-                            </select>
-                        </p> */}
+
                         <p>
                             <label htmlFor="message">
                             </label>
