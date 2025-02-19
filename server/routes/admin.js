@@ -3,7 +3,6 @@ const express = require('express'),
     controller = require('../controllers/admin.js');
 
 router.post('/login', controller.checklogin);
-router.post('/update/:id', controller.updateBooking);
 router.post('/deleteAll', controller.deleteAll)
 
 
