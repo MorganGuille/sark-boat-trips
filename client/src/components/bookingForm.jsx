@@ -11,7 +11,8 @@ function BookingForm({ selectedDate }) {
         return currentLoc.pathname === '/dashboard'
     }
 
-    let [showResponse, setResponse] = useState(null)
+    const [showResponse, setResponse] = useState(null)
+    let [updating, setUpdating] = useState(false)
 
     const handleSubmit = async (e) => {
         e.preventDefault()
@@ -56,7 +57,7 @@ function BookingForm({ selectedDate }) {
         }
 
         try {
-            const response = await axios.put(`http://localhost:4040/admin/update/${bookingId}`, updatedBooking)
+            const response = await axios.post(`http://localhost:4040/admin/update/${bookingId}`, updatedBooking)
             console.log(response.data)
             setResponse(response.data.data)
 
@@ -68,12 +69,33 @@ function BookingForm({ selectedDate }) {
 
     return (
         <section className='bookingForm'>
-            <form onSubmit={handleSubmit}>
+            {checkPage() ? <button onClick={() => setUpdating(!updating)}>Update/add</button> : null}
+
+            <form onSubmit={!updating ? handleSubmit : updateBooking}>
                 <p>
                     Required fields are followed by
                     <strong><span aria-label="Required">*</span></strong>
                 </p>
                 <section>
+                    {updating ? <div>
+                        <fieldset>
+                            <legend>Updating booking</legend>
+                            <p>
+                                <label htmlFor="_id">
+                                    <span>Enter booking _id</span>
+                                </label>
+                                <input type="text" id="_id" name="booking _id"
+                                    placeholder="booking_id" />
+                            </p>
+                            <p>
+                                <label htmlFor="New date">
+                                    <span>New date for Booking</span>
+                                </label>
+                                <input type="text" id="date" name="updatedate"
+                                    placeholder="yyyy-mm-dd" />
+                            </p>
+                        </fieldset>
+                    </div> : null}
                     <fieldset>
                         <legend>Contact Information</legend>
                         <p>
@@ -157,28 +179,14 @@ function BookingForm({ selectedDate }) {
                             </label>
                             <textarea id='message' name='message' cols="40" rows="4" placeholder={'Any further info'} />
                         </p>
-                        {checkPage() ? <div>
-                            <p>
-                                <label htmlFor="New date">
-                                    <span>New date for Booking</span>
-                                </label>
-                                <input type="text" id="date" name="updatedate"
-                                    placeholder="yyyy-mm-dd" />
-                            </p><p>
-                                <label htmlFor="_id">
-                                    <span>Enter booking _id</span>
-                                </label>
-                                <input type="text" id="_id" name="booking _id"
-                                    placeholder="booking_id" />
-                            </p>
-                        </div> : null}
+
 
                     </fieldset>
                 </section>
                 <div>
                     <button type="submit">Submit</button>
                     <button type="reset">Reset form</button>
-                    {checkPage() ? <button onClick={updateBooking}>Update</button> : null}
+
                 </div>
 
 
