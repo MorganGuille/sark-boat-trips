@@ -35,6 +35,7 @@ function BookingForm({ selectedDate }) {
         } catch (error) {
             console.log(error)
         }
+        e.target.reset()
     }
 
     const updateBooking = async (e) => {
@@ -64,6 +65,7 @@ function BookingForm({ selectedDate }) {
         } catch (error) {
             console.log(error)
         }
+        e.target.reset()
     }
 
 

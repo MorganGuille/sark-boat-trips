@@ -39,17 +39,18 @@ const updateBooking = async (req, res) => {
     }
 }
 
-const deleteAll = async (req, res) => {
-    try {
-        const result = await Bookings.deleteMany({});
-        res.status(200).json({ message: `${result.deletedCount} records deleted.` });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: "Failed to clear records." });
-    }
-};
+// const deleteAll = async (req, res) => {
+//     try {
+//         const result = await Bookings.deleteMany({});
+//         res.status(200).json({ message: `${result.deletedCount} records deleted.` });
+//     } catch (err) {
+//         console.error(err);
+//         res.status(500).json({ error: "Failed to clear records." });
+//     }
+// };
 
 
 
 
-module.exports = { checklogin, deleteAll, updateBooking }
+module.exports = { checklogin, updateBooking }
+
