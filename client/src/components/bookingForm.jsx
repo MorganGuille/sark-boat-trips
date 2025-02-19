@@ -14,7 +14,7 @@ function BookingForm({ selectedDate }) {
     const [showResponse, setResponse] = useState(null)
     let [updating, setUpdating] = useState(false)
 
-    const handleSubmit = async (e) => {
+    const addBooking = async (e) => {
         e.preventDefault()
         let newBooking = {
             timeslot: e.target.timeslot.value,
@@ -29,12 +29,8 @@ function BookingForm({ selectedDate }) {
             message: e.target.message.value
         }
 
-        console.log(newBooking)
-
-
         try {
             let response = await axios.post('http://localhost:4040/bookings/add', newBooking)
-            console.log(response.data)
             setResponse(response.data.data)
         } catch (error) {
             console.log(error)
@@ -44,8 +40,6 @@ function BookingForm({ selectedDate }) {
 
     const updateBooking = async (e) => {
         e.preventDefault()
-
-        console.log(e.target)
 
         let bookingId = e.target._id.value
 
@@ -63,7 +57,7 @@ function BookingForm({ selectedDate }) {
         }
 
         try {
-            const response = await axios.post(`http://localhost:4040/admin/update/${bookingId}`, updatedBooking)
+            const response = await axios.post(`http://localhost:4040/bookings/update/${bookingId}`, updatedBooking)
             console.log(response.data)
             setResponse(response.data.data)
 
@@ -78,7 +72,7 @@ function BookingForm({ selectedDate }) {
         <section className='bookingForm'>
             {checkPage() ? <button onClick={() => setUpdating(!updating)}>Update/add</button> : null}
 
-            <form onSubmit={!updating ? handleSubmit : updateBooking}>
+            <form onSubmit={!updating ? addBooking : updateBooking}>
                 <p>
                     Required fields are followed by
                     <strong><span aria-label="Required">*</span></strong>
@@ -113,7 +107,7 @@ function BookingForm({ selectedDate }) {
                                 <span>Preferred time</span>
                                 <strong><span aria-label="required">*</span></strong>
                             </label>
-                            <select id="timeslot" name="timeslot" required>
+                            <select id="timeslot" name="timeslot" required={!checkPage()}>
                                 <option value="11am">11am</option>
                                 <option value="2pm">2pm</option>
                             </select>
@@ -124,7 +118,7 @@ function BookingForm({ selectedDate }) {
                                 <span>First Name</span>
                                 <strong><span aria-label="Required">*</span></strong>
                             </label>
-                            <input type="text" id="firstName" name="firstName" placeholder="John" required />
+                            <input type="text" id="firstName" name="firstName" placeholder="John" required={!checkPage()} />
 
                         </p>
                         <p>
@@ -132,7 +126,7 @@ function BookingForm({ selectedDate }) {
                                 <span>Last Name</span>
                                 <strong><span aria-label="Required">*</span></strong>
                             </label>
-                            <input type="text" id="lastName" name="lastName" placeholder="Smith" required />
+                            <input type="text" id="lastName" name="lastName" placeholder="Smith" required={!checkPage()} />
 
                         </p>
                         <p>
@@ -140,7 +134,7 @@ function BookingForm({ selectedDate }) {
                                 <span>Email: </span>
                                 <strong><span aria-label="required">*</span></strong>
                             </label>
-                            <input type="email" id="email" name="useremail" placeholder="yourname@email.com" required autoComplete='true' />
+                            <input type="email" id="email" name="useremail" placeholder="yourname@email.com" required={!checkPage()} autoComplete='true' />
 
                         </p>
                         <p>
@@ -149,7 +143,7 @@ function BookingForm({ selectedDate }) {
                                 <strong><span aria-label="required">*</span></strong>
                             </label>
                             <input type="tel" id="phone" name="userphone" placeholder="(Include country code)"
-                                required autoComplete='true' />
+                                required={!checkPage()} autoComplete='true' />
 
                         </p>
                         <p>
@@ -171,7 +165,7 @@ function BookingForm({ selectedDate }) {
                                 <strong><span aria-label="required">*</span></strong>
                             </label>
                             <input type="number" min="1" max="12" id="adults" name="adults" placeholder="max 12"
-                                required />
+                                required={!checkPage()} />
 
                         </p>
                         <p>
@@ -179,7 +173,7 @@ function BookingForm({ selectedDate }) {
                                 <span>Number of children</span>
                             </label>
                             <input type="number" min="0" max="12" id="children" name="children" placeholder="including infants"
-                                required />
+                                required={!checkPage()} />
 
                         </p>
 

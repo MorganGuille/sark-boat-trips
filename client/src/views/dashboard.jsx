@@ -12,11 +12,8 @@ function Dashboard() {
     const [selectedDate, setSelectedDate] = useState()
     const [bookings, setBookings] = useState([])
     const [search, setSearch] = useState("")
-    const [deleted, setDeleted] = useState("")
+    const [showResponse, setResponse] = useState(null)
 
-
-
-    // log in / out logic below
 
     const checkLogin = async (e) => {
         e.preventDefault()
@@ -31,8 +28,6 @@ function Dashboard() {
     const Logout = async () => {
         setLoggedIn(false)
     }
-
-    // log in / out logic above
 
     const getBookingsByDate = async () => {
         console.log(selectedDate)
@@ -61,16 +56,18 @@ function Dashboard() {
         e.preventDefault()
         let booking = {
             date: e.target.date.value,
-            lastName: e.target.lastName.value
+            lastName: e.target.lastName.value,
+            timeslot: e.target.timeslot.value,
         }
 
         try {
             const res = await axios.post(`http://localhost:4040/bookings/delete`, booking)
-            setDeleted(res.data.data)
+            setResponse(res.data.data)
 
         } catch (error) {
             console.log(error)
         }
+        e.target.reset()
     }
 
 
@@ -139,8 +136,11 @@ function Dashboard() {
                 <form id='deleteBooking' onSubmit={deleteBooking} className='deleteBooking' >
                     <input type='text' id="lastName" name="lastName" placeholder='Lastname' />
                     <input type='text' id="date" name="date" placeholder='Date yyyy-mm-dd' />
+                    <input type='text' id="timeslot" name="timeslot" placeholder='11am or 2pm' />
                     <button style={{ backgroundColor: 'lightcoral' }}>Delete this booking</button>
-                    {deleted ? <div>{deleted}</div> : null}
+                    {showResponse != null ?
+                        <div className='responseDisplay'><h3>{showResponse}</h3><button onClick={() => setResponse(null)}>Confirm</button></div>
+                        : null}
                 </form>
 
                 <BookingForm selectedDate={selectedDate} />
@@ -153,13 +153,3 @@ function Dashboard() {
 }
 
 export default Dashboard
-
-// firstName: e.target.firstName.value,
-// lastName: e.target.lastName.value,
-// email: e.target.email.value,
-// adults: e.target.adults.value,
-// children: e.target.children.value,
-// date: selectedDate,
-// accommodation: e.target.accommodation.value,
-// message: e.target.message.value
-
