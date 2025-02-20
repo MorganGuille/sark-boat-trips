@@ -60,7 +60,7 @@ function MyCalendar({ setSelectedDate }) {
             const tileAvailability = availability[formattedDate];
 
             if (!tileAvailability) {
-                return null;
+                return "loading";
             }
 
             const available11am = tileAvailability['11am'];
@@ -77,16 +77,21 @@ function MyCalendar({ setSelectedDate }) {
         return null;
     };
 
-
-    const formattedDate = formatDate(date);
+    const setTileContent = ({ date, view }) => {
+        const className = setTileClassName({ date, view });
+        if (className === 'loading') {
+            return <div className="loader"></div>;
+        }
+        return null;
+    };
 
     return (
         <section className="calendar">
             <Calendar
                 onActiveStartDateChange={({ activeStartDate }) => onChange(activeStartDate)}
                 onChange={onChange}
-                value={date}
                 tileClassName={setTileClassName}
+                value={date}
                 showNeighboringMonth={true}
                 maxDetail="month"
                 minDetail="year"
@@ -96,11 +101,11 @@ function MyCalendar({ setSelectedDate }) {
             <div className="calendarDisplay">
                 <div>
                     <p>11:00 AM: </p>
-                    <p>{availability[formatDate(date)]?.['11am'] === null ? "Loading..." : availability[formatDate(date)]?.['11am']} spaces available</p>
+                    <p>{!availability[formatDate(date)]?.['11am'] ? <div className='loader'></div> : `${availability[formatDate(date)]?.['11am']} spaces available`}</p>
                 </div>
                 <div>
                     <p>2:00 PM: </p>
-                    <p>{availability[formatDate(date)]?.['2pm'] === null ? "Loading..." : availability[formatDate(date)]?.['2pm']} spaces available</p>
+                    <p>{!availability[formatDate(date)]?.['2pm'] ? <div className='loader'></div> : `${availability[formatDate(date)]?.['2pm']} spaces available`} </p>
                 </div>
             </div>
         </section>

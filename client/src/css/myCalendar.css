@@ -201,3 +201,19 @@ abbr[title] {
 .react-calendar__tile--now {
     background: #a1f9a1;
 }
+
+/* HTML: <div class="loader"></div> */
+.loader {
+    font-weight: 300;
+    animation: l1 1s linear infinite alternate;
+}
+
+.loader:before {
+    content: "Loading..."
+}
+
+@keyframes l1 {
+    to {
+        opacity: 0
+    }
+}
