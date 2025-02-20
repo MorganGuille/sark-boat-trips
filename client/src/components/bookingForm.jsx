@@ -93,7 +93,7 @@ function BookingForm({ selectedDate }) {
                                     <span>New date for Booking</span>
                                 </label>
                                 <input type="text" id="date" name="updatedate"
-                                    placeholder="yyyy-mm-dd" />
+                                    placeholder="dd-mm-yyyy" />
                             </p>
                         </fieldset>
                     </div> : null}
