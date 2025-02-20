@@ -60,7 +60,7 @@ function MyCalendar({ setSelectedDate }) {
             const tileAvailability = availability[formattedDate];
 
             if (!tileAvailability) {
-                return "loading";
+                return null;
             }
 
             const available11am = tileAvailability['11am'];
@@ -73,14 +73,6 @@ function MyCalendar({ setSelectedDate }) {
             } else {
                 return 'available';
             }
-        }
-        return null;
-    };
-
-    const setTileContent = ({ date, view }) => {
-        const className = setTileClassName({ date, view });
-        if (className === 'loading') {
-            return <div className="loader"></div>;
         }
         return null;
     };
