@@ -25,6 +25,10 @@
 
 }
 
+.navbar {
+    background-color: rgba(27, 27, 27, 0.861);
+}
+
 @media (max-width: 1366px) {
 
     .charterTours {
