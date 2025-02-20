@@ -1,6 +1,7 @@
 * {
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
 }
 
 html {
@@ -8,28 +9,41 @@ html {
     overflow-x: hidden;
 }
 
+body {
+    font-family: sans-serif;
+}
+
 h1 {
-    font-size: 5em;
+    font-size: 5rem;
 }
 
 h2 {
-    font-size: 3em;
-    margin: 0.5em 0em 0.5em 0em;
+    font-size: 3rem;
+    margin: 0.5em 0;
 }
 
 h3 {
-    font-size: 1em;
+    font-size: 1rem;
 }
 
 p {
-    margin: 1em 0em;
+    margin: 1em 0;
+}
+
+.btn {
+    padding: 1em 1.5em;
+    border-radius: 0.5em;
+    border: none;
+    transition: 0.5s ease-in-out;
+    cursor: pointer;
+}
+
+.btn:hover {
+    transform: scale(1.1);
 }
 
 .hero-banner {
-    background-image: linear-gradient(rgba(0, 0, 0, 0.144), rgba(0, 0, 0, 0.3)), url(../assets/images/hero-banner.jpg);
-    background-position: left;
-    background-repeat: no-repeat;
-    background-size: cover;
+    background: linear-gradient(rgba(0, 0, 0, 0.144), rgba(0, 0, 0, 0.3)), url(../assets/images/hero-banner.jpg) left / cover no-repeat;
     height: 100vh;
     width: 100vw;
     display: flex;
@@ -38,98 +52,46 @@ p {
     align-items: center;
     justify-content: center;
     gap: 5em;
-
-    & span {
-        text-align: center;
-    }
-
-    & button {
-        padding: 1em 1.5em;
-        border-radius: 0.5em;
-        border: none;
-        transition: 0.5s ease-in-out;
-        animation: pulse 2s infinite;
-    }
-
-    & button:hover {
-        cursor: pointer;
-        transform: scale(1.1);
-        animation: none;
-    }
-}
-
-.theTour {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
     text-align: center;
-    max-width: 60%;
-    margin: 2em auto;
 }
 
-.charters {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    max-width: 60%;
-    margin: 2em auto;
-
-    & button {
-        padding: 1em 1.5em;
-        border-radius: 0.5em;
-        border: none;
-        transition: 0.5s ease-in-out;
-        background-color: #1087ff;
-        color: white;
-        margin: 1em;
-    }
-
-    & button:hover {
-        cursor: pointer;
-        transform: scale(1.1);
-    }
-
-    & img {
-        width: 100%;
-    }
+.hero-banner button {
+    animation: pulse 2s infinite;
 }
 
-.sarkIsland {
-
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    max-width: 70%;
-    margin: 2em auto;
-
-    & .grid1 {
-        display: grid;
-        grid-template-columns: auto auto;
-        gap: 3em;
-        padding: 2em;
-        text-align: start;
-
-    }
+.hero-banner button:hover {
+    transform: scale(1.1);
+    animation: none;
 }
 
+.charters button {
+    background-color: #1087ff;
+    color: white;
+    margin: 1em;
+}
 
+.charters img {
+    width: 100%;
+}
 
+.sarkIsland .grid1 {
+    display: grid;
+    grid-template-columns: auto auto;
+    gap: 3em;
+    padding: 2em;
+    text-align: start;
+}
 
 @keyframes pulse {
     0% {
         transform: scale(0.95);
-        /* box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.7); */
     }
 
     70% {
         transform: scale(1.05);
-        /* box-shadow: 0 0 0 10px rgba(0, 0, 0, 0); */
     }
 
     100% {
         transform: scale(0.95);
-        /* box-shadow: 0 0 0 0 rgba(0, 0, 0, 0); */
     }
 }

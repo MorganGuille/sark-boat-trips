@@ -95,12 +95,12 @@ function MyCalendar({ setSelectedDate }) {
             />
             <div className="calendarDisplay">
                 <div>
-                    <p>11:00 AM: </p>
-                    <p>{!availability[formatDate(date)]?.['11am'] ? <div className='loader'></div> : `${availability[formatDate(date)]?.['11am']} spaces available`}</p>
+                    <span>11:00 AM: </span>
+                    <span>{!availability[formatDate(date)]?.['11am'] ? <span className='loader'></span> : `${availability[formatDate(date)]?.['11am']} spaces available`}</span>
                 </div>
                 <div>
-                    <p>2:00 PM: </p>
-                    <p>{!availability[formatDate(date)]?.['2pm'] ? <div className='loader'></div> : `${availability[formatDate(date)]?.['2pm']} spaces available`} </p>
+                    <span>2:00 PM: </span>
+                    <span>{!availability[formatDate(date)]?.['2pm'] ? <span className='loader'></span> : `${availability[formatDate(date)]?.['2pm']} spaces available`} </span>
                 </div>
             </div>
         </section>

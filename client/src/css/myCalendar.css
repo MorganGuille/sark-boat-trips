@@ -172,7 +172,7 @@
         justify-content: space-evenly;
     }
 
-    & p {
+    & span {
         margin: 0.2em;
     }
 }

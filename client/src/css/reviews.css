@@ -3,40 +3,29 @@ a {
     color: inherit;
 }
 
-.reviews {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    max-width: 60%;
-    margin: 2em auto;
-
-}
-
 .reviewsContainer {
-    margin: 2em 0em;
+    margin: 2em 0;
     width: 100%;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-
 }
 
 .reviewCard {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 200px;
-    height: 100px;
-    border: solid black 1px;
+    width: 15rem;
+    height: 7rem;
+    border: 1px solid black;
     border-radius: 0.5em;
-    background-color: rgb(255, 255, 255);
+    background-color: white;
     filter: drop-shadow(0.5em 0.5em grey);
     transition: 0.3s ease-in-out;
+}
 
-    & span {
-        display: flex;
-    }
+.reviewCard span {
+    display: flex;
 }
 
 .reviewCard:hover {
