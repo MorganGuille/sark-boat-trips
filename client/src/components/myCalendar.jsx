@@ -8,6 +8,7 @@ function MyCalendar({ setSelectedDate }) {
     const [date, setDate] = useState(new Date());
     const [availability, setAvailability] = useState({});
 
+
     useEffect(() => {
         fetchMonthAvailability(date);
     }, [date]);
@@ -77,13 +78,15 @@ function MyCalendar({ setSelectedDate }) {
         return null;
     };
 
+
     return (
         <section className="calendar">
             <Calendar
                 onActiveStartDateChange={({ activeStartDate }) => onChange(activeStartDate)}
                 onChange={onChange}
-                tileClassName={setTileClassName}
+
                 value={date}
+                tileClassName={setTileClassName}
                 showNeighboringMonth={true}
                 maxDetail="month"
                 minDetail="year"
