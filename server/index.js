@@ -1,14 +1,20 @@
 const app = require("express")()
-const port = 4040;
+const port = process.env.PORT || 3030;
 const mongoose = require("mongoose")
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config()
+const express = require('express');
+
 
 let dbPassword = process.env.atlasDB_password;
 
-app.use(require("express").json())
-app.use(require("express").urlencoded({ extended: true }))
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
+
 app.use(cors())
+app.use(express.static(__dirname));
+app.use(express.static(path.join(__dirname, '../client/build')));
 
 async function connecting() {
     try {
@@ -24,3 +30,7 @@ app.use("/bookings", require("./routes/bookings"))
 app.use("/admin", require("./routes/admin"))
 
 app.listen(port, () => console.log(`listening on port : ${port}`))
+
+app.get('/*', function (req, res) {
+    res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
+});
