@@ -14,7 +14,7 @@ app.use(express.urlencoded({ extended: true }))
 
 app.use(cors())
 app.use(express.static(__dirname));
-app.use(express.static(path.join(__dirname, '../client/build')));
+app.use(express.static(path.join(__dirname, '../client/dist')));
 
 async function connecting() {
     try {
