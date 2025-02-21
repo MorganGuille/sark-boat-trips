@@ -83,7 +83,7 @@ th {
     overflow-y: scroll;
 }
 
-.deleteBooking {
+.minorform {
     display: flex;
     flex-direction: row;
     margin-top: 1em;

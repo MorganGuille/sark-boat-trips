@@ -1,4 +1,5 @@
 const Bookings = require("../models/bookings");
+const Availability = require('../models/availability');
 const nodemailer = require('nodemailer');
 
 
@@ -21,17 +22,48 @@ const sendEmail = async (mailOptions) => {
     }
 };
 
+const getAvailability = async (date, timeslot) => {
+    try {
+        const availabilitySettings = await Availability.findOne({ date, timeslot });
+        const capacity = availabilitySettings ? availabilitySettings.capacity : 12;
+
+        const existingBookings = await Bookings.find({ date, timeslot });
+        let total = 0;
+        existingBookings.forEach(booking => {
+            total += (booking.adults + booking.children);
+        });
+
+        return capacity - total;
+    } catch (error) {
+        console.error("Error calculating availability:", error);
+        throw error;
+    }
+};
+
+const updateAvailability = async (req, res) => {
+    const { date, timeslot, capacity } = req.body;
+
+    try {
+        let availability = await Availability.findOneAndUpdate(
+            { date, timeslot },
+            { capacity },
+            { upsert: true, new: true }
+        );
+
+        res.send({ ok: true, data: `Sucessfully updated availability, there are now ${availability.capacity} seats available at ${availability.timeslot}` });
+    } catch (error) {
+        console.error("Error updating availability:", error);
+        res.status(500).send({ ok: false, data: "An error occurred while updating availability." });
+    }
+};
+
+
 const addBooking = async (req, res) => {
     let { date, firstName, lastName, phone, adults, children = 0, email, timeslot } = req.body;
 
     try {
-        const existingBookings = await Bookings.find({ date, timeslot });
-        let total = 0;
-        existingBookings.forEach(element => {
-            total += (element.adults + element.children);
-        });
 
-        const availability = 12 - total;
+        const availability = await getAvailability(date, timeslot);
 
         if (availability >= (Number(adults) + Number(children))) {
 
@@ -118,8 +150,8 @@ const checkAvail = async (req, res) => {
 
     try {
         const availability = {
-            '11am': await calculateAvailability(date, '11am'),
-            '2pm': await calculateAvailability(date, '2pm'),
+            '11am': await getAvailability(date, '11am'),
+            '2pm': await getAvailability(date, '2pm'),
         };
 
         res.send({ ok: true, data: availability });
@@ -129,14 +161,6 @@ const checkAvail = async (req, res) => {
     }
 };
 
-const calculateAvailability = async (date, timeslot) => {
-    const existingBookings = await Bookings.find({ date, timeslot });
-    let total = 0;
-    existingBookings.forEach(booking => {
-        total += (booking.adults + booking.children);
-    });
-    return 12 - total;
-};
 
 const search = async (req, res) => {
     let search = req.params.search;
@@ -220,5 +244,5 @@ const updateBooking = async (req, res) => {
 }
 
 
-module.exports = { addBooking, deleteBooking, checkDate, checkAvail, search, updateBooking }
+module.exports = { addBooking, deleteBooking, checkDate, checkAvail, search, updateBooking, updateAvailability }
 

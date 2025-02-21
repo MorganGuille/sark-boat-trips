@@ -6,6 +6,7 @@ import axios from 'axios'
 import '../css/dashboard.css'
 
 
+
 function Dashboard() {
 
     const [loggedin, setLoggedIn] = useState(false)
@@ -70,13 +71,36 @@ function Dashboard() {
         e.target.reset()
     }
 
+    const updateAvailability = async (e) => {
+        e.preventDefault()
+
+        let update = {
+            date: e.target.date.value,
+            timeslot: e.target.timeslot.value,
+            capacity: e.target.capacity.value,
+        }
+        try {
+            const res = await axios.post('http://localhost:4040/bookings/updateavailability', update)
+            setResponse(res.data.data)
+        } catch (error) {
+            console.log(error)
+        }
+
+    }
+
+
+
 
 
 
     return (<section className='dashboard'>
+
         {loggedin ? <button className='logoutButton' onClick={Logout}>Log Out</button> : null}
+
         <div>Admin panel</div>
+
         {!loggedin ? <form onSubmit={checkLogin}>
+
             <input type="text" id="username" name="username" placeholder="username" required />
             <input type="password" id="password" name="password" placeholder="password" required />
             <div>
@@ -87,14 +111,17 @@ function Dashboard() {
         {loggedin ? <p className='logged'>logged in</p> : <p className='notLogged'>Please log in</p>}
 
         {loggedin ? <div className='bookingsDisplay' >
+
             <MyCalendar setSelectedDate={setSelectedDate} />
             <div className='bookingsTable'>
 
 
-                <button onClick={getBookingsByDate}>Get bookings by date</button>
-                <form id='bookingsearch' onSubmit={getBookingsByLastName}>
-                    <input type='text' id="lastName" name="lastName" placeholder='get bookings by last name' />
-                </form>
+                <div className='minorform'>
+                    <button onClick={getBookingsByDate}>Get bookings by date</button>
+                    <form id='bookingsearch' onSubmit={getBookingsByLastName}>
+                        <input type='text' id="lastName" name="lastName" placeholder='get bookings by last name' />
+                    </form>
+                </div>
 
                 {bookings.length != 0 ? <table>
                     <thead>
@@ -133,14 +160,27 @@ function Dashboard() {
                     </tbody>
                 </table > : null}
 
-                <form id='deleteBooking' onSubmit={deleteBooking} className='deleteBooking' >
+                <form id='deleteBooking' onSubmit={deleteBooking} className='minorform' >
                     <input type='text' id="lastName" name="lastName" placeholder='Lastname' />
-                    <input type='text' id="date" name="date" placeholder='Date yyyy-mm-dd' />
-                    <input type='text' id="timeslot" name="timeslot" placeholder='11am or 2pm' />
+                    <input type='text' id="date" name="date" placeholder='Date dd-mm-yyyy' />
+                    <select id="timeslot" name="timeslot" required>
+                        <option value="11am">11am</option>
+                        <option value="2pm">2pm</option>
+                    </select>
                     <button style={{ backgroundColor: 'lightcoral' }}>Delete this booking</button>
                     {showResponse != null ?
                         <div className='responseDisplay'><h3>{showResponse}</h3><button onClick={() => setResponse(null)}>Confirm</button></div>
                         : null}
+                </form>
+                <form id='updateAvailability' className='minorform' onSubmit={updateAvailability}>
+                    <input type='text' id="date" name="date" placeholder='Date dd-mm-yyyy' />
+                    <select id="timeslot" name="timeslot" required>
+                        <option value="11am">11am</option>
+                        <option value="2pm">2pm</option>
+                    </select>
+                    <input type="number" id="capacity" name="capacity" placeholder='capacity' required></input>
+                    <button type="submit">Update Availability</button>
+
                 </form>
 
                 <BookingForm selectedDate={selectedDate} />

@@ -8,6 +8,7 @@ router.get('/:date', controller.checkDate)
 router.get('/availability/:date', controller.checkAvail)
 router.get('/search/:search', controller.search)
 router.post('/update/:id', controller.updateBooking);
+router.post('/updateavailability', controller.updateAvailability)
 
 
 
