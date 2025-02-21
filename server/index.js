@@ -1,5 +1,5 @@
 const app = require("express")()
-const port = process.env.PORT || 3030;
+const PORT = process.env.PORT || 3030;
 const mongoose = require("mongoose")
 const cors = require('cors');
 const path = require('path');
@@ -29,7 +29,7 @@ connecting()
 app.use("/bookings", require("./routes/bookings"))
 app.use("/admin", require("./routes/admin"))
 
-app.listen(port, () => console.log(`listening on port : ${port}`))
+app.listen(port, () => console.log(`listening on port : ${PORT}`))
 
 app.get('/*', function (req, res) {
     res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
