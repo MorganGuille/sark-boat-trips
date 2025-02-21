@@ -18,10 +18,11 @@ function MobileNav() {
 
 
     return (
-        <div className='mobileMenu'>
-            <div className={`burger-icon ${menuOpen && 'menuOpen'}`} onClick={toggleMenu}>☰</div>
-
-            <div className={`mobileLinks ${menuOpen && 'mobile-links-open'}`}>
+        <div
+            className={`${menuOpen ? 'mobileNavOpen' : 'mobileNavClosed'}`}>
+            <span onClick={toggleMenu}
+                className={`burgerIcon ${menuOpen && 'burgerIconOpen'} `}>☰</span>
+            <div className={`mobileLinks ${menuOpen ? 'linksOpen' : 'linksClosed'}`}>
                 {!checkPage() ? (<a href='#heroBanner'>HOME</a>) : (<NavLink to={'./'}>HOME</NavLink>)}
                 {!checkPage() ? (<a href='#theTour' >THE TOUR</a>) : (null)}
                 {!checkPage() ? (<a href='#charters' >CHARTERS</a>) : (null)}

@@ -8,7 +8,7 @@
     position: absolute;
     top: 0;
     padding: 0.5em 0;
-    z-index: 1;
+    z-index: 999;
 
     & a {
         font-size: 1em;
@@ -33,12 +33,23 @@
     position: fixed;
     top: 0;
     left: 0;
+    z-index: 999;
 }
 
-.mobileMenu {
+.mobileNav {
     display: none;
-
+    z-index: 999;
 }
+
+.burgerIcon {
+    display: none;
+}
+
+.mobileLinks {
+    display: none;
+}
+
+
 
 @media (max-width: 1020px) {
 
@@ -47,29 +58,43 @@
         display: none;
     }
 
-    .mobileMenu {
+    .mobileNavClosed {
         background-color: transparent;
         display: block;
         position: fixed;
         top: 0;
         left: 0;
-        z-index: 1;
+        z-index: 999;
     }
 
-    .burger-icon {
+    .burgerIcon {
+        display: block;
+        width: 5rem;
+        height: 5rem;
         font-size: 3em;
         cursor: pointer;
         color: black;
         padding: 0.5rem;
         opacity: 9;
+        z-index: 999;
     }
 
-    .menuOpen {
+    .burgerIconOpen {
+        color: white;
+        z-index: 999;
+    }
+
+
+    .mobileNavOpen {
+        position: fixed;
+        z-index: 1;
         background-color: rgba(65, 65, 65, 0.895);
         height: auto;
+        width: 60vw;
         color: white;
         opacity: 10;
         transition: opacity 0.3s ease-in-out;
+        z-index: 999;
     }
 
     .mobileLinks {
@@ -77,17 +102,21 @@
         color: white;
         display: flex;
         flex-direction: column;
-        background-color: rgba(65, 65, 65, 0.895);
         padding: 1em;
         height: 100vh;
-        width: 60vw;
         gap: 1rem;
         font-size: x-large;
     }
 
-    .mobile-links-open {
+    .linksClosed {
+        display: none;
+        opacity: 0;
+    }
+
+    .linksOpen {
+        display: flex;
+        position: relative;
         opacity: 1;
-        /* transition: opacity 0.3s ease-in-out; */
     }
 
 

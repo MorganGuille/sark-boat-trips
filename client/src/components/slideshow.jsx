@@ -45,9 +45,9 @@ function Slideshow({ images, interval = 5000 }) {
     const handlePointerUp = (e) => {
         if (e.pointerId === activePointerId.current) {
             // console.log('Touch End - Start X:', startX.current, 'End X:', endX.current);
-            if (startX.current - endX.current > 20) {
+            if (startX.current - endX.current > 10) {
                 goToNext();
-            } else if (startX.current - endX.current < -20) {
+            } else if (startX.current - endX.current < -10) {
                 goToPrevious();
             }
             startX.current = 0;
