@@ -5,23 +5,35 @@ import Bookings from '../components/bookings'
 import Footer from '../components/footer'
 import { NavLink } from 'react-router'
 
+import gallery1 from '../assets/images/gallery1'
+import gallery2 from '../assets/images/gallery2'
+import gallery3 from '../assets/images/gallery3'
+import gallery4 from '../assets/images/gallery4'
+import gallery5 from '../assets/images/gallery5'
+import gallery6 from '../assets/images/gallery6'
+import gallery7 from '../assets/images/gallery7'
+import gallery8 from '../assets/images/gallery8'
+import gallery9 from '../assets/images/gallery9'
+import gallery10 from '../assets/images/gallery10'
+import gallery11 from '../assets/images/gallery11'
+
 
 import '../css/home.css'
 
 function Home() {
 
     const images = [
-        '../src/assets/images/gallery1.jpg',
-        '../src/assets/images/gallery2.jpg',
-        '../src/assets/images/gallery3.jpg',
-        '../src/assets/images/gallery4.jpg',
-        '../src/assets/images/gallery5.jpg',
-        '../src/assets/images/gallery6.jpg',
-        '../src/assets/images/gallery7.jpg',
-        '../src/assets/images/gallery8.jpeg',
-        '../src/assets/images/gallery9.jpeg',
-        '../src/assets/images/gallery10.jpeg',
-        '../src/assets/images/gallery11.jpg',
+        gallery1,
+        gallery2,
+        gallery3,
+        gallery4,
+        gallery5,
+        gallery6,
+        gallery7,
+        gallery8,
+        gallery9,
+        gallery10,
+        gallery11,
     ]
 
     return (<>
@@ -71,7 +83,7 @@ function Home() {
                 <p>For more information and ideas</p>
                 <NavLink to={'./charters'}><button className='btn'>Click Here</button></NavLink>
             </div>
-            <img src={"../assets/images/charters.jpg"} alt='Charter trip inside cave' />
+            <img src={"../src/assets/images/charters.jpg"} alt='Charter trip inside cave' />
         </section>
         <section id='sarkIsland' className="sarkIsland centered-section">
             <h2>SARK ISLAND</h2>
