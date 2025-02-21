@@ -71,7 +71,7 @@ function Home() {
                 <p>For more information and ideas</p>
                 <NavLink to={'./charters'}><button className='btn'>Click Here</button></NavLink>
             </div>
-            <img src={"../src/assets/images/charters.jpg"} alt='Charter trip inside cave' />
+            <img src={"../assets/images/charters.jpg"} alt='Charter trip inside cave' />
         </section>
         <section id='sarkIsland' className="sarkIsland centered-section">
             <h2>SARK ISLAND</h2>
