@@ -27,8 +27,8 @@ async function connecting() {
 }
 connecting()
 
-app.use("/bookings", require("./routes/bookings"))
-app.use("/admin", require("./routes/admin"))
+app.use("bookings", require("./routes/bookings"))
+app.use("admin", require("./routes/admin"))
 
 app.listen(PORT, () => console.log(`listening on port : ${PORT}`))
 
