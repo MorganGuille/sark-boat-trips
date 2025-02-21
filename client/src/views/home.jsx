@@ -17,6 +17,10 @@ import gallery9 from '../assets/images/gallery9.jpeg'
 import gallery10 from '../assets/images/gallery10.jpeg'
 import gallery11 from '../assets/images/gallery11.jpg'
 
+import charters from "../assets/images/charters.jpg"
+import sarkShipping from "../assets/images/isle-of-sark-shipping-company.jpg"
+import suesbnb from "../assets/images/SuesbnbextGeorge.jpg"
+
 
 import '../css/home.css'
 
@@ -83,7 +87,7 @@ function Home() {
                 <p>For more information and ideas</p>
                 <NavLink to={'./charters'}><button className='btn'>Click Here</button></NavLink>
             </div>
-            <img src={"../src/assets/images/charters.jpg"} alt='Charter trip inside cave' />
+            <img src={charters} alt='Charter trip inside cave' />
         </section>
         <section id='sarkIsland' className="sarkIsland centered-section">
             <h2>SARK ISLAND</h2>
@@ -130,12 +134,12 @@ function Home() {
                     </a>
                 </div>
                 <div>
-                    <img width="500px" height="auto" src={"../src/assets/images/isle-of-sark-shipping-company.jpg"} />
+                    <img width="500px" height="auto" src={sarkShipping} />
                 </div>
             </div>
 
             <div className="grid1">
-                <div><img width="500px" height="auto" src={"../src/assets/images/SuesbnbextGeorge.jpg"} /></div>
+                <div><img width="500px" height="auto" src={suesbnb} /></div>
                 <div>
                     <h2>SUE'S BNB</h2>
                     <p>We also offer 4* accommodation on the island at Sue’s BnB,</p>

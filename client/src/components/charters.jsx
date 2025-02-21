@@ -3,12 +3,15 @@ import Bookings from './bookings'
 
 import '../css/charters.css'
 
+import charterDerrible from '../assets/images/Charter+Tour+Derrible.jpeg'
+import guillemots from "../assets/images/Guillemots.jpg"
+
 function Charters() {
     return (<>
         <section id="charters" className='charterTours' >
             <h2>CHARTER TOURS</h2>
             <div className='grid1'>
-                <div><img width="600px" height="auto" src={"../src/assets/images/Charter+Tour+Derrible.jpeg"} /></div>
+                <div><img width="600px" height="auto" src={charterDerrible} /></div>
                 <div>
                     <h3>Beach Explorer</h3>
                     <p>Sark is known for its secluded, difficult to access, beaches.
@@ -23,7 +26,7 @@ function Charters() {
                         Why not hire us for a trip out to their off-shore colonies and get up close and personal with these elusive seabirds.
                     </p>
                 </div>
-                <div><img width="600px" height="auto" src={"../src/assets/images/Guillemots.jpg"} /></div>
+                <div><img width="600px" height="auto" src={guillemots} /></div>
             </div>
             <div>
                 <h3>More ideas</h3>
