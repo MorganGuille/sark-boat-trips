@@ -4,7 +4,8 @@
     align-items: center;
     text-align: center;
     max-width: 60%;
-    margin: 2em auto 0em auto;
+    margin: 3em auto 0em auto;
+    padding-top: 2em;
 
     & .grid1 {
         display: grid;
@@ -25,9 +26,7 @@
 
 }
 
-.navbar {
-    background-color: rgba(27, 27, 27, 0.861);
-}
+
 
 @media (max-width: 1366px) {
 

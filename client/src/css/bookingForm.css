@@ -46,13 +46,14 @@ form {
     align-items: center;
     justify-content: center;
     backdrop-filter: blur(10px);
+    background-color: rgba(65, 65, 65, 0.3);
     gap: 1em;
-
     position: fixed;
-    bottom: 0%;
-    left: 0%;
-    width: 100vw;
-    height: 100vh;
+    bottom: 25%;
+    left: 25%;
+    width: 50vw;
+    height: 50vh;
+    border-radius: 1em;
 
     & button {
         padding: 1em 1.5em;

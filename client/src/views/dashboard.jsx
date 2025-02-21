@@ -96,103 +96,109 @@ function Dashboard() {
 
 
 
-    return (<section className='dashboard'>
+    return (<>
 
-        {loggedin ? <button className='logoutButton' onClick={Logout}>Log Out</button> : null}
+        {/* <section className='dashboard'> */}
 
-        <div>Admin panel</div>
+        <div className='centered-section padded'>
+            {loggedin ? <button className='logoutButton' onClick={Logout}>Log Out</button> : null}
+            {!loggedin ? <form onSubmit={checkLogin}>
+                <input type="text" id="username" name="username" placeholder="username" required />
+                <input type="password" id="password" name="password" placeholder="password" required />
+                <div>
+                    <button type="submit">Log in</button>
+                    <button onClick={Logout} type="reset">Log Out</button>
+                </div>
+            </form> : null}
+            {loggedin ? <p className='logged'>logged in</p> : <p className='notLogged'>Please log in</p>}
+        </div>
 
-        {!loggedin ? <form onSubmit={checkLogin}>
+        {loggedin ? <div  >
 
-            <input type="text" id="username" name="username" placeholder="username" required />
-            <input type="password" id="password" name="password" placeholder="password" required />
-            <div>
-                <button type="submit">Log in</button>
-                <button onClick={Logout} type="reset">Log Out</button>
-            </div>
-        </form> : null}
-        {loggedin ? <p className='logged'>logged in</p> : <p className='notLogged'>Please log in</p>}
-
-        {loggedin ? <div className='bookingsDisplay' >
-
-            <MyCalendar setSelectedDate={setSelectedDate} />
-            <div className='bookingsTable'>
-
-
-                <div className='minorform'>
-                    <button onClick={getBookingsByDate}>Get bookings by date</button>
-                    <form id='bookingsearch' onSubmit={getBookingsByLastName}>
-                        <input type='text' id="lastName" name="lastName" placeholder='get bookings by last name' />
+            <div className='bookingsDisplay'>
+                <div className='left-grid'>
+                    <MyCalendar setSelectedDate={setSelectedDate} />
+                    <div className='minorform'>
+                        <button onClick={getBookingsByDate}>Get bookings by date</button>
+                        <form id='bookingsearch' onSubmit={getBookingsByLastName}>
+                            <input type='text' id="lastName" name="lastName" placeholder='get bookings by last name' />
+                        </form>
+                    </div>
+                    <form id='deleteBooking' onSubmit={deleteBooking} className='minorform' >
+                        <input type='text' id="lastName" name="lastName" placeholder='Lastname' />
+                        <input type='text' id="date" name="date" placeholder='Date dd-mm-yyyy' />
+                        <select id="timeslot" name="timeslot" required>
+                            <option value="11am">11am</option>
+                            <option value="2pm">2pm</option>
+                        </select>
+                        <button style={{ backgroundColor: 'lightcoral' }}>Delete this booking</button>
+                        {showResponse != null ?
+                            <div className='responseDisplay'><h3>{showResponse}</h3><button onClick={() => setResponse(null)}>Confirm</button></div>
+                            : null}
+                    </form>
+                    <form id='updateAvailability' className='minorform' onSubmit={updateAvailability}>
+                        <input type='text' id="date" name="date" placeholder='Date dd-mm-yyyy' />
+                        <select id="timeslot" name="timeslot" required>
+                            <option value="11am">11am</option>
+                            <option value="2pm">2pm</option>
+                        </select>
+                        <input type="number" id="capacity" name="capacity" placeholder='capacity' required></input>
+                        <button type="submit">Update Availability</button>
                     </form>
                 </div>
+                <div className='right-grid'>
 
-                {bookings.length != 0 ? <table>
-                    <thead>
-                        <tr>
-                            <th>_id</th>
-                            <th>Date</th>
-                            <th>Timeslot</th>
-                            <th>First Name</th>
-                            <th>Last Name</th>
-                            <th>Email</th>
-                            <th>Phone</th>
-                            <th>Adults</th>
-                            <th>Children</th>
-                            <th>Accommodation</th>
-                            <th>Message</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {bookings.map((ele, i) => {
-                            return <>
-                                <tr key={i}>
-                                    <td>{ele._id}</td>
-                                    <td>{ele.date}</td>
-                                    <td>{ele.timeslot}</td>
-                                    <td>{ele.firstName}</td>
-                                    <td>{ele.lastName}</td>
-                                    <td>{ele.email}</td>
-                                    <td>{ele.phone}</td>
-                                    <td>{ele.adults}</td>
-                                    <td>{ele.children}</td>
-                                    <td>{ele.accommodation}</td>
-                                    <td className='message'>{ele.message}</td>
-                                </tr>
-                            </>
-                        })}
-                    </tbody>
-                </table > : null}
-
-                <form id='deleteBooking' onSubmit={deleteBooking} className='minorform' >
-                    <input type='text' id="lastName" name="lastName" placeholder='Lastname' />
-                    <input type='text' id="date" name="date" placeholder='Date dd-mm-yyyy' />
-                    <select id="timeslot" name="timeslot" required>
-                        <option value="11am">11am</option>
-                        <option value="2pm">2pm</option>
-                    </select>
-                    <button style={{ backgroundColor: 'lightcoral' }}>Delete this booking</button>
-                    {showResponse != null ?
-                        <div className='responseDisplay'><h3>{showResponse}</h3><button onClick={() => setResponse(null)}>Confirm</button></div>
-                        : null}
-                </form>
-                <form id='updateAvailability' className='minorform' onSubmit={updateAvailability}>
-                    <input type='text' id="date" name="date" placeholder='Date dd-mm-yyyy' />
-                    <select id="timeslot" name="timeslot" required>
-                        <option value="11am">11am</option>
-                        <option value="2pm">2pm</option>
-                    </select>
-                    <input type="number" id="capacity" name="capacity" placeholder='capacity' required></input>
-                    <button type="submit">Update Availability</button>
-
-                </form>
-
-                <BookingForm selectedDate={selectedDate} />
+                    <BookingForm selectedDate={selectedDate} />
+                </div>
             </div>
+
+            <div className='bookingsTable'>
+
+                {bookings.length != 0 ?
+                    <table >
+                        <thead>
+                            <tr>
+                                <th>_id</th>
+                                <th>Date</th>
+                                <th>Timeslot</th>
+                                <th>First Name</th>
+                                <th>Last Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Adults</th>
+                                <th>Children</th>
+                                <th>Accommodation</th>
+                                <th>Message</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {bookings.map((ele, i) => {
+                                return <>
+                                    <tr key={i}>
+                                        <td>{ele._id}</td>
+                                        <td>{ele.date}</td>
+                                        <td>{ele.timeslot}</td>
+                                        <td>{ele.firstName}</td>
+                                        <td>{ele.lastName}</td>
+                                        <td>{ele.email}</td>
+                                        <td>{ele.phone}</td>
+                                        <td>{ele.adults}</td>
+                                        <td>{ele.children}</td>
+                                        <td>{ele.accommodation}</td>
+                                        <td className='message'>{ele.message}</td>
+                                    </tr>
+                                </>
+                            })}
+                        </tbody>
+                    </table > : null}
+            </div>
+
         </div> : null
         }
+        {/* </section> */}
 
-    </section >
-    )
+
+    </>)
 }
 
 export default Dashboard

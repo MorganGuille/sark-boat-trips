@@ -1,34 +1,43 @@
-.dashboard {
+.padded {
+    padding-top: 3em;
+}
+
+.logoutButton {
+    align-self: flex-end;
+    background-color: rgba(240, 128, 128, 0.664);
+    padding: 0.2em;
+    border-radius: 0.5em;
+    cursor: pointer;
+}
+
+.bookingsDisplay {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1em;
+    padding: 1em;
+    /* align-items: center; */
+    text-align: center;
+    max-width: 80%;
+    margin: 2em auto;
+    padding-top: 2em;
+}
+
+.left-grid {
     display: flex;
     flex-direction: column;
     align-items: center;
-    text-align: center;
-    max-width: 60%;
-    margin: 2em auto;
-
-    & .logoutButton {
-        align-self: flex-end;
-        background-color: rgba(240, 128, 128, 0.664);
-        padding: 0.2em;
-        border-radius: 0.5em;
-        cursor: pointer;
-    }
+    justify-content: center;
 }
 
-.navbar {
-    background-color: rgba(27, 27, 27, 0.861);
+.right-grid {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
-
 
 input {
     padding: 0.5em;
     margin: 0.5em;
-}
-
-.bookingsDisplay {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
 }
 
 .logged {
@@ -44,44 +53,6 @@ input {
     border-radius: 0.5em;
 }
 
-.bookingsTable {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-
-    & button {
-        padding: 1em 1.5em;
-        border-radius: 0.5em;
-        border: none;
-        transition: 0.5s ease-in-out;
-        background-color: #1087ff;
-        color: white;
-        margin: 0.5em;
-    }
-
-    & button:hover {
-        cursor: pointer;
-        transform: scale(1.1);
-    }
-}
-
-
-table {
-    border-collapse: collapse;
-}
-
-td,
-th {
-    text-align: center;
-    border: solid black 1px;
-    height: 2em;
-    padding: 1em;
-}
-
-.message {
-    overflow-wrap: normal;
-    overflow-y: scroll;
-}
 
 .minorform {
     display: flex;
@@ -89,32 +60,77 @@ th {
     margin-top: 1em;
 }
 
-.responseDisplay {
-    display: flex;
-    flex-direction: column;
+.minorform button,
+.bookingForm button {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5em;
+    border: none;
+    transition: 0.5s ease-in-out;
+    background-color: #1087ff;
+    color: white;
+    margin: 0.5em;
+}
+
+.minorform button:hover,
+.bookingForm button:hover {
+    cursor: pointer;
+    transform: scale(1.1);
+}
+
+.bookingsTable {
     align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(10px);
-    gap: 1em;
+    overflow-x: auto;
 
-    position: fixed;
-    bottom: 0%;
-    left: 0%;
-    width: 100vw;
-    height: 100vh;
 
-    & button {
-        padding: 1em 1.5em;
-        border-radius: 0.5em;
-        border: none;
-        transition: 0.5s ease-in-out;
-        background-color: #1087ff;
-        color: white;
-        margin: 0.5em;
+}
+
+table {
+    align-self: center;
+    margin: auto;
+    border-collapse: collapse;
+    margin-bottom: 5em;
+    width: 90%;
+    overflow-x: auto;
+}
+
+td,
+th {
+    text-align: center;
+    border: solid black 1px;
+    height: 1.5em;
+    padding: 0.5em;
+    overflow: auto;
+    white-space: nowrap;
+}
+
+.message {
+    overflow-wrap: normal;
+    overflow-y: scroll;
+}
+
+
+@media (max-width: 1400px) {
+    .bookingsDisplay {
+
+        max-width: 90%;
     }
 
-    & button:hover {
-        cursor: pointer;
-        transform: scale(1.1);
+    .minorform {
+        flex-direction: column;
+        padding: 0.2rem;
+        border: solid rgba(52, 52, 52, 0.728) 1px;
+        border-radius: 0.5rem;
     }
+
+}
+
+
+@media (max-width: 1020px) {
+    .bookingsDisplay {
+        display: flex;
+        flex-direction: column;
+    }
+
+
+
 }

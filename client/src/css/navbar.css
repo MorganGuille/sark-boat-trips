@@ -9,6 +9,7 @@
     top: 0;
     padding: 0.5em 0;
     z-index: 999;
+    background-color: rgba(65, 65, 65, 0.8);
 
     & a {
         font-size: 1em;
@@ -28,7 +29,9 @@
 }
 
 .sticky-nav {
-    background-color: rgba(27, 27, 27, 0.861);
+    background-color: rgba(65, 65, 65, 0.8);
+
+
     transition: 0.5s ease-in-out;
     position: fixed;
     top: 0;
@@ -88,9 +91,10 @@
     .mobileNavOpen {
         position: fixed;
         z-index: 1;
-        background-color: rgba(65, 65, 65, 0.895);
+        background-color: rgba(65, 65, 65, 0.313);
+        backdrop-filter: blur(10px);
         height: auto;
-        width: 60vw;
+        width: 100vw;
         color: white;
         opacity: 10;
         transition: opacity 0.3s ease-in-out;
@@ -106,6 +110,11 @@
         height: 100vh;
         gap: 1rem;
         font-size: x-large;
+    }
+
+    .mobileLinks a:hover {
+        transform: translate(10px);
+
     }
 
     .linksClosed {
