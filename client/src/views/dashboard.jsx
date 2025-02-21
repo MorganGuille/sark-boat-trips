@@ -2,8 +2,11 @@ import { useState } from 'react'
 import MyCalendar from '../components/myCalendar'
 import BookingForm from '../components/bookingForm'
 import axios from 'axios'
+import { URL } from '../config'
 
 import '../css/dashboard.css'
+
+
 
 
 
@@ -22,7 +25,7 @@ function Dashboard() {
             userName: e.target.username.value,
             password: e.target.password.value
         }
-        let response = await axios.post('http://localhost:4040/admin/login', user)
+        let response = await axios.post(`${URL}/admin/login`, user)
         setLoggedIn(response.data.data)
     }
 
@@ -33,7 +36,7 @@ function Dashboard() {
     const getBookingsByDate = async () => {
         console.log(selectedDate)
         try {
-            const res = await axios.get(`http://localhost:4040/bookings/${selectedDate}`);
+            const res = await axios.get(`${URL}/bookings/${selectedDate}`);
             setBookings(res.data.data)
             console.log(res.data.data)
         } catch (error) {
@@ -45,7 +48,7 @@ function Dashboard() {
         e.preventDefault()
         setSearch(e.target.lastName.value)
         try {
-            const res = await axios.get(`http://localhost:4040/bookings/search/${search}`);
+            const res = await axios.get(`${URL}/bookings/search/${search}`);
             setBookings(res.data.data)
 
         } catch (error) {
@@ -62,7 +65,7 @@ function Dashboard() {
         }
 
         try {
-            const res = await axios.post(`http://localhost:4040/bookings/delete`, booking)
+            const res = await axios.post(`${URL}/bookings/delete`, booking)
             setResponse(res.data.data)
 
         } catch (error) {
@@ -80,7 +83,7 @@ function Dashboard() {
             capacity: e.target.capacity.value,
         }
         try {
-            const res = await axios.post('http://localhost:4040/bookings/updateavailability', update)
+            const res = await axios.post(`${URL}/bookings/updateavailability`, update)
             setResponse(res.data.data)
         } catch (error) {
             console.log(error)

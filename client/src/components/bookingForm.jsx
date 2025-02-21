@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useLocation } from 'react-router'
 import '../css/bookingForm.css'
 import axios from 'axios'
+import { URL } from '../config'
 
 function BookingForm({ selectedDate }) {
 
@@ -34,7 +35,7 @@ function BookingForm({ selectedDate }) {
         }
 
         try {
-            let response = await axios.post('http://localhost:4040/bookings/add', newBooking)
+            let response = await axios.post(`${URL}/bookings/add`, newBooking)
             setResponse(response.data.data)
         } catch (error) {
             console.log(error)
@@ -61,7 +62,7 @@ function BookingForm({ selectedDate }) {
         }
 
         try {
-            const response = await axios.post(`http://localhost:4040/bookings/update/${bookingId}`, updatedBooking)
+            const response = await axios.post(`${URL}/bookings/update/${bookingId}`, updatedBooking)
             console.log(response.data)
             setResponse(response.data.data)
 

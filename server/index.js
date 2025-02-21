@@ -1,10 +1,11 @@
-const app = require("express")()
+const express = require('express');
+const app = express()
 const PORT = process.env.PORT || 3030;
 const mongoose = require("mongoose")
 const cors = require('cors');
 const path = require('path');
 require('dotenv').config()
-const express = require('express');
+
 
 
 let dbPassword = process.env.atlasDB_password;

@@ -3,6 +3,10 @@ import Calendar from 'react-calendar';
 import axios from 'axios';
 // import 'react-calendar/dist/Calendar.css';  for default styles 
 import '../css/myCalendar.css';
+import { URL } from '../config'
+
+
+
 
 function MyCalendar({ setSelectedDate }) {
     const [date, setDate] = useState(new Date());
@@ -38,7 +42,7 @@ function MyCalendar({ setSelectedDate }) {
             };
 
             try {
-                const res = await axios.get(`http://localhost:4040/bookings/availability/${formattedDate}`);
+                const res = await axios.get(`${URL}/bookings/availability/${formattedDate}`);
                 newAvailability[formattedDate]['11am'] = res.data.data['11am'];
                 newAvailability[formattedDate]['2pm'] = res.data.data['2pm'];
             } catch (error) {
