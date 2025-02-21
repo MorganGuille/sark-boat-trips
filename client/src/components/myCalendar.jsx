@@ -3,7 +3,7 @@ import Calendar from 'react-calendar';
 import axios from 'axios';
 // import 'react-calendar/dist/Calendar.css';  for default styles 
 import '../css/myCalendar.css';
-import { URL } from '../config'
+import { URL } from '../../config'
 
 
 
