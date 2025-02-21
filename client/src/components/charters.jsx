@@ -1,4 +1,5 @@
 import React from 'react'
+import Bookings from './bookings'
 
 import '../css/charters.css'
 
@@ -30,11 +31,14 @@ function Charters() {
                     Maybe with a glass of champagne to toast the day! </p>
                 <p><strong>Safety boat.</strong> Whether you’re doing a long distance swim / exploring the island by kayak, safety is paramount. We can stay close and escort you around the island.
                     We also have a wealth of experience and knowledge of the tides around the island and can help you plan a safe route. </p>
-                <p>If you have any questions or ideas, please use the form below to contact us and discuss options. We’re sure we can build you an adventure to remember!</p>
-
+                <h3>If you have any questions or ideas, please contact us and discuss options. We’re sure we can build you an adventure to remember!</h3>
+                <h3>Or use the form below to book your charter trip! please note we require a (refundable) depoist of 20% to reserve a charter tour!</h3>
             </div>
-
         </section>
+
+        <Bookings />
+
+
     </>
 
     )

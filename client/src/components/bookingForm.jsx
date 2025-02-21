@@ -7,8 +7,12 @@ function BookingForm({ selectedDate }) {
 
     let currentLoc = useLocation()
 
-    const checkPage = () => {
+    const checkPageDashboard = () => {
         return currentLoc.pathname === '/dashboard'
+    }
+
+    const checkPageCharters = () => {
+        return currentLoc.pathname === '/charters'
     }
 
     const [showResponse, setResponse] = useState(null)
@@ -70,7 +74,7 @@ function BookingForm({ selectedDate }) {
 
     return (
         <section className='bookingForm'>
-            {checkPage() ? <button onClick={() => setUpdating(!updating)}>Update/add</button> : null}
+            {checkPageDashboard() ? <button onClick={() => setUpdating(!updating)}>Update/add</button> : null}
 
             <form onSubmit={!updating ? addBooking : updateBooking}>
                 <p>
@@ -100,14 +104,14 @@ function BookingForm({ selectedDate }) {
                     <fieldset>
                         <legend>Contact Information</legend>
                         <p>
-                            <span style={{ backgroundColor: 'lightgreen' }}>{`You are booking for ${selectedDate}`}</span>
+                            <span style={{ backgroundColor: 'lightgreen' }}>{`You are booking ${checkPageCharters() ? 'a private charter' : ''} for ${selectedDate}`}</span>
                         </p>
                         <p>
                             <label htmlFor="timeslot">
                                 <span>Preferred time</span>
                                 <strong><span aria-label="required">*</span></strong>
                             </label>
-                            <select id="timeslot" name="timeslot" required={!checkPage()}>
+                            <select id="timeslot" name="timeslot" required={!checkPageDashboard()}>
                                 <option value="11am">11am</option>
                                 <option value="2pm">2pm</option>
                             </select>
@@ -118,7 +122,7 @@ function BookingForm({ selectedDate }) {
                                 <span>First Name</span>
                                 <strong><span aria-label="Required">*</span></strong>
                             </label>
-                            <input type="text" id="firstName" name="firstName" placeholder="John" required={!checkPage()} />
+                            <input type="text" id="firstName" name="firstName" placeholder="John" required={!checkPageDashboard()} />
 
                         </p>
                         <p>
@@ -126,7 +130,7 @@ function BookingForm({ selectedDate }) {
                                 <span>Last Name</span>
                                 <strong><span aria-label="Required">*</span></strong>
                             </label>
-                            <input type="text" id="lastName" name="lastName" placeholder="Smith" required={!checkPage()} />
+                            <input type="text" id="lastName" name="lastName" placeholder="Smith" required={!checkPageDashboard()} />
 
                         </p>
                         <p>
@@ -134,7 +138,7 @@ function BookingForm({ selectedDate }) {
                                 <span>Email: </span>
                                 <strong><span aria-label="required">*</span></strong>
                             </label>
-                            <input type="email" id="email" name="useremail" placeholder="yourname@email.com" required={!checkPage()} autoComplete='true' />
+                            <input type="email" id="email" name="useremail" placeholder="yourname@email.com" required={!checkPageDashboard()} autoComplete='true' />
 
                         </p>
                         <p>
@@ -143,7 +147,7 @@ function BookingForm({ selectedDate }) {
                                 <strong><span aria-label="required">*</span></strong>
                             </label>
                             <input type="tel" id="phone" name="userphone" placeholder="(Include country code)"
-                                required={!checkPage()} autoComplete='true' />
+                                required={!checkPageDashboard()} autoComplete='true' />
 
                         </p>
                         <p>
@@ -165,7 +169,7 @@ function BookingForm({ selectedDate }) {
                                 <strong><span aria-label="required">*</span></strong>
                             </label>
                             <input type="number" min="1" max="12" id="adults" name="adults" placeholder="max 12"
-                                required={!checkPage()} />
+                                required={!checkPageDashboard()} />
 
                         </p>
                         <p>
@@ -173,7 +177,7 @@ function BookingForm({ selectedDate }) {
                                 <span>Number of children</span>
                             </label>
                             <input type="number" min="0" max="12" id="children" name="children" placeholder="including infants"
-                                required={!checkPage()} />
+                                required={!checkPageDashboard()} />
 
                         </p>
 
