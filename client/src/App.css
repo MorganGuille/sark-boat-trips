@@ -90,7 +90,7 @@ body {
 }
 
 
-@media (max-width: 768px) {
+@media (max-width: 1020px) {
   h1 {
     font-size: 3rem;
   }

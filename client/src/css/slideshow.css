@@ -3,6 +3,7 @@
     width: 100%;
     height: 100vh;
     overflow: hidden;
+
 }
 
 .slider-container {
@@ -25,11 +26,13 @@
     visibility: hidden;
     opacity: 0;
 
+
 }
 
 .slide.active {
     visibility: visible;
     opacity: 1;
+
 }
 
 .slider-controls {
