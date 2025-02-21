@@ -30,7 +30,7 @@ connecting()
 app.use("/bookings", require("./routes/bookings"))
 app.use("/admin", require("./routes/admin"))
 
-app.listen(port, () => console.log(`listening on port : ${PORT}`))
+app.listen(PORT, () => console.log(`listening on port : ${PORT}`))
 
 app.get('/*', function (req, res) {
     res.sendFile(path.join(__dirname, '../client/dist', 'index.html'));
