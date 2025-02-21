@@ -25,7 +25,7 @@ function Dashboard() {
             userName: e.target.username.value,
             password: e.target.password.value
         }
-        let response = await axios.post(`${URL}/admin/login`, user)
+        let response = await axios.post(`${URL}admin/login`, user)
         setLoggedIn(response.data.data)
     }
 
