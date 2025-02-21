@@ -4,6 +4,7 @@ import Home from './views/home';
 
 import './App.css'
 import Navbar from './components/navbar';
+import MobileNav from './components/mobilenav'
 import Bookings from './components/bookings';
 import Charters from './components/charters'
 import Dashboard from "./views/dashboard";
@@ -15,6 +16,7 @@ function App() {
     <>
       <Router>
         <Navbar />
+        <MobileNav />
         <Routes>
           <Route path='/' element={<Home />} />
           <Route path='/bookings' element={<Bookings />} />

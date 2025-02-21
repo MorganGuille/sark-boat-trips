@@ -8,7 +8,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "start": "cd ./server && node index.js"
   },
   "engines": {
     "node": "22.11.0"

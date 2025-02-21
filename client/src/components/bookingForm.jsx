@@ -2,21 +2,27 @@ import { useState } from 'react'
 import { useLocation } from 'react-router'
 import '../css/bookingForm.css'
 import axios from 'axios'
+import { URL } from '../config'
 
 function BookingForm({ selectedDate }) {
 
     let currentLoc = useLocation()
 
-    const checkPage = () => {
+    const checkPageDashboard = () => {
         return currentLoc.pathname === '/dashboard'
+    }
+
+    const checkPageCharters = () => {
+        return currentLoc.pathname === '/charters'
     }
 
     const [showResponse, setResponse] = useState(null)
     let [updating, setUpdating] = useState(false)
 
-    const handleSubmit = async (e) => {
+    const addBooking = async (e) => {
         e.preventDefault()
         let newBooking = {
+            timeslot: e.target.timeslot.value,
             firstName: e.target.firstName.value,
             lastName: e.target.lastName.value,
             email: e.target.email.value,
@@ -29,8 +35,7 @@ function BookingForm({ selectedDate }) {
         }
 
         try {
-            let response = await axios.post('http://localhost:4040/bookings/add', newBooking)
-            console.log(response.data)
+            let response = await axios.post(`${URL}/bookings/add`, newBooking)
             setResponse(response.data.data)
         } catch (error) {
             console.log(error)
@@ -41,11 +46,10 @@ function BookingForm({ selectedDate }) {
     const updateBooking = async (e) => {
         e.preventDefault()
 
-        console.log(e.target)
-
         let bookingId = e.target._id.value
 
         let updatedBooking = {
+            timeslot: e.target.timeslot.value,
             firstName: e.target.firstName.value,
             lastName: e.target.lastName.value,
             email: e.target.email.value,
@@ -58,7 +62,7 @@ function BookingForm({ selectedDate }) {
         }
 
         try {
-            const response = await axios.post(`http://localhost:4040/admin/update/${bookingId}`, updatedBooking)
+            const response = await axios.post(`${URL}/bookings/update/${bookingId}`, updatedBooking)
             console.log(response.data)
             setResponse(response.data.data)
 
@@ -71,9 +75,9 @@ function BookingForm({ selectedDate }) {
 
     return (
         <section className='bookingForm'>
-            {checkPage() ? <button onClick={() => setUpdating(!updating)}>Update/add</button> : null}
+            {checkPageDashboard() ? <button onClick={() => setUpdating(!updating)}>Update/add</button> : null}
 
-            <form onSubmit={!updating ? handleSubmit : updateBooking}>
+            <form onSubmit={!updating ? addBooking : updateBooking}>
                 <p>
                     Required fields are followed by
                     <strong><span aria-label="Required">*</span></strong>
@@ -94,38 +98,49 @@ function BookingForm({ selectedDate }) {
                                     <span>New date for Booking</span>
                                 </label>
                                 <input type="text" id="date" name="updatedate"
-                                    placeholder="yyyy-mm-dd" />
+                                    placeholder="dd-mm-yyyy" />
                             </p>
                         </fieldset>
                     </div> : null}
                     <fieldset>
                         <legend>Contact Information</legend>
                         <p>
-                            <span style={{ backgroundColor: 'lightgreen' }}>{`You are booking for ${selectedDate}`}</span>
+                            <span style={{ backgroundColor: 'lightgreen' }}>{`You are booking ${checkPageCharters() ? 'a private charter' : ''} for ${selectedDate}`}</span>
                         </p>
+                        <p>
+                            <label htmlFor="timeslot">
+                                <span>Preferred time</span>
+                                <strong><span aria-label="required">*</span></strong>
+                            </label>
+                            <select id="timeslot" name="timeslot" required={!checkPageDashboard()}>
+                                <option value="11am">11am</option>
+                                <option value="2pm">2pm</option>
+                            </select>
+                        </p>
+
                         <p>
                             <label htmlFor="firstName">
                                 <span>First Name</span>
                                 <strong><span aria-label="Required">*</span></strong>
                             </label>
-                            <input type="text" id="firstName" name="firstName" placeholder="John" required />
-                            <span></span>
+                            <input type="text" id="firstName" name="firstName" placeholder="John" required={!checkPageDashboard()} />
+
                         </p>
                         <p>
                             <label htmlFor="lastName">
                                 <span>Last Name</span>
                                 <strong><span aria-label="Required">*</span></strong>
                             </label>
-                            <input type="text" id="lastName" name="lastName" placeholder="Smith" required />
-                            <span></span>
+                            <input type="text" id="lastName" name="lastName" placeholder="Smith" required={!checkPageDashboard()} />
+
                         </p>
                         <p>
                             <label htmlFor="email">
                                 <span>Email: </span>
                                 <strong><span aria-label="required">*</span></strong>
                             </label>
-                            <input type="email" id="email" name="useremail" placeholder="yourname@email.com" required autoComplete='true' />
-                            <span></span>
+                            <input type="email" id="email" name="useremail" placeholder="yourname@email.com" required={!checkPageDashboard()} autoComplete='true' />
+
                         </p>
                         <p>
                             <label htmlFor="phone">
@@ -133,8 +148,8 @@ function BookingForm({ selectedDate }) {
                                 <strong><span aria-label="required">*</span></strong>
                             </label>
                             <input type="tel" id="phone" name="userphone" placeholder="(Include country code)"
-                                required autoComplete='true' />
-                            <span></span>
+                                required={!checkPageDashboard()} autoComplete='true' />
+
                         </p>
                         <p>
                             <label htmlFor="accommodation">
@@ -155,27 +170,18 @@ function BookingForm({ selectedDate }) {
                                 <strong><span aria-label="required">*</span></strong>
                             </label>
                             <input type="number" min="1" max="12" id="adults" name="adults" placeholder="max 12"
-                                required />
-                            <span></span>
+                                required={!checkPageDashboard()} />
+
                         </p>
                         <p>
                             <label htmlFor="children">
                                 <span>Number of children</span>
                             </label>
                             <input type="number" min="0" max="12" id="children" name="children" placeholder="including infants"
-                                required />
-                            <span></span>
+                                required={!checkPageDashboard()} />
+
                         </p>
-                        {/* <p>
-                            <label htmlFor="time">
-                                <span>Preferred time</span>
-                                <strong><span aria-label="required">*</span></strong>
-                            </label>
-                            <select id="time" name="triptime">
-                                <option value="11am">11am</option>
-                                <option value="2px">2pm</option>
-                            </select>
-                        </p> */}
+
                         <p>
                             <label htmlFor="message">
                             </label>

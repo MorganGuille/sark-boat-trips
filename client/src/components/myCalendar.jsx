@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import Calendar from 'react-calendar';
 import axios from 'axios';
-// import 'react-calendar/dist/Calendar.css';
+// import 'react-calendar/dist/Calendar.css';  for default styles 
 import '../css/myCalendar.css';
+import { URL } from '../config'
+
+
+
 
 function MyCalendar({ setSelectedDate }) {
     const [date, setDate] = useState(new Date());
     const [availability, setAvailability] = useState({});
+
 
     useEffect(() => {
         fetchMonthAvailability(date);
@@ -16,7 +21,7 @@ function MyCalendar({ setSelectedDate }) {
         const year = date.getFullYear();
         const month = (`0${date.getMonth() + 1}`).slice(-2);
         const day = (`0${date.getDate()}`).slice(-2);
-        return `${year}-${month}-${day}`;
+        return `${day}-${month}-${year}`;
     };
 
     const fetchMonthAvailability = async (date) => {
@@ -31,9 +36,15 @@ function MyCalendar({ setSelectedDate }) {
             const currentDate = new Date(year, month, day);
             const formattedDate = formatDate(currentDate);
 
+            newAvailability[formattedDate] = {
+                '11am': null,
+                '2pm': null,
+            };
+
             try {
-                const res = await axios.get(`http://localhost:4040/bookings/availability/${formattedDate}`);
-                newAvailability[formattedDate] = res.data.data;
+                const res = await axios.get(`${URL}/bookings/availability/${formattedDate}`);
+                newAvailability[formattedDate]['11am'] = res.data.data['11am'];
+                newAvailability[formattedDate]['2pm'] = res.data.data['2pm'];
             } catch (error) {
                 console.error(error);
                 newAvailability[formattedDate] = null;
@@ -49,31 +60,35 @@ function MyCalendar({ setSelectedDate }) {
     };
 
     const setTileClassName = ({ date, view }) => {
-        const formattedDate = formatDate(date);
-        const tileAvailability = availability[formattedDate];
-
-        if (tileAvailability === undefined || tileAvailability === null) {
-            return '';
-        }
-
         if (view === 'month') {
-            if (tileAvailability === 0) {
+            const formattedDate = formatDate(date);
+            const tileAvailability = availability[formattedDate];
+
+            if (!tileAvailability) {
+                return null;
+            }
+
+            const available11am = tileAvailability['11am'];
+            const available2pm = tileAvailability['2pm'];
+
+            if (available11am === 0 && available2pm === 0) {
                 return 'fully-booked';
-            } else if (tileAvailability < 24) {
+            } else if (available11am < 12 || available2pm < 12) {
                 return 'partially-booked';
             } else {
                 return 'available';
             }
         }
+        return null;
     };
 
-    const formattedDate = formatDate(date);
 
     return (
         <section className="calendar">
             <Calendar
                 onActiveStartDateChange={({ activeStartDate }) => onChange(activeStartDate)}
                 onChange={onChange}
+
                 value={date}
                 tileClassName={setTileClassName}
                 showNeighboringMonth={true}
@@ -83,8 +98,14 @@ function MyCalendar({ setSelectedDate }) {
                 prev2Label={null}
             />
             <div className="calendarDisplay">
-                <p>Seats available</p>
-                <p>{availability[formattedDate] === undefined ? 'Loading...' : availability[formattedDate]}</p>
+                <div>
+                    <span>11:00 AM: </span>
+                    <span>{!availability[formatDate(date)]?.['11am'] ? <span className='loader'></span> : `${availability[formatDate(date)]?.['11am']} spaces available`}</span>
+                </div>
+                <div>
+                    <span>2:00 PM: </span>
+                    <span>{!availability[formatDate(date)]?.['2pm'] ? <span className='loader'></span> : `${availability[formatDate(date)]?.['2pm']} spaces available`} </span>
+                </div>
             </div>
         </section>
     );
