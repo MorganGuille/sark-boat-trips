@@ -1,37 +1,123 @@
 .navbar {
     width: 100%;
-    background-color: rgba(27, 27, 27, 0.861);
+    font-size: x-large;
     display: flex;
     flex-direction: row;
     justify-content: center;
     gap: 1.5em;
-    position: relative;
+    position: absolute;
     top: 0;
-    padding: 0.2em 0;
-    z-index: 1;
-
+    padding: 0.5em 0;
+    z-index: 999;
 
     & a {
         font-size: 1em;
         font-weight: 600;
         text-decoration: none;
-        color: rgb(204, 204, 204);
+        color: rgb(255, 255, 255);
     }
 
     & a.active {
-        color: rgb(255, 255, 255);
+        color: rgb(204, 204, 204);
     }
 
     & a:hover {
-        color: rgb(255, 255, 255);
+        color: rgb(204, 204, 204);
         transform: scale(1.1);
     }
 }
 
 .sticky-nav {
-
+    background-color: rgba(27, 27, 27, 0.861);
     transition: 0.5s ease-in-out;
     position: fixed;
     top: 0;
     left: 0;
+    z-index: 999;
+}
+
+.mobileNav {
+    display: none;
+    z-index: 999;
+}
+
+.burgerIcon {
+    display: none;
+}
+
+.mobileLinks {
+    display: none;
+}
+
+
+
+@media (max-width: 1020px) {
+
+    .navbar,
+    .navlink {
+        display: none;
+    }
+
+    .mobileNavClosed {
+        background-color: transparent;
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 999;
+    }
+
+    .burgerIcon {
+        display: block;
+        width: 5rem;
+        height: 5rem;
+        font-size: 3em;
+        cursor: pointer;
+        color: black;
+        padding: 0.5rem;
+        opacity: 9;
+        z-index: 999;
+    }
+
+    .burgerIconOpen {
+        color: white;
+        z-index: 999;
+    }
+
+
+    .mobileNavOpen {
+        position: fixed;
+        z-index: 1;
+        background-color: rgba(65, 65, 65, 0.895);
+        height: auto;
+        width: 60vw;
+        color: white;
+        opacity: 10;
+        transition: opacity 0.3s ease-in-out;
+        z-index: 999;
+    }
+
+    .mobileLinks {
+        opacity: 0;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        padding: 1em;
+        height: 100vh;
+        gap: 1rem;
+        font-size: x-large;
+    }
+
+    .linksClosed {
+        display: none;
+        opacity: 0;
+    }
+
+    .linksOpen {
+        display: flex;
+        position: relative;
+        opacity: 1;
+    }
+
+
 }

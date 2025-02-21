@@ -2,8 +2,12 @@ import { useState } from 'react'
 import MyCalendar from '../components/myCalendar'
 import BookingForm from '../components/bookingForm'
 import axios from 'axios'
+import { URL } from '../config'
 
 import '../css/dashboard.css'
+
+
+
 
 
 function Dashboard() {
@@ -12,11 +16,8 @@ function Dashboard() {
     const [selectedDate, setSelectedDate] = useState()
     const [bookings, setBookings] = useState([])
     const [search, setSearch] = useState("")
-    const [deleted, setDeleted] = useState("")
+    const [showResponse, setResponse] = useState(null)
 
-
-
-    // log in / out logic below
 
     const checkLogin = async (e) => {
         e.preventDefault()
@@ -24,7 +25,7 @@ function Dashboard() {
             userName: e.target.username.value,
             password: e.target.password.value
         }
-        let response = await axios.post('http://localhost:4040/admin/login', user)
+        let response = await axios.post(`${URL}/admin/login`, user)
         setLoggedIn(response.data.data)
     }
 
@@ -32,12 +33,10 @@ function Dashboard() {
         setLoggedIn(false)
     }
 
-    // log in / out logic above
-
     const getBookingsByDate = async () => {
         console.log(selectedDate)
         try {
-            const res = await axios.get(`http://localhost:4040/bookings/${selectedDate}`);
+            const res = await axios.get(`${URL}/bookings/${selectedDate}`);
             setBookings(res.data.data)
             console.log(res.data.data)
         } catch (error) {
@@ -49,7 +48,7 @@ function Dashboard() {
         e.preventDefault()
         setSearch(e.target.lastName.value)
         try {
-            const res = await axios.get(`http://localhost:4040/bookings/search/${search}`);
+            const res = await axios.get(`${URL}/bookings/search/${search}`);
             setBookings(res.data.data)
 
         } catch (error) {
@@ -61,25 +60,50 @@ function Dashboard() {
         e.preventDefault()
         let booking = {
             date: e.target.date.value,
-            lastName: e.target.lastName.value
+            lastName: e.target.lastName.value,
+            timeslot: e.target.timeslot.value,
         }
 
         try {
-            const res = await axios.post(`http://localhost:4040/bookings/delete`, booking)
-            setDeleted(res.data.data)
+            const res = await axios.post(`${URL}/bookings/delete`, booking)
+            setResponse(res.data.data)
 
         } catch (error) {
             console.log(error)
         }
+        e.target.reset()
+    }
+
+    const updateAvailability = async (e) => {
+        e.preventDefault()
+
+        let update = {
+            date: e.target.date.value,
+            timeslot: e.target.timeslot.value,
+            capacity: e.target.capacity.value,
+        }
+        try {
+            const res = await axios.post(`${URL}/bookings/updateavailability`, update)
+            setResponse(res.data.data)
+        } catch (error) {
+            console.log(error)
+        }
+
     }
 
 
 
 
+
+
     return (<section className='dashboard'>
+
         {loggedin ? <button className='logoutButton' onClick={Logout}>Log Out</button> : null}
+
         <div>Admin panel</div>
+
         {!loggedin ? <form onSubmit={checkLogin}>
+
             <input type="text" id="username" name="username" placeholder="username" required />
             <input type="password" id="password" name="password" placeholder="password" required />
             <div>
@@ -90,20 +114,24 @@ function Dashboard() {
         {loggedin ? <p className='logged'>logged in</p> : <p className='notLogged'>Please log in</p>}
 
         {loggedin ? <div className='bookingsDisplay' >
+
             <MyCalendar setSelectedDate={setSelectedDate} />
             <div className='bookingsTable'>
 
 
-                <button onClick={getBookingsByDate}>Get bookings by date</button>
-                <form id='bookingsearch' onSubmit={getBookingsByLastName}>
-                    <input type='text' id="lastName" name="lastName" placeholder='get bookings by last name' />
-                </form>
+                <div className='minorform'>
+                    <button onClick={getBookingsByDate}>Get bookings by date</button>
+                    <form id='bookingsearch' onSubmit={getBookingsByLastName}>
+                        <input type='text' id="lastName" name="lastName" placeholder='get bookings by last name' />
+                    </form>
+                </div>
 
                 {bookings.length != 0 ? <table>
                     <thead>
                         <tr>
                             <th>_id</th>
                             <th>Date</th>
+                            <th>Timeslot</th>
                             <th>First Name</th>
                             <th>Last Name</th>
                             <th>Email</th>
@@ -120,6 +148,7 @@ function Dashboard() {
                                 <tr key={i}>
                                     <td>{ele._id}</td>
                                     <td>{ele.date}</td>
+                                    <td>{ele.timeslot}</td>
                                     <td>{ele.firstName}</td>
                                     <td>{ele.lastName}</td>
                                     <td>{ele.email}</td>
@@ -134,11 +163,27 @@ function Dashboard() {
                     </tbody>
                 </table > : null}
 
-                <form id='deleteBooking' onSubmit={deleteBooking} className='deleteBooking' >
+                <form id='deleteBooking' onSubmit={deleteBooking} className='minorform' >
                     <input type='text' id="lastName" name="lastName" placeholder='Lastname' />
-                    <input type='text' id="date" name="date" placeholder='Date yyyy-mm-dd' />
+                    <input type='text' id="date" name="date" placeholder='Date dd-mm-yyyy' />
+                    <select id="timeslot" name="timeslot" required>
+                        <option value="11am">11am</option>
+                        <option value="2pm">2pm</option>
+                    </select>
                     <button style={{ backgroundColor: 'lightcoral' }}>Delete this booking</button>
-                    {deleted ? <div>{deleted}</div> : null}
+                    {showResponse != null ?
+                        <div className='responseDisplay'><h3>{showResponse}</h3><button onClick={() => setResponse(null)}>Confirm</button></div>
+                        : null}
+                </form>
+                <form id='updateAvailability' className='minorform' onSubmit={updateAvailability}>
+                    <input type='text' id="date" name="date" placeholder='Date dd-mm-yyyy' />
+                    <select id="timeslot" name="timeslot" required>
+                        <option value="11am">11am</option>
+                        <option value="2pm">2pm</option>
+                    </select>
+                    <input type="number" id="capacity" name="capacity" placeholder='capacity' required></input>
+                    <button type="submit">Update Availability</button>
+
                 </form>
 
                 <BookingForm selectedDate={selectedDate} />
@@ -151,13 +196,3 @@ function Dashboard() {
 }
 
 export default Dashboard
-
-// firstName: e.target.firstName.value,
-// lastName: e.target.lastName.value,
-// email: e.target.email.value,
-// adults: e.target.adults.value,
-// children: e.target.children.value,
-// date: selectedDate,
-// accommodation: e.target.accommodation.value,
-// message: e.target.message.value
-

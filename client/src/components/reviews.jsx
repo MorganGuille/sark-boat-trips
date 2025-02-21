@@ -3,7 +3,7 @@ import '../css/reviews.css'
 
 function Reviews() {
     return (
-        <section id="reviews" className='reviews'>
+        <section id="reviews" className='reviews centered-section'>
             <h2>REVIEWS</h2>
             <div className='reviewsContainer'>
                 <a href="https://g.co/kgs/xgNzzxD" target="_blank">

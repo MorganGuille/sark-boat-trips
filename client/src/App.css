@@ -4,14 +4,12 @@
   font-weight: 400;
 
   color: #213547;
-  background-color: #ffffff;
+  background-color: #ececec;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  scroll-behavior: smooth;
-
 }
 
 body {
@@ -19,8 +17,16 @@ body {
   padding: 0;
 }
 
-@media (max-width: 1366px) {
+.centered-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 60%;
+  margin: 2em auto;
+}
 
+@media (max-width: 1366px) {
 
   h1 {
     font-size: 3em;
@@ -28,38 +34,144 @@ body {
 
   h2 {
     font-size: 2em;
-    margin: 0.5em 0em 0.5em 0em;
+    margin: 0.5em 0;
   }
 
   h3 {
     font-size: 1.1em;
   }
 
+  .image-slider {
+    height: 80vh;
+  }
+
+  .slider-controls button {
+    font-size: 1rem;
+    padding: 20px 10px;
+  }
+
+  .slide {
+    background-size: contain
+  }
 
   .sarkIsland {
     max-width: 80%;
-    margin: 2em auto;
+  }
 
-    & .grid1 {
-      gap: 1em;
-      padding: 1em 0em;
-      text-align: start;
-      align-items: center;
-    }
+  .sarkIsland .grid1 {
+    gap: 1em;
+    padding: 1em 0;
+    text-align: start;
+    align-items: center;
+  }
 
-    & .textGrid {
-      grid-template-columns: auto;
-    }
+  .sarkIsland img {
+    width: 100%;
+    height: auto;
+  }
 
-    & img {
-      width: 100%;
-    }
+  .sarkIsland .textGrid {
+    grid-template-columns: auto;
   }
 
   .reviews {
     max-width: 80%;
   }
 
+  .reviewsContainer {
+    justify-content: space-around;
+  }
+
+  .reviewCard {
+    width: 15rem;
+    height: 7rem;
+  }
+
+}
 
 
+@media (max-width: 1020px) {
+  h1 {
+    font-size: 3rem;
+  }
+
+  h2 {
+    font-size: 2rem;
+  }
+
+  .hero-banner {
+    gap: 3em;
+  }
+
+  .centered-section {
+    max-width: 90%;
+  }
+
+  .sarkIsland .grid1 {
+    grid-template-columns: 1fr;
+    gap: 1.5em;
+    padding: 1em;
+  }
+
+  .image-slider {
+    height: 60vh;
+  }
+
+  .slider-controls {
+    visibility: hidden;
+    bottom: 10px;
+    justify-content: center;
+
+  }
+
+  .slider-controls button {
+    font-size: 0.8em;
+    padding: 10px 8px;
+    margin: 0 3px;
+  }
+
+
+  .reviews {
+    max-width: 95%;
+  }
+
+  .reviewsContainer {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 1em;
+  }
+
+  .reviewCard {
+    width: 90%;
+    height: auto;
+    padding: 1em;
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .reviewCard img {
+    width: 30px;
+    height: auto;
+  }
+
+  .reviewCard span {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .reviewCard p {
+    margin: 0;
+  }
+
+  .bookings {
+    flex-direction: column;
+    gap: 1em;
+  }
+
+  footer {
+    flex-direction: column;
+    padding: 0.5rem;
+    gap: 0em;
+  }
 }

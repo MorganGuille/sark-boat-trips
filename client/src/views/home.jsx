@@ -30,9 +30,9 @@ function Home() {
                 <h1>THE BEST WAY TO SEE SARK</h1>
                 <h3>BOAT TRIPS WITH SARK LOCALS</h3>
             </span>
-            <a href='#reservations' ><button>Book now</button></a>
+            <a href='#reservations' ><button className='btn'>Book now</button></a>
         </section>
-        <section id='theTour' className='theTour'>
+        <section id='theTour' className='theTour centered-section'>
             <div className="content">
                 <h2>THE TOUR</h2>
                 <p>Departing from the ‘Creux’ Harbour, the original fishing port on Sark we will take a leisurely two
@@ -56,7 +56,7 @@ function Home() {
             </div>
         </section >
         <Slideshow images={images} />
-        <section id='charters' className="charters">
+        <section id='charters' className="charters centered-section">
             <div className="content">
                 <h2>CHARTERS</h2>
                 <p>If you are a larger group and/or would just like the boat to yourself we can also arrange charter
@@ -69,11 +69,11 @@ function Home() {
                     by calling +44 7911 764 246 and we will arrange a tour to suit you.</p>
 
                 <p>For more information and ideas</p>
-                <NavLink to={'./charters'}><button>Click Here</button></NavLink>
+                <NavLink to={'./charters'}><button className='btn'>Click Here</button></NavLink>
             </div>
             <img src={"../src/assets/images/charters.jpg"} alt='Charter trip inside cave' />
         </section>
-        <section id='sarkIsland' className="sarkIsland">
+        <section id='sarkIsland' className="sarkIsland centered-section">
             <h2>SARK ISLAND</h2>
 
             <div className="grid1 textGrid">
@@ -138,6 +138,12 @@ function Home() {
         </section>
 
         <Reviews />
+        <section id='reservations' className="reservations centered-section">
+            <h2>RESERVATIONS</h2>
+            <p>Please note that we do not charge a deposit online - so if your plans change please let us know asap so
+                we can rearrange your seat. Payment is on the day, at the end of the trip - either in cash or by card.
+            </p>
+        </section>
 
         <Bookings />
 
