@@ -2,7 +2,7 @@ import { useState } from 'react'
 import MyCalendar from '../components/myCalendar'
 import BookingForm from '../components/bookingForm'
 import axios from 'axios'
-import { URL } from '../../config'
+import { URL } from '../../config.js'
 
 import '../css/dashboard.css'
 

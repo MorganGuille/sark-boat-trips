@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useLocation } from 'react-router'
 import '../css/bookingForm.css'
 import axios from 'axios'
-import { URL } from '../../config'
+import { URL } from '../../config.js'
 
 function BookingForm({ selectedDate }) {
 
