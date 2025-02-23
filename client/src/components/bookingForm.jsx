@@ -17,10 +17,13 @@ function BookingForm({ selectedDate }) {
     }
 
     const [showResponse, setResponse] = useState(null)
-    let [updating, setUpdating] = useState(false)
+    const [updating, setUpdating] = useState(false)
+    const [isSubmitting, setIsSubmitting] = useState(false)
+
 
     const addBooking = async (e) => {
         e.preventDefault()
+        setIsSubmitting(true);
         let newBooking = {
             timeslot: e.target.timeslot.value,
             firstName: e.target.firstName.value,
@@ -39,13 +42,16 @@ function BookingForm({ selectedDate }) {
             setResponse(response.data.data)
         } catch (error) {
             console.log(error)
+        } finally {
+            setIsSubmitting(false)
+            e.target.reset()
         }
-        e.target.reset()
+
     }
 
     const updateBooking = async (e) => {
         e.preventDefault()
-
+        setIsSubmitting(true);
         let bookingId = e.target._id.value
 
         let updatedBooking = {
@@ -68,8 +74,11 @@ function BookingForm({ selectedDate }) {
 
         } catch (error) {
             console.log(error)
+        } finally {
+            setIsSubmitting(false)
+            e.target.reset()
         }
-        e.target.reset()
+
     }
 
 
@@ -192,7 +201,9 @@ function BookingForm({ selectedDate }) {
                     </fieldset>
                 </section>
                 <div>
-                    <button type="submit">Submit</button>
+                    <button type="submit" disabled={isSubmitting}>
+                        {isSubmitting ? <span className="loader"></span> : 'Submit'}
+                    </button>
                     <button type="reset">Reset form</button>
 
                 </div>

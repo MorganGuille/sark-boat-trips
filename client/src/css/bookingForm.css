@@ -71,6 +71,21 @@ form {
     }
 }
 
+.submitter {
+    font-weight: 300;
+    animation: l1 1s linear infinite alternate;
+}
+
+.submitter:before {
+    content: "submitting..."
+}
+
+@keyframes l1 {
+    to {
+        opacity: 0
+    }
+}
+
 
 @media (max-width: 1366px) {
     .bookingForm {
