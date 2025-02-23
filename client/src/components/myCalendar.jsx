@@ -30,29 +30,40 @@ function MyCalendar({ setSelectedDate }) {
         const firstDayOfMonth = new Date(year, month, 1);
         const lastDayOfMonth = new Date(year, month + 1, 0);
 
-        const newAvailability = {};
+        const dates = [];
 
         for (let day = firstDayOfMonth.getDate(); day <= lastDayOfMonth.getDate(); day++) {
             const currentDate = new Date(year, month, day);
-            const formattedDate = formatDate(currentDate);
-
-            newAvailability[formattedDate] = {
-                '11am': null,
-                '2pm': null,
-            };
-
-            try {
-                const res = await axios.get(`${URL}/bookings/availability/${formattedDate}`);
-                newAvailability[formattedDate]['11am'] = res.data.data['11am'];
-                newAvailability[formattedDate]['2pm'] = res.data.data['2pm'];
-            } catch (error) {
-                console.error(error);
-                newAvailability[formattedDate] = null;
-            }
+            dates.push(formatDate(currentDate))
         }
+        try {
+            const res = await axios.post(`${URL}/bookings/monthAvailability`, { dates });
+            const availabilityData = res.data.data;
 
-        setAvailability(newAvailability);
-    };
+            const newAvailability = {};
+            dates.forEach((formattedDate, index) => {
+                if (availabilityData[index]) {
+                    newAvailability[formattedDate] = {
+                        '11am': availabilityData[index]['11am'],
+                        '2pm': availabilityData[index]['2pm'],
+                    };
+                } else {
+                    newAvailability[formattedDate] = null;
+                }
+            })
+
+            setAvailability(newAvailability);
+
+        } catch (error) {
+            console.error(error);
+            const newAvailability = {};
+            dates.forEach((formattedDate) => {
+                newAvailability[formattedDate] = null;
+            });
+            setAvailability(newAvailability);
+        }
+    }
+
 
     const onChange = (date) => {
         setDate(date);

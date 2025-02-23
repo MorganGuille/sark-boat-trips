@@ -145,16 +145,26 @@ const checkDate = async (req, res) => {
     }
 }
 
-const checkAvail = async (req, res) => {
-    const date = req.params.date;
+const checkMonthAvail = async (req, res) => {
+    const dates = req.body;
 
     try {
-        const availability = {
-            '11am': await getAvailability(date, '11am'),
-            '2pm': await getAvailability(date, '2pm'),
-        };
+        const availabilityData = await Promise.all(
+            dates.map(async (date) => {
+                try {
+                    const availability = {
+                        '11am': await getAvailability(date, '11am'),
+                        '2pm': await getAvailability(date, '2pm'),
+                    }
+                    return availability
+                } catch (error) {
+                    console.error(`Error fetching availability for ${date}:`, error);
+                    return null;
+                }
+            })
+        );
 
-        res.send({ ok: true, data: availability });
+        res.send({ ok: true, data: availabilityData });
     } catch (error) {
         console.error(error);
         res.status(500).send({ ok: false, data: "An error occurred." });
@@ -244,5 +254,5 @@ const updateBooking = async (req, res) => {
 }
 
 
-module.exports = { addBooking, deleteBooking, checkDate, checkAvail, search, updateBooking, updateAvailability }
+module.exports = { addBooking, deleteBooking, checkDate, checkMonthAvail, search, updateBooking, updateAvailability }
 
