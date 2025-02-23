@@ -146,7 +146,7 @@ const checkDate = async (req, res) => {
 }
 
 const checkMonthAvail = async (req, res) => {
-    const dates = req.body;
+    const { dates } = req.body;
 
     try {
         const availabilityData = await Promise.all(
@@ -166,7 +166,7 @@ const checkMonthAvail = async (req, res) => {
 
         res.send({ ok: true, data: availabilityData });
     } catch (error) {
-        console.error(error);
+        console.error("Error fetching batch availability:", error);
         res.status(500).send({ ok: false, data: "An error occurred." });
     }
 };
