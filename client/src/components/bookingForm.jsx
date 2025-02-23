@@ -202,7 +202,7 @@ function BookingForm({ selectedDate }) {
                 </section>
                 <div>
                     <button type="submit" disabled={isSubmitting}>
-                        {isSubmitting ? <span className="loader"></span> : 'Submit'}
+                        {isSubmitting ? <span className="submitter"></span> : 'Submit'}
                     </button>
                     <button type="reset">Reset form</button>
 
