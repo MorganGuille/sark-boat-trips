@@ -30,17 +30,6 @@ p {
     margin: 1em 0;
 }
 
-.btn {
-    padding: 1em 1.5em;
-    border-radius: 0.5em;
-    border: none;
-    transition: 0.5s ease-in-out;
-    cursor: pointer;
-}
-
-.btn:hover {
-    transform: scale(1.1);
-}
 
 .hero-banner {
     background: linear-gradient(rgba(0, 0, 0, 0.144), rgba(0, 0, 0, 0.3)), url(../assets/images/hero-banner.jpg) left / cover no-repeat;
@@ -56,6 +45,9 @@ p {
 }
 
 .hero-banner button {
+    padding: 1em 1.5em;
+    border-radius: 0.5em;
+    border: none;
     animation: pulse 2s infinite;
 }
 
@@ -64,22 +56,33 @@ p {
     animation: none;
 }
 
-.charters button {
-    background-color: #1087ff;
-    color: white;
-    margin: 1em;
+.content {
+    margin-bottom: 2rem;
 }
 
 .charters img {
+    max-width: 500px;
     width: 100%;
+
 }
 
 .sarkIsland .grid1 {
     display: grid;
     grid-template-columns: auto auto;
-    gap: 3em;
-    padding: 2em;
+    gap: 1em;
+    padding: 1em;
     text-align: start;
+
+}
+
+.sarkIsland img {
+    align-self: center;
+    max-width: 500px;
+}
+
+.sarkIsland h2 {
+    margin-top: 0;
+    padding-top: 0;
 }
 
 @keyframes pulse {

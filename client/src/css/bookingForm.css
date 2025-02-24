@@ -1,44 +1,52 @@
 .bookingForm {
-    width: 350px;
-}
-
-form {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-
-    & p {
-        width: 350px;
-        display: flex;
-        flex-direction: column;
-        gap: 0.2em;
-        margin: 0.5em 1em
-    }
-
-    & select {
-
-        margin: 0.5em;
-        padding: 0.5em;
-
-    }
-
-    & button {
-        padding: 1em 1.5em;
-        border-radius: 0.5em;
-        border: none;
-        transition: 0.5s ease-in-out;
-        background-color: #1087ff;
-        color: white;
-        margin: 0.5em;
-    }
-
-    & button:hover {
-        cursor: pointer;
-        transform: scale(1.1);
-    }
+    padding: 1em;
 }
 
+form div {
+    width: 350px;
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2em;
+    margin: 0.5em 1em;
+}
+
+form select {
+    margin: 0.5em;
+    padding: 0.5em;
+}
+
+form button {
+    padding: 1em 1.5em;
+    border-radius: 0.3em;
+    border: none;
+    width: 350px;
+    max-width: 100%;
+    background-color: #1087ff;
+    color: white;
+    margin: 0.5em;
+}
+
+form button:hover {
+    cursor: pointer;
+    background-color: #0f7ae5;
+}
+
+form button:active {
+    transform: scale(0.95);
+}
+
+form textarea {
+
+    max-width: 100%;
+    resize: none;
+    margin: 0.5em;
+    padding: 0.5em;
+}
 
 .responseDisplay {
     display: flex;
@@ -54,21 +62,21 @@ form {
     width: 50vw;
     height: 50vh;
     border-radius: 1em;
+}
 
-    & button {
-        padding: 1em 1.5em;
-        border-radius: 0.5em;
-        border: none;
-        transition: 0.5s ease-in-out;
-        background-color: #1087ff;
-        color: white;
-        margin: 0.5em;
-    }
+.responseDisplay button {
+    padding: 1em 1.5em;
+    border-radius: 0.5em;
+    border: none;
+    transition: 0.5s ease-in-out;
+    background-color: #1087ff;
+    color: white;
+    margin: 0.5em;
+}
 
-    & button:hover {
-        cursor: pointer;
-        transform: scale(1.1);
-    }
+.responseDisplay button:hover {
+    cursor: pointer;
+    transform: scale(1.1);
 }
 
 .submitter {
@@ -77,15 +85,14 @@ form {
 }
 
 .submitter:before {
-    content: "submitting..."
+    content: "submitting...";
 }
 
 @keyframes l1 {
     to {
-        opacity: 0
+        opacity: 0;
     }
 }
-
 
 @media (max-width: 1366px) {
     .bookingForm {
@@ -96,9 +103,7 @@ form {
         margin: 0.7em 0.5em;
     }
 
-    form {
-        & p {
-            width: 300px;
-        }
+    form p {
+        width: 300px;
     }
 }

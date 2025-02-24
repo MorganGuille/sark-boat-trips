@@ -46,7 +46,7 @@ function Home() {
                 <h1>THE BEST WAY TO SEE SARK</h1>
                 <h3>BOAT TRIPS WITH SARK LOCALS</h3>
             </span>
-            <a href='#reservations' ><button className='btn'>Book now</button></a>
+            <a href='#reservations' ><button >Book now</button></a>
         </section>
         <section id='theTour' className='theTour centered-section'>
             <div className="content">
@@ -134,12 +134,12 @@ function Home() {
                     </a>
                 </div>
                 <div>
-                    <img width="500px" height="auto" src={sarkShipping} />
+                    <img src={sarkShipping} />
                 </div>
             </div>
 
             <div className="grid1">
-                <div><img width="500px" height="auto" src={suesbnb} /></div>
+                <div><img src={suesbnb} /></div>
                 <div>
                     <h2>SUE'S BNB</h2>
                     <p>We also offer 4* accommodation on the island at Sue’s BnB,</p>

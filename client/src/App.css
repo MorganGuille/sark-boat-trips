@@ -17,6 +17,26 @@ body {
   padding: 0;
 }
 
+.btn {
+  padding: 1em 1.5em;
+  border-radius: 0.5em;
+  border: none;
+  background-color: #1087ff;
+  color: white;
+  margin: 0.5em;
+
+}
+
+.btn:hover {
+  cursor: pointer;
+  background-color: #0f7ae5;
+}
+
+.btn:active {
+  cursor: pointer;
+  transform: scale(0.95);
+}
+
 .centered-section {
   display: flex;
   flex-direction: column;
@@ -66,8 +86,9 @@ body {
   }
 
   .sarkIsland img {
+    max-width: 500px;
     width: 100%;
-    height: auto;
+
   }
 
   .sarkIsland .textGrid {
@@ -108,9 +129,13 @@ body {
   }
 
   .sarkIsland .grid1 {
-    grid-template-columns: 1fr;
-    gap: 1.5em;
-    padding: 1em;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 1em;
+    padding: 1em 0;
+    text-align: start;
+    align-items: center;
+
   }
 
   .image-slider {
@@ -119,9 +144,6 @@ body {
 
   .slider-controls {
     visibility: hidden;
-    bottom: 10px;
-    justify-content: center;
-
   }
 
   .slider-controls button {
@@ -129,7 +151,6 @@ body {
     padding: 10px 8px;
     margin: 0 3px;
   }
-
 
   .reviews {
     max-width: 95%;

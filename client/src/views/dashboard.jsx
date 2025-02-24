@@ -105,10 +105,10 @@ function Dashboard() {
             {!loggedin ? <form onSubmit={checkLogin}>
                 <input type="text" id="username" name="username" placeholder="username" required />
                 <input type="password" id="password" name="password" placeholder="password" required />
-                <div>
-                    <button type="submit">Log in</button>
-                    <button onClick={Logout} type="reset">Log Out</button>
-                </div>
+
+                <button className='btn' type="submit">Log in</button>
+                <button className='btn' onClick={Logout} type="reset">Log Out</button>
+
             </form> : null}
             {loggedin ? <p className='logged'>logged in</p> : <p className='notLogged'>Please log in</p>}
         </div>
@@ -119,7 +119,7 @@ function Dashboard() {
                 <div className='left-grid'>
                     <MyCalendar setSelectedDate={setSelectedDate} />
                     <div className='minorform'>
-                        <button onClick={getBookingsByDate}>Get bookings by date</button>
+                        <button className='btn' onClick={getBookingsByDate}>Get bookings by date</button>
                         <form id='bookingsearch' onSubmit={getBookingsByLastName}>
                             <input type='text' id="lastName" name="lastName" placeholder='get bookings by last name' />
                         </form>
@@ -131,9 +131,9 @@ function Dashboard() {
                             <option value="11am">11am</option>
                             <option value="2pm">2pm</option>
                         </select>
-                        <button style={{ backgroundColor: 'lightcoral' }}>Delete this booking</button>
+                        <button className='btn' style={{ backgroundColor: 'lightcoral' }}>Delete this booking</button>
                         {showResponse != null ?
-                            <div className='responseDisplay'><h3>{showResponse}</h3><button onClick={() => setResponse(null)}>Confirm</button></div>
+                            <div className='responseDisplay'><h3>{showResponse}</h3><button className='btn' onClick={() => setResponse(null)}>Confirm</button></div>
                             : null}
                     </form>
                     <form id='updateAvailability' className='minorform' onSubmit={updateAvailability}>
@@ -143,7 +143,7 @@ function Dashboard() {
                             <option value="2pm">2pm</option>
                         </select>
                         <input type="number" id="capacity" name="capacity" placeholder='capacity' required></input>
-                        <button type="submit">Update Availability</button>
+                        <button className='btn' type="submit">Update Availability</button>
                     </form>
                 </div>
                 <div className='right-grid'>

@@ -8,26 +8,10 @@
     border-radius: 0.3em;
 }
 
-/* .react-calendar--doubleView {
-    width: 700px;
-}
-
-.react-calendar--doubleView .react-calendar__viewContainer {
-    display: flex;
-    margin: -0.5em;
-}
-
-.react-calendar--doubleView .react-calendar__viewContainer>* {
-    width: 50%;
-    margin: 0.5em;
-} */
-
 .react-calendar,
 .react-calendar *,
 .react-calendar *:before,
 .react-calendar *:after {
-    -moz-box-sizing: border-box;
-    -webkit-box-sizing: border-box;
     box-sizing: border-box;
 }
 
@@ -65,7 +49,6 @@
 .react-calendar__month-view__weekdays {
     text-align: center;
     text-transform: uppercase;
-    font: inherit;
     font-size: 0.75em;
     font-weight: bold;
 }
@@ -78,7 +61,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font: inherit;
     font-size: 0.75em;
     font-weight: bold;
 }
@@ -100,7 +82,6 @@
     padding: 10px 6.6667px;
     background: none;
     text-align: center;
-    font: inherit;
     font-size: 0.833em;
     border-radius: 0;
     transition: none;
@@ -123,13 +104,8 @@
 }
 
 .react-calendar__tile--now {
-    background: lightblue;
+    background: #a1f9a1;
 }
-
-/* .react-calendar__tile--now:enabled:hover,
-.react-calendar__tile--now:enabled:focus {
-    background: #ffffa9;
-} */
 
 .react-calendar__tile--hasActive {
     background: #76baff;
@@ -140,10 +116,7 @@
     background: #a9d4ff;
 }
 
-
-
-.react-calendar__tile--active:enabled:hover,
-.react-calendar__tile--active:enabled:focus {
+.react-calendar__tile--active {
     background: #1087ff;
 }
 
@@ -151,12 +124,8 @@
     background-color: #e6e6e6;
 }
 
-
-/* above are the default styles */
-
 .calendarDisplay {
     width: 350px;
-    /* height: 3em; */
     background-color: white;
     margin-top: 1em;
     display: flex;
@@ -165,16 +134,16 @@
     align-items: center;
     border: 1px solid #a0a096;
     border-radius: 0.3em;
+}
 
-    & div {
-        width: inherit;
-        display: flex;
-        justify-content: space-evenly;
-    }
+.calendarDisplay div {
+    width: 100%;
+    display: flex;
+    justify-content: space-evenly;
+}
 
-    & span {
-        margin: 0.2em;
-    }
+.calendarDisplay span {
+    margin: 0.2em;
 }
 
 .fully-booked {
@@ -195,27 +164,17 @@ abbr[title] {
     text-decoration: none;
 }
 
-.react-calendar__tile--now {
-    background: #a1f9a1;
-}
-
-.react-calendar__tile--active {
-    background: #1087ff;
-
-}
-
-/* HTML: <div class="loader"></div> */
 .loader {
     font-weight: 300;
     animation: l1 1s linear infinite alternate;
 }
 
 .loader:before {
-    content: "Loading..."
+    content: "Loading...";
 }
 
 @keyframes l1 {
     to {
-        opacity: 0
+        opacity: 0;
     }
 }
