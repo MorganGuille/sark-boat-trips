@@ -14,6 +14,7 @@ function Bookings() {
 
     const [selectedDate, setSelectedDate] = useState(formatDate(new Date()))
 
+
     return (<>
 
         <section className="bookings">

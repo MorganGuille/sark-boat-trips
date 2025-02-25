@@ -1,17 +1,24 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router'
 import Calendar from 'react-calendar';
 import axios from 'axios';
-// import 'react-calendar/dist/Calendar.css';  for default styles 
+
 import '../css/myCalendar.css';
 import { URL } from '../../config.js'
-
-
-
 
 function MyCalendar({ setSelectedDate }) {
     const [date, setDate] = useState(new Date());
     const [availability, setAvailability] = useState({});
 
+    let currentLoc = useLocation()
+
+    const blockDateStart = () => {
+        return currentLoc.pathname === '/dashboard' ? null : new Date("05-01-2025")
+    }
+
+    const blockDateEnd = () => {
+        return currentLoc.pathname === '/dashboard' ? null : new Date("09-30-2025")
+    }
 
     useEffect(() => {
         fetchMonthAvailability(date);
@@ -64,7 +71,6 @@ function MyCalendar({ setSelectedDate }) {
         }
     }
 
-
     const onChange = (date) => {
         setDate(date);
         setSelectedDate(formatDate(date))
@@ -93,13 +99,21 @@ function MyCalendar({ setSelectedDate }) {
         return null;
     };
 
+    const color11am = () => {
+        return availability[formatDate(date)]?.['11am'] > 6 ? 'green' : 'darkred'
+    }
+
+    const color2pm = () => {
+        return availability[formatDate(date)]?.['2pm'] > 6 ? 'green' : 'darkred'
+    }
+
 
     return (
         <section className="calendar">
             <Calendar
                 onActiveStartDateChange={({ activeStartDate }) => onChange(activeStartDate)}
-                onChange={onChange}
-
+                onChange={() => [onChange]}
+                onClickDay={onChange}
                 value={date}
                 tileClassName={setTileClassName}
                 showNeighboringMonth={true}
@@ -107,16 +121,19 @@ function MyCalendar({ setSelectedDate }) {
                 minDetail="year"
                 next2Label={null}
                 prev2Label={null}
+                minDate={blockDateStart()}
+                maxDate={blockDateEnd()}
             />
             <div className="calendarDisplay">
                 <div>
-                    <span>11:00 AM: </span>
-                    <span>{!availability[formatDate(date)]?.['11am'] ? <span className='loader'></span> : `${availability[formatDate(date)]?.['11am']} spaces available`}</span>
+                    <span >11:00 AM: </span>
+                    <span style={{ color: color11am() }}>{!availability[formatDate(date)]?.['11am'] && availability[formatDate(date)]?.['11am'] != 0 ? <span className='loader'></span> : `${availability[formatDate(date)]?.['11am']} spaces available`}</span>
                 </div>
                 <div>
                     <span>2:00 PM: </span>
-                    <span>{!availability[formatDate(date)]?.['2pm'] ? <span className='loader'></span> : `${availability[formatDate(date)]?.['2pm']} spaces available`} </span>
+                    <span style={{ color: color2pm() }}>{!availability[formatDate(date)]?.['2pm'] && availability[formatDate(date)]?.['2pm'] != 0 ? <span className='loader'></span> : `${availability[formatDate(date)]?.['2pm']} spaces available`} </span>
                 </div>
+
             </div>
         </section>
     );

@@ -4,6 +4,7 @@ import '../css/bookingForm.css'
 import axios from 'axios'
 import { URL } from '../../config.js'
 
+
 function BookingForm({ selectedDate }) {
 
     let currentLoc = useLocation()
@@ -19,6 +20,7 @@ function BookingForm({ selectedDate }) {
     const [showResponse, setResponse] = useState(null)
     const [updating, setUpdating] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
+
 
 
     const addBooking = async (e) => {
@@ -82,7 +84,8 @@ function BookingForm({ selectedDate }) {
     }
 
 
-    return (
+    return (<>
+
         <section >
             {checkPageDashboard() ? <button className='btn' onClick={() => setUpdating(!updating)}>Update/add</button> : null}
 
@@ -206,7 +209,7 @@ function BookingForm({ selectedDate }) {
                 <div className='responseDisplay'><h3>{showResponse}</h3><button className='btn' onClick={() => setResponse(null)}>Confirm</button></div>
                 : null}
         </section>
-    )
+    </>)
 }
 
 export default BookingForm

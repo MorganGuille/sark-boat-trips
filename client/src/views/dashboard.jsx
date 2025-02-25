@@ -6,10 +6,6 @@ import { URL } from '../../config.js'
 
 import '../css/dashboard.css'
 
-
-
-
-
 function Dashboard() {
 
     const [loggedin, setLoggedIn] = useState(false)
@@ -63,12 +59,11 @@ function Dashboard() {
             lastName: e.target.lastName.value,
             timeslot: e.target.timeslot.value,
         }
-
         try {
             const res = await axios.post(`${URL}/bookings/delete`, booking)
             setResponse(res.data.data)
-
-        } catch (error) {
+        }
+        catch (error) {
             console.log(error)
         }
         e.target.reset()
@@ -88,27 +83,19 @@ function Dashboard() {
         } catch (error) {
             console.log(error)
         }
-
     }
 
-
-
-
-
-
     return (<>
-
-        {/* <section className='dashboard'> */}
 
         <div className='centered-section padded'>
             {loggedin ? <button className='logoutButton' onClick={Logout}>Log Out</button> : null}
             {!loggedin ? <form onSubmit={checkLogin}>
                 <input type="text" id="username" name="username" placeholder="username" required />
                 <input type="password" id="password" name="password" placeholder="password" required />
-
-                <button className='btn' type="submit">Log in</button>
-                <button className='btn' onClick={Logout} type="reset">Log Out</button>
-
+                <span>
+                    <button className='btn' type="submit">Log in</button>
+                    <button className='btn' onClick={Logout} type="reset">Log Out</button>
+                </span>
             </form> : null}
             {loggedin ? <p className='logged'>logged in</p> : <p className='notLogged'>Please log in</p>}
         </div>
@@ -195,8 +182,6 @@ function Dashboard() {
 
         </div> : null
         }
-        {/* </section> */}
-
 
     </>)
 }
