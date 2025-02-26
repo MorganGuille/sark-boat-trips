@@ -25,7 +25,7 @@ function Navbar() {
     let currentLoc = useLocation()
 
     const checkPage = () => {
-        return currentLoc.pathname === '/charters' || currentLoc.pathname === '/dashboard'
+        return currentLoc.pathname === '/charters' || currentLoc.pathname === '/dashboard' || currentLoc.pathname === '/success' || currentLoc.pathname === '/canceled'
     }
 
     useEffect(() => {

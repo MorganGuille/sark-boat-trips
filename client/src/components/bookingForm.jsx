@@ -51,8 +51,8 @@ function BookingForm({ selectedDate }) {
     }
 
     const addCharterBooking = async (e) => {
-        e.preventDefault()
-        console.log('adding charter!')
+        e.preventDefault();
+        console.log('adding charter!');
         setIsSubmitting(true);
         let newBooking = {
             timeslot: e.target.timeslot.value,
@@ -68,14 +68,21 @@ function BookingForm({ selectedDate }) {
             charter: 'true'
         }
 
+
         try {
-            const response = await axios.post(`${URL}/create-checkout-session`,)
-            console.log(response.data)
+            const response = await axios.post(`${URL}/charters/create-checkout-session`, newBooking);
+            if (response.data.url) {
 
-        } catch {
-
+                window.location.href = response.data.url;
+            } else {
+                console.error("Error: No checkout URL received.");
+            }
+        } catch (error) {
+            console.error("Error creating checkout session:", error);
+        } finally {
+            setIsSubmitting(false);
         }
-    }
+    };
 
     const updateBooking = async (e) => {
         e.preventDefault()
@@ -113,7 +120,7 @@ function BookingForm({ selectedDate }) {
     const actionOnClick = (e) => {
         if (!updating && !checkPageCharters()) {
             return addBooking(e);
-        } else if (updating) {
+        } else if (updating && checkPageDashboard()) {
             return updateBooking(e);
         } else if (checkPageCharters()) {
             return addCharterBooking(e);
