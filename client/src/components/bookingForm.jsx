@@ -22,7 +22,6 @@ function BookingForm({ selectedDate }) {
     const [isSubmitting, setIsSubmitting] = useState(false)
 
 
-
     const addBooking = async (e) => {
         e.preventDefault()
         setIsSubmitting(true);
@@ -36,7 +35,8 @@ function BookingForm({ selectedDate }) {
             children: e.target.children.value,
             date: selectedDate,
             accommodation: e.target.accommodation.value,
-            message: e.target.message.value
+            message: e.target.message.value,
+            charter: 'false'
         }
 
         try {
@@ -48,7 +48,33 @@ function BookingForm({ selectedDate }) {
             setIsSubmitting(false)
             e.target.reset()
         }
+    }
 
+    const addCharterBooking = async (e) => {
+        e.preventDefault()
+        console.log('adding charter!')
+        setIsSubmitting(true);
+        let newBooking = {
+            timeslot: e.target.timeslot.value,
+            firstName: e.target.firstName.value,
+            lastName: e.target.lastName.value,
+            email: e.target.email.value,
+            phone: e.target.phone.value,
+            adults: e.target.adults.value,
+            children: e.target.children.value,
+            date: selectedDate,
+            accommodation: e.target.accommodation.value,
+            message: e.target.message.value,
+            charter: 'true'
+        }
+
+        try {
+            const response = await axios.post(`${URL}/create-checkout-session`,)
+            console.log(response.data)
+
+        } catch {
+
+        }
     }
 
     const updateBooking = async (e) => {
@@ -66,7 +92,8 @@ function BookingForm({ selectedDate }) {
             children: e.target.children.value,
             date: e.target.date.value,
             accommodation: e.target.accommodation.value,
-            message: e.target.message.value
+            message: e.target.message.value,
+            charter: e.target.charter.value
         }
 
         try {
@@ -83,13 +110,26 @@ function BookingForm({ selectedDate }) {
 
     }
 
+    const actionOnClick = (e) => {
+        if (!updating && !checkPageCharters()) {
+            return addBooking(e);
+        } else if (updating) {
+            return updateBooking(e);
+        } else if (checkPageCharters()) {
+            return addCharterBooking(e);
+        } else {
+            e.preventDefault();
+            console.log('Error');
+            ;
+        }
+    }
 
     return (<>
 
         <section >
             {checkPageDashboard() ? <button className='btn' onClick={() => setUpdating(!updating)}>Update/add</button> : null}
 
-            <form className='bookingForm' onSubmit={!updating ? addBooking : updateBooking}>
+            <form className='bookingForm' onSubmit={(e) => actionOnClick(e)}>
                 <div>
                     <span>Required fields are followed by<strong><span aria-label="Required">*</span></strong></span>
                 </div>
@@ -110,6 +150,15 @@ function BookingForm({ selectedDate }) {
                             </label>
                             <input type="text" id="date" name="updatedate"
                                 placeholder="dd-mm-yyyy" />
+                        </div>
+                        <div>
+                            <label htmlFor="charter">
+                                <span>Charter</span>
+                            </label>
+                            <select id="charter" name="charter" >
+                                <option value="false">Not Charter</option>
+                                <option value="true">Charter Trip</option>
+                            </select>
                         </div>
                     </fieldset>
                 </> : null}

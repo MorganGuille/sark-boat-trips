@@ -30,11 +30,11 @@ function Dashboard() {
     }
 
     const getBookingsByDate = async () => {
-        console.log(selectedDate)
+
         try {
             const res = await axios.get(`${URL}/bookings/${selectedDate}`);
             setBookings(res.data.data)
-            console.log(res.data.data)
+
         } catch (error) {
             console.error(error);
         }
@@ -156,6 +156,7 @@ function Dashboard() {
                                 <th>Children</th>
                                 <th>Accommodation</th>
                                 <th>Message</th>
+                                <th>Charter</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -173,6 +174,7 @@ function Dashboard() {
                                         <td>{ele.children}</td>
                                         <td>{ele.accommodation}</td>
                                         <td className='message'>{ele.message}</td>
+                                        <td>{ele.charter}</td>
                                     </tr>
                                 </>
                             })}

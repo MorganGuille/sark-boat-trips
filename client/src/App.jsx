@@ -8,6 +8,8 @@ import MobileNav from './components/mobilenav'
 import Bookings from './components/bookings';
 import Charters from './components/charters'
 import Dashboard from "./views/dashboard";
+import Success from "./views/success";
+import Canceled from "./views/canceled";
 
 
 function App() {
@@ -22,6 +24,8 @@ function App() {
           <Route path='/bookings' element={<Bookings />} />
           <Route path='/charters' element={<Charters />} />
           <Route path='/dashboard' element={<Dashboard />} />
+          <Route path='/success' element={<Success />} />
+          <Route path='/canceled' element={<Canceled />} />
         </Routes>
       </Router>
 

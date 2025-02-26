@@ -217,6 +217,9 @@ const updateBooking = async (req, res) => {
     if (req.body.message) {
         updateObject.message = req.body.message;
     }
+    if (req.body.charter) {
+        updateObject.charter = req.body.charter;
+    }
 
     const bookingId = req.params.id;
 

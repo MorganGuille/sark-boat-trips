@@ -38,6 +38,9 @@ const bookingsSchema = new mongoose.Schema({
     },
     message: {
         type: String,
+    },
+    charter: {
+        type: String
     }
 });
 
