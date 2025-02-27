@@ -3,7 +3,7 @@ const express = require('express'),
     controller = require('../controllers/charters.js');
 
 router.post('/create-checkout-session', controller.createCheckOutSession);
-router.get('/charters/verify-payment', controller.verifyPayment)
+router.get('/verify-payment', controller.verifyPayment)
 
 
 

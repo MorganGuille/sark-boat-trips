@@ -52,7 +52,7 @@ function BookingForm({ selectedDate }) {
 
     const addCharterBooking = async (e) => {
         e.preventDefault();
-        console.log('adding charter!');
+
         setIsSubmitting(true);
         let newBooking = {
             timeslot: e.target.timeslot.value,
@@ -75,7 +75,8 @@ function BookingForm({ selectedDate }) {
 
                 window.location.href = response.data.url;
             } else {
-                console.error("Error: No checkout URL received.");
+                setResponse(response.data.data)
+                console.log(response.data.data);
             }
         } catch (error) {
             console.error("Error creating checkout session:", error);
@@ -179,7 +180,7 @@ function BookingForm({ selectedDate }) {
                             <span>Preferred time</span>
                             <strong><span aria-label="required">*</span></strong>
                         </label>
-                        <select id="timeslot" name="timeslot" required={!checkPageDashboard()}>
+                        <select id="timeslot" name="timeslot" defaultValue="11am" required={!checkPageDashboard()}>
                             <option value="11am">11am</option>
                             <option value="2pm">2pm</option>
                         </select>
