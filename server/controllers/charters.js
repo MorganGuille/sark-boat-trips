@@ -5,6 +5,25 @@ const stripe = require('stripe')('sk_test_51ICT0fBMZ6qJyKg93hNehaAWerXDMLYgGSP48
 
 const YOUR_DOMAIN = 'http://localhost:5173'
 
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.gmail_address,
+        pass: process.env.gmail_password,
+    },
+});
+
+const sendEmail = async (mailOptions) => {
+    try {
+        const info = await transporter.sendMail(mailOptions);
+        console.log('Message sent: %s', info.messageId);
+        return info;
+    } catch (error) {
+        console.error('Error sending email:', error);
+        throw error;
+    }
+};
+
 const getAvailability = async (date, timeslot) => {
     try {
         const availabilitySettings = await Availability.findOne({ date, timeslot });
@@ -74,6 +93,7 @@ const verifyPayment = async (req, res) => {
         let { ...charterData } = session.metadata
         let date = session.metadata.date
         let timeslot = session.metadata.timeslot
+        let email = session.metadata.email
 
         if (session.payment_status === 'paid') {
             ///// if payment was successful, create booking ////
@@ -90,7 +110,32 @@ const verifyPayment = async (req, res) => {
                 { $inc: { capacity: - delta } },
                 { upsert: true, new: true }
             );
-            console.log('availability data: ', newCapacity.capacity)
+            const mailOptionsClient = {
+                from: 'sarkboattrips@gmail.com',
+                to: email,
+                subject: 'PRIVATE CHARTER Confirmation Sark Boat Trips',
+                html: `<p>Dear ${charterData.firstName},</p>
+                        <p>Your private charter on ${charterData.date} at ${charterData.timeslot} has been confirmed and deposit received. If you havnt already, please
+                        get in touch so we can plan your trip!. 
+                        if anything changes we'll be in touch!</p>
+                        <p> Thank you so much for booking with us, Sark Boat Trips</p>`,
+            };
+
+            const mailOptionsAdmin = {
+                from: 'sarkboattrips@gmail.com',
+                to: 'sarkboattrips@gmail.com',
+                subject: `New CHARTER on : ${date}`,
+                html: `<p>A new PRIVATE CHARTER has been made by ${charterData.firstName} ${charterData.lastName} on ${charterData.date} at ${charterData.timeslot}.</p>
+                        <p>Contact them by email : ${charterData.email} or phone : ${charterData.phone}`,
+            };
+            try {
+                await sendEmail(mailOptionsClient);
+                await sendEmail(mailOptionsAdmin);
+
+            } catch (emailError) {
+                console.error("Email sending failed:", emailError);
+                res.status(500).send({ ok: false, data: "Booking confirmed, but email sending failed. Please contact us." });
+            }
 
             res.json({ ok: true, message: 'Payment verified and charter added', date: charterData.date, name: charterData.firstName });
 

@@ -120,6 +120,7 @@ const deleteBooking = async (req, res) => {
             html: `<p>Dear ${bookingToDelete.firstName},</p>
                    <p>Your booking on ${bookingToDelete.date} at ${bookingToDelete.timeslot} has been CANCELLED.</p>
                    <p>If this is a mistake please contact us</p>
+                   <p>Our whatsapp number is : +44 7911 764246</p>
                    <p>Thank you so much, Sark Boat Trips</p>`,
         };
 
