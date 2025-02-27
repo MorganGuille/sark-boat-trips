@@ -95,7 +95,15 @@ const verifyPayment = async (req, res) => {
         let timeslot = session.metadata.timeslot
         let email = session.metadata.email
 
+        const availability = await getAvailability(charterData.date, charterData.timeslot);
+
+        if (availability != 12) {
+            return res.json({ ok: false, message: 'No availability ', date: charterData.date, name: charterData.firstName });
+
+        }
+
         if (session.payment_status === 'paid') {
+
             ///// if payment was successful, create booking ////
             let newBooking = await Bookings.create(charterData);
             console.log('Booking successful for:', charterData);
@@ -107,7 +115,7 @@ const verifyPayment = async (req, res) => {
             let newCapacity = await Availability.findOneAndUpdate(
 
                 { date, timeslot },
-                { $inc: { capacity: - delta } },
+                { capacity: delta },
                 { upsert: true, new: true }
             );
             const mailOptionsClient = {
@@ -134,7 +142,7 @@ const verifyPayment = async (req, res) => {
 
             } catch (emailError) {
                 console.error("Email sending failed:", emailError);
-                res.status(500).send({ ok: false, data: "Booking confirmed, but email sending failed. Please contact us." });
+                res.status(500).json({ ok: false, data: "Booking confirmed, but email sending failed. Please contact us." });
             }
 
             res.json({ ok: true, message: 'Payment verified and charter added', date: charterData.date, name: charterData.firstName });
