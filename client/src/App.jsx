@@ -11,6 +11,8 @@ import Dashboard from "./views/dashboard";
 import Success from "./views/success";
 import Canceled from "./views/canceled";
 
+import Footer from './components/footer'
+
 
 function App() {
 
@@ -31,7 +33,7 @@ function App() {
 
 
 
-      {/* <Footer /> */}
+      <Footer />
     </>
   )
 }

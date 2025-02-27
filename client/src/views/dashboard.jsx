@@ -85,7 +85,7 @@ function Dashboard() {
         }
     }
 
-    return (<>
+    return (<div className='dashboard'>
 
         <div className='centered-section padded'>
             {loggedin ? <button className='logoutButton' onClick={Logout}>Log Out</button> : null}
@@ -185,7 +185,7 @@ function Dashboard() {
         </div> : null
         }
 
-    </>)
+    </div>)
 }
 
 export default Dashboard

@@ -43,7 +43,7 @@ const createCheckOutSession = async (req, res) => {
             }],
             mode: 'payment',
             success_url: `${YOUR_DOMAIN}/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${YOUR_DOMAIN}/cancel`,
+            cancel_url: `${YOUR_DOMAIN}/canceled`,
             metadata: {
                 timeslot: newBooking.timeslot,
                 firstName: newBooking.firstName,
@@ -81,8 +81,8 @@ const verifyPayment = async (req, res) => {
             console.log('Booking successful for:', charterData);
 
             //// and update capacity of that timeslot to 0 ////
-            let totalpax = (Number(charterData.adults) + Number(charterData.children)) /// 5 ////
-            let delta = 12 - totalpax  /// 7 //// 
+            let totalpax = (Number(charterData.adults) + Number(charterData.children))
+            let delta = 12 - totalpax
 
             let newCapacity = await Availability.findOneAndUpdate(
 
@@ -92,14 +92,14 @@ const verifyPayment = async (req, res) => {
             );
             console.log('availability data: ', newCapacity.capacity)
 
-            res.json({ success: true, message: 'Payment verified and charter added' });
+            res.json({ ok: true, message: 'Payment verified and charter added', date: charterData.date, name: charterData.firstName });
 
-        } else {
-            res.json({ success: false, message: 'Payment not completed' });
+        } else if ((session.payment_status === 'unpaid')) {
+            res.json({ ok: false, message: 'Payment not completed', date: charterData.date, name: charterData.firstName });
         }
     } catch (error) {
         console.error('Error verifying payment:', error);
-        res.status(500).json({ success: false, message: 'Internal Server Error' });
+        res.status(500).json({ ok: false, message: 'Internal Server Error' });
     }
 };
 

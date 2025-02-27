@@ -2,7 +2,7 @@ import React from 'react'
 import Slideshow from '../components/slideshow'
 import Reviews from '../components/reviews'
 import Bookings from '../components/bookings'
-import Footer from '../components/footer'
+
 import { NavLink } from 'react-router'
 
 import gallery1 from '../assets/images/gallery1.jpg'
@@ -163,7 +163,7 @@ function Home() {
 
         <Bookings />
 
-        <Footer />
+       
 
 
 

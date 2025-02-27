@@ -1,4 +1,7 @@
 footer {
+    position: relative;
+    bottom: 0;
+    width: 100%;
     display: flex;
     text-align: center;
     justify-content: center;
@@ -6,4 +9,24 @@ footer {
     color: white;
     padding: 1em;
     gap: 3em;
+    margin-top: auto;
+
+}
+
+@media (max-width: 1366px) {
+
+
+    footer {
+        gap: 1em;
+    }
+
+    footer * {
+        margin: 0.2em;
+    }
+}
+
+@media (max-width: 1020px) {
+    footer {
+        gap: 0em;
+    }
 }

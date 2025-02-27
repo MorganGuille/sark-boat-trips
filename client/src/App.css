@@ -46,6 +46,17 @@ body {
   margin: 2em auto;
 }
 
+.stripe-landing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  justify-content: center;
+  max-width: 60%;
+  margin: 2em auto;
+  height: 85vh;
+}
+
 @media (max-width: 1366px) {
 
   h1 {
