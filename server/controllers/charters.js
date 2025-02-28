@@ -111,12 +111,12 @@ const verifyPayment = async (req, res) => {
 
             //// and update capacity of that timeslot to 0 ////
             let totalpax = (Number(charterData.adults) + Number(charterData.children))
-            let delta = 12 - totalpax
+            // let delta = 12 - totalpax
 
             let newCapacity = await Availability.findOneAndUpdate(
 
                 { date, timeslot },
-                { capacity: delta },
+                { capacity: totalpax },
                 { upsert: true, new: true }
             );
             const mailOptionsClient = {
