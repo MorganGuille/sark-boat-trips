@@ -29,10 +29,10 @@ connecting()
 app.use("/bookings", require("./routes/bookings"))
 app.use("/admin", require("./routes/admin"))
 app.use("/charters", require("./routes/charters"))
+app.get('/*', function (req, res) {
+    res.sendFile(path.join(__dirname, '../client/dist', 'index.html'));
+});
 app.use(express.static('public'));
 
 app.listen(PORT, () => console.log(`listening on port : ${PORT}`))
 
-app.get('/*', function (req, res) {
-    res.sendFile(path.join(__dirname, '../client/dist', 'index.html'));
-});
