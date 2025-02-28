@@ -30,7 +30,7 @@ footer a:hover {
 
 .popUpDisplay {
     backdrop-filter: blur(10px);
-    background-color: rgba(65, 65, 65, 0.3);
+    background-color: rgba(255, 255, 255, 0.8);
     gap: 1em;
     position: fixed;
     bottom: 20%;
@@ -40,8 +40,7 @@ footer a:hover {
     border-radius: 1em;
     overflow-y: scroll;
     padding: 1em;
-    z-index: 999;
-
+    z-index: 900;
 }
 
 .popUpBackground {
@@ -58,15 +57,11 @@ footer a:hover {
     list-style: none;
 }
 
-
 @media (max-width: 1366px) {
-
 
     footer {
         gap: 1em;
         text-align: left;
-
-
     }
 
     footer * {
@@ -79,9 +74,6 @@ footer a:hover {
         width: 80vw;
         height: 60vh;
     }
-
-
-
 }
 
 @media (max-width: 1020px) {
@@ -89,7 +81,6 @@ footer a:hover {
         gap: 0.5rem;
         flex-direction: column;
         text-align: center;
-
     }
 
     .popUpDisplay {
@@ -102,8 +93,5 @@ footer a:hover {
     .footer-section {
         display: flex;
         flex-direction: column;
-        /* justify-content: space-around; */
-
     }
-
 }
