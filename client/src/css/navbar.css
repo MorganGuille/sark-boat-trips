@@ -91,10 +91,10 @@
     .mobileNavOpen {
         position: fixed;
         z-index: 1;
-        background-color: rgba(65, 65, 65, 0.313);
-        backdrop-filter: blur(10px);
+        background-color: rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(5px);
         height: auto;
-        width: 100vw;
+        width: 30vw;
         color: white;
         opacity: 10;
         transition: opacity 0.3s ease-in-out;
@@ -110,6 +110,7 @@
         height: 100vh;
         gap: 1rem;
         font-size: x-large;
+        max-width: 40vw;
     }
 
     .mobileLinks a:hover {
@@ -129,4 +130,18 @@
     }
 
 
+}
+
+@media (max-width: 720px) {
+
+    .mobileNavOpen {
+        width: 50vw;
+    }
+}
+
+@media (max-width: 450px) {
+
+    .mobileNavOpen {
+        width: 60vw;
+    }
 }
