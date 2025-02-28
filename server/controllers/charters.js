@@ -3,7 +3,8 @@ const Availability = require('../models/availability');
 const nodemailer = require('nodemailer');
 const stripe = require('stripe')('sk_test_51ICT0fBMZ6qJyKg93hNehaAWerXDMLYgGSP48Skcv4vOwpal7oayM72Pr2qLg8s8yCgnaoTN5WvxOpN5Mxqt8cf000oSAsOQmI');
 
-const YOUR_DOMAIN = 'http://localhost:5173'
+const YOUR_DOMAIN = 'https://secret-eyrie-44762-a52d7fb9dbaa.herokuapp.com'
+// const YOUR_DOMAIN = 'http://localhost:5173'
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
