@@ -35,7 +35,7 @@ function Charters() {
                 <p><strong>Safety boat.</strong> Whether you’re doing a long distance swim / exploring the island by kayak, safety is paramount. We can stay close and escort you around the island.
                     We also have a wealth of experience and knowledge of the tides around the island and can help you plan a safe route. </p>
                 <h3>If you have any questions or ideas, please contact us and discuss options. We’re sure we can build you an adventure to remember!</h3>
-                <h3>Or use the form below to book your charter trip! please note we require a (refundable) depoist of 20% to reserve a charter tour!</h3>
+                <h3>Or use the form below to book your charter trip! please note we require a (refundable) deposit of 20% to reserve a charter tour!</h3>
             </div>
         </section>
 

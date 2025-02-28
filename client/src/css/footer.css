@@ -64,6 +64,9 @@ footer a:hover {
 
     footer {
         gap: 1em;
+        text-align: left;
+
+
     }
 
     footer * {
@@ -78,11 +81,15 @@ footer a:hover {
     }
 
 
+
 }
 
 @media (max-width: 1020px) {
     footer {
-        gap: 0em;
+        gap: 0.5rem;
+        flex-direction: column;
+        text-align: center;
+
     }
 
     .popUpDisplay {
@@ -94,9 +101,9 @@ footer a:hover {
 
     .footer-section {
         display: flex;
-        flex-direction: row;
-        justify-content: space-around;
-        width: 80%;
+        flex-direction: column;
+        /* justify-content: space-around; */
+
     }
 
 }
