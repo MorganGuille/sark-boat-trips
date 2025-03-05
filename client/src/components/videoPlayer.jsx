@@ -19,7 +19,6 @@ function VideoPlayer() {
                 responsive='true'
             />
         }
-
     </>)
 }
 
