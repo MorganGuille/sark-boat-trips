@@ -1,8 +1,8 @@
 const Bookings = require("../models/bookings");
 const Availability = require('../models/availability');
 const nodemailer = require('nodemailer');
-const STRIPEKEY = process.env.STRIPEKEY
-const stripe = require('stripe')(STRIPEKEY);
+
+const stripe = require('stripe')(process.env.STRIPEKEY);
 
 const YOUR_DOMAIN = 'https://secret-eyrie-44762-a52d7fb9dbaa.herokuapp.com'
 // const YOUR_DOMAIN = 'http://localhost:5173'
