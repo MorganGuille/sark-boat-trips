@@ -21,7 +21,7 @@ body {
   padding: 1em 1.5em;
   border-radius: 0.5em;
   border: none;
-  background-color: #1087ff;
+  background-color: #04BF8A;
   color: white;
   margin: 0.5em;
 
@@ -71,6 +71,23 @@ body {
   h3 {
     font-size: 1.1em;
   }
+
+  p {
+    font-size: 1.2rem;
+  }
+
+  .centered-section {
+    max-width: 80%;
+  }
+
+  .hero-banner {
+    gap: 20em;
+    background-position: 0% 0%;
+  }
+
+
+
+
 
   .image-slider {
     height: 80vh;
@@ -132,7 +149,8 @@ body {
   }
 
   .hero-banner {
-    gap: 3em;
+    gap: 20em;
+    background-position: 10% 75%;
   }
 
   .centered-section {

@@ -15,8 +15,8 @@ function Navbar() {
 
     const stickNavbar = () => {
         if (window !== undefined) {
-            let windowHeight = window.scrollY;
-            windowHeight > 850 ? setStickyClass('sticky-nav') : setStickyClass('');
+            let scrollPosition = window.scrollY;
+            scrollPosition > 850 ? setStickyClass('sticky-nav') : setStickyClass('');
         }
     };
 

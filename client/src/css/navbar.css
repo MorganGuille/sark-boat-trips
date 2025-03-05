@@ -9,7 +9,7 @@
     top: 0;
     padding: 0.5em 0;
     z-index: 999;
-    background-color: rgba(65, 65, 65, 0.8);
+    background-color: rgb(63, 78, 90, 0.8);
 
     & a {
         font-size: 1em;
@@ -29,7 +29,7 @@
 }
 
 .sticky-nav {
-    background-color: rgba(65, 65, 65, 0.8);
+    background-color: rgb(63, 78, 90, 0.8);
 
 
     transition: 0.5s ease-in-out;
