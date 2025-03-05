@@ -2,6 +2,7 @@ import React from 'react'
 import Slideshow from '../components/slideshow'
 import Reviews from '../components/reviews'
 import Bookings from '../components/bookings'
+import VideoPlayer from '../components/videoPlayer'
 
 import { NavLink } from 'react-router'
 
@@ -67,6 +68,9 @@ function Home() {
                 </button>
             </a>
         </section>
+        <section className="centered-section">
+            <VideoPlayer />
+        </section>
         <section id='theTour' className='theTour centered-section'>
             <div className="content">
                 <h2>THE TOUR</h2>
@@ -95,14 +99,12 @@ function Home() {
                 <h2>CHARTERS</h2>
                 <h3>Did you know we do charters?</h3>
                 <p>If you are a larger group and/or would just like the boat to yourself we can arrange a charter
-                    tour!</p>
-                <p>
+                    tour!
                     We can do specific tours such as; a tour to see the sea birds of L’Etac, an early morning
-                    / late evening cruise.</p><p> Or perhaps you fancy a trip around to one of Sark’s secluded bays. We can provide
-                        SUP’s, snorkeling gear and even a packed lunch.</p>
-
-
-                <p>For more information and ideas for a tour to suit you, please click below.</p>
+                    / late evening cruise.</p>
+                <p> Or perhaps you fancy a trip around to one of Sark’s secluded bays. We can provide
+                    SUP’s, snorkeling gear and even a packed lunch.</p>
+                <p>For more information and ideas for a charter to suit you, please click below.</p>
                 <NavLink to={'/charters'}><button className='btn'>Discover more and book yours</button></NavLink>
             </div>
             <img src={charters} alt='Charter trip inside cave' />
