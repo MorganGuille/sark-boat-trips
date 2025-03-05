@@ -12,6 +12,7 @@ footer {
     padding: 1em;
     gap: 3em;
     margin-top: auto;
+
 }
 
 footer ul {
@@ -21,11 +22,19 @@ footer ul {
 
 footer a:hover {
     cursor: pointer;
+    transform: scale(1.1);
 }
 
 .footer-section {
     display: flex;
     flex-direction: column;
+}
+
+.footer-links {
+    display: flex;
+    flex-direction: row;
+    gap: 0.2rem;
+    border: none;
 }
 
 .popUpDisplay {
@@ -64,9 +73,7 @@ footer a:hover {
         text-align: left;
     }
 
-    footer * {
-        margin: 0.2em;
-    }
+
 
     .popUpDisplay {
         bottom: 20%;
@@ -94,4 +101,5 @@ footer a:hover {
         display: flex;
         flex-direction: column;
     }
+
 }
