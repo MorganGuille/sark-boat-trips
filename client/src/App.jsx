@@ -10,6 +10,7 @@ import Charters from './components/charters'
 import Dashboard from "./views/dashboard";
 import Success from "./views/success";
 import Canceled from "./views/canceled";
+import NotFound from "./views/notfound";
 
 import Footer from './components/footer'
 
@@ -28,6 +29,7 @@ function App() {
           <Route path='/dashboard' element={<Dashboard />} />
           <Route path='/success' element={<Success />} />
           <Route path='/canceled' element={<Canceled />} />
+          <Route path='*' element={<NotFound />} />
         </Routes>
       </Router>
 
