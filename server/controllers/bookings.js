@@ -72,7 +72,7 @@ const addBooking = async (req, res) => {
                 to: email,
                 subject: 'Booking Confirmation Sark Boat Trips',
                 html: `<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
-                <div style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto auto auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
+                <div style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto 4rem auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
                 <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTbfVS_8hzPlk9unxom9wpjtPJyZ_7XgpjsuA&s"
                         alt="Sark Boat Trips" width="42" height="42"
                         style="background-color: white; padding: 0.2rem; border-radius: 50px;">
@@ -111,7 +111,7 @@ const addBooking = async (req, res) => {
                 subject: `New Booking ${date}`,
                 html: `<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
                             <div
-                                style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto auto auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
+                                style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto 4rem auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
                                 <h3>New Booking ${date}</h3>
                                 <p>A new booking has been made by:</p>
                                 <p><strong>${firstName} ${lastName}</strong></p>
@@ -166,7 +166,7 @@ const deleteBooking = async (req, res) => {
             subject: 'Booking CANCELLED - Sark Boat Trips',
             html: `<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
                         <div
-                            style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto auto auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
+                            style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto 4rem auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
                             <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTbfVS_8hzPlk9unxom9wpjtPJyZ_7XgpjsuA&s"
                                 alt="Sark Boat Trips" width="42" height="42"
                                 style="background-color: white; padding: 0.2rem; border-radius: 50px;">
@@ -198,7 +198,7 @@ const deleteBooking = async (req, res) => {
             subject: `Booking CANCELLED ${bookingToDelete.date}`,
             html: `<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
                     <div
-                        style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto auto auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
+                        style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto 4rem auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
                         <h3>Booking <strong style="color: lightcoral;">CANCELLED</strong></h3>
                         <p>Name : ${bookingToDelete.firstName} ${bookingToDelete.lastName} </p>
                         <p>Date : ${bookingToDelete.date} at ${bookingToDelete.timeslot}</p>
@@ -330,7 +330,7 @@ const updateBooking = async (req, res) => {
             subject: 'Booking UPDATED - Sark Boat Trips',
             html: `<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
                         <div
-                            style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto auto auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
+                            style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto 4rem auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
                             <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTbfVS_8hzPlk9unxom9wpjtPJyZ_7XgpjsuA&s"
                                 alt="Sark Boat Trips" width="42" height="42"
                                 style="background-color: white; padding: 0.2rem; border-radius: 50px;">
@@ -362,7 +362,7 @@ const updateBooking = async (req, res) => {
             subject: 'Booking <strong style="color: aquamarine;">UPDATED</strong>',
             html: `<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
                         <div
-                            style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto auto auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
+                            style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto 4rem auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
                             <h3>Booking <strong style="color: aquamarine;">UPDATED</strong></h3>
                             <p>Name : ${updatedBooking.firstName} ${updatedBooking.lastName} </p>
                             <p>Date : ${updatedBooking.date} at ${updatedBooking.timeslot}</p>

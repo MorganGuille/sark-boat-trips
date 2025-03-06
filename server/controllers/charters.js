@@ -126,7 +126,7 @@ const verifyPayment = async (req, res) => {
                 subject: 'PRIVATE CHARTER Confirmation Sark Boat Trips',
                 html: `<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
                             <div
-                                style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto auto auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
+                                style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto 4rem auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
                                 <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTbfVS_8hzPlk9unxom9wpjtPJyZ_7XgpjsuA&s"
                                     alt="Sark Boat Trips" width="42" height="42"
                                     style="background-color: white; padding: 0.2rem; border-radius: 50px;">
@@ -164,7 +164,7 @@ const verifyPayment = async (req, res) => {
                 subject: `New CHARTER on : ${date}`,
                 html: `<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
                             <div
-                                style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto auto auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
+                                style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto 4rem auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
                                 <h3>New PRIVATE CHARTER ${charterData.date}</h3>
                                 <p>Name: ${charterData.firstName} ${charterData.lastName}</p>
                                 <p>Date: ${charterData.timeslot} ${charterData.date}.</p>
