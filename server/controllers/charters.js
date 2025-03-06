@@ -124,19 +124,63 @@ const verifyPayment = async (req, res) => {
                 from: 'sarkboattrips@gmail.com',
                 to: email,
                 subject: 'PRIVATE CHARTER Confirmation Sark Boat Trips',
-                html: `<p>Dear ${charterData.firstName},</p>
-                        <p>Your private charter on ${charterData.date} at ${charterData.timeslot} has been confirmed and deposit received. If you havnt already, please
-                        get in touch so we can plan your trip!. 
-                        if anything changes we'll be in touch!</p>
-                        <p> Thank you so much for booking with us, Sark Boat Trips</p>`,
+                html: `<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
+                            <div
+                                style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto auto auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
+                                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTbfVS_8hzPlk9unxom9wpjtPJyZ_7XgpjsuA&s"
+                                    alt="Sark Boat Trips" width="42" height="42"
+                                    style="background-color: white; padding: 0.2rem; border-radius: 50px;">
+                                <h3>Dear ${charterData.firstName},</h3>
+                                <p>Your <strong style="color: aquamarine;">private charter</strong> on ${charterData.date} at
+                                    ${charterData.timeslot} has been confirmed and we've received your deposit</p>
+                                <p>We love to run unique charters, so if you haven't already, please get in touch so we can plan your trip!</p>
+                                <p><a style="color: white; text-decoration: none;" href="mailto:sarkboattrips@gmail.com">&#9993
+                                        sarkboattrips@gmail.com</a></p>
+                                <p>If your plans change or you need to cancel your charter, please let us know asap</p>
+                                <p>We try to be as flexible as we can and just to note that your deposit <strong>is refundable</strong> if we
+                                    need to cancel, for example, due
+                                    to the weather.</p>
+                                <br>
+                                <p> Thank you so much for booking with us,</p>
+                                <h3>Sark Boat Trips</h3>
+                                <hr>
+                                <br>
+                                <div style="text-align: center;">
+                                    <a style="color: white; text-decoration: none; margin: 0; padding: 0;"
+                                        href="https://maps.app.goo.gl/E2XLJqrGku7eDePZ8" target='_blank'>&#9875 Creux Harbour, Sark</a>
+                                    <br>
+                                    <a style="color: white; text-decoration: none;" href="tel:+44-7911-764-246">&#9990 +44 7911 764 246</a>
+                                    <br>
+                                    <a style="color: white; text-decoration: none;" href="mailto:sarkboattrips@gmail.com">&#9993
+                                        sarkboattrips@gmail.com</a>
+                                </div>
+                            </div>
+                        </div>`,
             };
 
             const mailOptionsAdmin = {
                 from: 'sarkboattrips@gmail.com',
                 to: 'sarkboattrips@gmail.com',
                 subject: `New CHARTER on : ${date}`,
-                html: `<p>A new PRIVATE CHARTER has been made by ${charterData.firstName} ${charterData.lastName} on ${charterData.date} at ${charterData.timeslot}.</p>
-                        <p>Contact them by email : ${charterData.email} or phone : ${charterData.phone}`,
+                html: `<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
+                            <div
+                                style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto auto auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
+                                <h3>New PRIVATE CHARTER ${charterData.date}</h3>
+                                <p>Name: ${charterData.firstName} ${charterData.lastName}</p>
+                                <p>Date: ${charterData.timeslot} ${charterData.date}.</p>
+                                <hr>
+                                <p>Message:</p>
+                                <p>${charterData.message}</p>
+                                <hr>
+                                <p>Email : ${charterData.email}</p>
+                                <p>Phone : ${charterData.phone}</p>
+                                <p>Accommodation : ${charterData.accommodation}</p>
+                                <hr>
+                                <br>
+                                <a style="background-color: rgb(5, 171, 116); color: white; text-decoration: none; padding: 0.5rem;"
+                                    href="https://www.sarkboattrips.com/dashboard" target='_blank'>Go to dashboard</a>
+                            </div>
+                        </div>`,
             };
             try {
                 await sendEmail(mailOptionsClient);
