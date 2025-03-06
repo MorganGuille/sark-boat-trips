@@ -164,14 +164,56 @@ const deleteBooking = async (req, res) => {
             from: 'sarkboattrips@gmail.com',
             to: bookingToDelete.email,
             subject: 'Booking CANCELLED - Sark Boat Trips',
-            html: `<p>Dear ${bookingToDelete.firstName},</p>
-                   <p>Your booking on ${bookingToDelete.date} at ${bookingToDelete.timeslot} has been CANCELLED.</p>
-                   <p>If this is a mistake please contact us</p>
-                   <p>Our whatsapp number is : +44 7911 764246</p>
-                   <p>Thank you so much, Sark Boat Trips</p>`,
+            html: `<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
+                        <div
+                            style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto auto auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
+                            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTbfVS_8hzPlk9unxom9wpjtPJyZ_7XgpjsuA&s"
+                                alt="Sark Boat Trips" width="42" height="42"
+                                style="background-color: white; padding: 0.2rem; border-radius: 50px;">
+                            <h3>Dear ${bookingToDelete.firstName},</h3>
+                            <p>Your booking on ${bookingToDelete.date} at ${bookingToDelete.timeslot} has been <strong
+                                    style="color: lightcoral;">CANCELLED</strong>.
+                            </p>
+                            <p>If this is a mistake please contact us</p>
+                            <p>Thank you so much,</p>
+                            <h3>Sark Boat Trips</h3>
+                            <hr>
+                            <br>
+                            <div style="text-align: center;">
+                                <a style="color: white; text-decoration: none; margin: 0; padding: 0;"
+                                    href="https://maps.app.goo.gl/E2XLJqrGku7eDePZ8" target='_blank'>&#9875 Creux Harbour, Sark</a>
+                                <br>
+                                <a style="color: white; text-decoration: none;" href="tel:+44-7911-764-246">&#9990 +44 7911 764 246</a>
+                                <br>
+                                <a style="color: white; text-decoration: none;" href="mailto:sarkboattrips@gmail.com">&#9993
+                                    sarkboattrips@gmail.com</a>
+                            </div>
+                        </div>
+                    </div>`,
+        };
+
+        const mailOptionsAdmin = {
+            from: 'sarkboattrips@gmail.com',
+            to: 'sarkboattrips@gmail.com',
+            subject: `Booking CANCELLED ${bookingToDelete.date}`,
+            html: `<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
+                    <div
+                        style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto auto auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
+                        <h3>Booking <strong style="color: lightcoral;">CANCELLED</strong></h3>
+                        <p>Name : ${bookingToDelete.firstName} ${bookingToDelete.lastName} </p>
+                        <p>Date : ${bookingToDelete.date} at ${bookingToDelete.timeslot}</p>
+                        <p>Email : ${bookingToDelete.email} </p>
+                        <p>Phone : ${bookingToDelete.phone} </p>
+                        <hr>
+                        <br>
+                        <a style="background-color: rgb(5, 171, 116); color: white; text-decoration: none; padding: 0.5rem;"
+                            href="https://www.sarkboattrips.com/dashboard" target='_blank'>Go to dashboard</a>
+                    </div>
+                </div>`
         };
 
         await sendEmail(mailOptionsClient);
+        await sendEmail(mailOptionsAdmin);
         res.send({ ok: true, data: `Booking for ${lastName} on ${date} at ${timeslot} deleted successfully and email sent` });
 
     } catch (error) {
@@ -286,10 +328,52 @@ const updateBooking = async (req, res) => {
             from: 'sarkboattrips@gmail.com',
             to: updatedBooking.email,
             subject: 'Booking UPDATED - Sark Boat Trips',
-            html: `<p>Dear ${updatedBooking.firstName},</p>
-                   <p>Your booking has been UPDATED. You are booked for ${updatedBooking.adults} adults and ${updatedBooking.children} children on ${updatedBooking.date} at ${updatedBooking.timeslot}  </p>
-                   <p>If this is a mistake please contact us</p>
-                   <p>Thank you so much, Sark Boat Trips</p>`,
+            html: `<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
+                        <div
+                            style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto auto auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
+                            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTbfVS_8hzPlk9unxom9wpjtPJyZ_7XgpjsuA&s"
+                                alt="Sark Boat Trips" width="42" height="42"
+                                style="background-color: white; padding: 0.2rem; border-radius: 50px;">
+                            <h3>Dear ${updatedBooking.firstName},</h3>
+                            <p>Your booking has been <strong style="color: aquamarine;">UPDATED</strong>.</p>
+                            <p>You are booked for ${updatedBooking.adults} adults and ${updatedBooking.children} children on
+                                ${updatedBooking.date} at ${updatedBooking.timeslot}</p>
+                            <p>If this is a mistake please contact us</p>
+                            <p>Thank you so much,</p>
+                            <h3>Sark Boat Trips</h3>
+                            <hr>
+                            <br>
+                            <div style="text-align: center;">
+                                <a style="color: white; text-decoration: none; margin: 0; padding: 0;"
+                                    href="https://maps.app.goo.gl/E2XLJqrGku7eDePZ8" target='_blank'>&#9875 Creux Harbour, Sark</a>
+                                <br>
+                                <a style="color: white; text-decoration: none;" href="tel:+44-7911-764-246">&#9990 +44 7911 764 246</a>
+                                <br>
+                                <a style="color: white; text-decoration: none;" href="mailto:sarkboattrips@gmail.com">&#9993
+                                    sarkboattrips@gmail.com</a>
+                            </div>
+                        </div>
+                    </div>`,
+        };
+
+        const mailOptionsAdmin = {
+            from: 'sarkboattrips@gmail.com',
+            to: 'sarkboattrips@gmail.com',
+            subject: 'Booking <strong style="color: aquamarine;">UPDATED</strong>',
+            html: `<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
+                        <div
+                            style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto auto auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
+                            <h3>Booking <strong style="color: aquamarine;">UPDATED</strong></h3>
+                            <p>Name : ${updatedBooking.firstName} ${updatedBooking.lastName} </p>
+                            <p>Date : ${updatedBooking.date} at ${updatedBooking.timeslot}</p>
+                            <p>Email : ${updatedBooking.email} </p>
+                            <p>Phone : ${updatedBooking.phone} </p>
+                            <hr>
+                            <br>
+                            <a style="background-color: rgb(5, 171, 116); color: white; text-decoration: none; padding: 0.5rem;"
+                                href="https://www.sarkboattrips.com/dashboard" target='_blank'>Go to dashboard</a>
+                        </div>
+                    </div>`,
         };
 
 
@@ -297,6 +381,7 @@ const updateBooking = async (req, res) => {
             return res.status(404).send({ ok: false, data: 'Booking not found!' });
         }
         await sendEmail(mailOptionsClient);
+        await sendEmail(mailOptionsAdmin);
         res.send({ ok: true, data: `Booking for ${updatedBooking.firstName} ${updatedBooking.lastName} on ${updatedBooking.date} updated successfully and email sent` });
     } catch (error) {
         res.status(500).send({ ok: false, data: "Error updating booking", error });
