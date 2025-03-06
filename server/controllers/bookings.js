@@ -59,7 +59,7 @@ const updateAvailability = async (req, res) => {
 
 
 const addBooking = async (req, res) => {
-    let { date, firstName, lastName, phone, adults, children = 0, email, timeslot } = req.body;
+    let { date, firstName, lastName, phone, adults, children = 0, email, timeslot, message, accommodation } = req.body;
 
     try {
 
@@ -71,18 +71,65 @@ const addBooking = async (req, res) => {
                 from: 'sarkboattrips@gmail.com',
                 to: email,
                 subject: 'Booking Confirmation Sark Boat Trips',
-                html: `<p>Dear ${firstName},</p>
-                       <p>Your booking for ${adults} adults and ${children} children on ${date} at ${timeslot} has been confirmed. Please note that due to weather or 
-                       availability we may need to change the time of your trip. We will contact you if anything changes!</p>
-                       <p> Thank you so much, Sark Boat Trips</p>`,
+                html: `<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
+                <div style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto auto auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTbfVS_8hzPlk9unxom9wpjtPJyZ_7XgpjsuA&s"
+                        alt="Sark Boat Trips" width="42" height="42"
+                        style="background-color: white; padding: 0.2rem; border-radius: 50px;">
+                <h3>Dear ${firstName},</h3>
+                <p>Your booking for ${adults} adults and ${children} children on ${date} at ${timeslot} has been confirmed.</p>
+                <p>Please be at the <strong>Creux Harbour</strong> shortly before ${timeslot}, bring weather appropriate
+                clothing and any snacks
+                and drinks you'd like.</p>
+                <p>Payment is at the end of the trip and you can pay either by cash or card.</p>
+                <p>If you have any questions, please dont hesitate to ask</p>
+                <br>
+                <p><strong>Please note that due to weather or availability we may need to change the time of your trip.</strong>
+                </p>
+                <p>We will contact you if anything changes!</p>
+                <br>
+                <p>Thank you so much,</p>
+                <h3>Sark Boat Trips</h3>
+                <hr>
+                <br>
+                <div style="text-align: center;">
+                <a style="color: white; text-decoration: none; margin: 0; padding: 0;"
+                    href="https://maps.app.goo.gl/E2XLJqrGku7eDePZ8" target='_blank'>&#9875 Creux Harbour, Sark</a>
+                <br>
+                <a style="color: white; text-decoration: none;" href="tel:+44-7911-764-246">&#9990 +44 7911 764 246</a>
+                <br>
+                <a style="color: white; text-decoration: none;" href="mailto:sarkboattrips@gmail.com">&#9993
+                    sarkboattrips@gmail.com</a>
+        </div>
+    </div>
+</div>`,
             };
 
             const mailOptionsAdmin = {
                 from: 'sarkboattrips@gmail.com',
                 to: 'sarkboattrips@gmail.com',
                 subject: `New Booking ${date}`,
-                html: `<p>A new booking has been made by ${firstName} ${lastName} for ${adults} adults and ${children} children on ${date} at ${timeslot}.</p>
-                        <p>Contact them by email : ${email} or phone : ${phone}`,
+                html: `<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
+                            <div
+                                style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto auto auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
+                                <h3>New Booking ${date}</h3>
+                                <p>A new booking has been made by:</p>
+                                <p><strong>${firstName} ${lastName}</strong></p>
+                                <p>for ${adults} adults and ${children} children </p>
+                                <p>on ${date} at ${timeslot}.</p>
+                                <hr>
+                                <p>Message:</p>
+                                <p>${message}</p>
+                                <hr>
+                                <p>Email : ${email}</p>
+                                <p>Phone : ${phone}</p>
+                                <p>Accommodation : ${accommodation}</p>
+                                <hr>
+                                <br>
+                                <a style="background-color: rgb(5, 171, 116); color: white; text-decoration: none; padding: 0.5rem;"
+                                    href="https://www.sarkboattrips.com/dashboard" target='_blank'>Go to dashboard</a>
+                            </div>
+                        </div>`,
             };
             try {
                 await sendEmail(mailOptionsClient);
