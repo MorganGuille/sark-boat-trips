@@ -60,6 +60,8 @@ const updateAvailability = async (req, res) => {
 
 const addBooking = async (req, res) => {
     let { date, firstName, lastName, phone, adults, children = 0, email, timeslot, message, accommodation } = req.body;
+    let childResponse = ``
+    Number(children) > 0 ? childResponse = `and ${children} children` : childResponse = ``
 
     try {
 
@@ -135,7 +137,11 @@ const addBooking = async (req, res) => {
                 await sendEmail(mailOptionsClient);
                 await sendEmail(mailOptionsAdmin);
                 let newBooking = await Bookings.create(req.body);
-                res.send({ ok: true, data: `Thanks ${firstName}, your booking for ${adults} adults and ${children} children on ${date} at ${timeslot} added successfully. Please check your email for confirmation` });
+                res.send({
+                    ok: true, data: `Thanks ${firstName}, your booking for ${adults} adults ${childResponse} on
+                            ${date} at ${timeslot} has been reserved. Please check your email for confirmation (Dont forget to check the spam folder!)`
+
+                });
             } catch (emailError) {
                 console.error("Email sending failed:", emailError);
                 res.status(500).send({ ok: false, data: "Booking confirmed, but email sending failed. Please contact us." });

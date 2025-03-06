@@ -263,7 +263,9 @@ function BookingForm({ selectedDate }) {
                 </button>
             </form>
             {showResponse != null ?
-                <div className='responseDisplay'><h3>{showResponse}</h3><button className='btn' onClick={() => setResponse(null)}>Confirm</button></div>
+                <div className="responseBackdrop">
+                    <div className='responseDisplay'><h3>{showResponse}</h3><button className='btn' onClick={() => setResponse(null)}>Confirm</button></div>
+                </div>
                 : null}
         </section>
     </>)
