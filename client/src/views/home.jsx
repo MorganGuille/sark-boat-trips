@@ -42,10 +42,13 @@ function Home() {
     ]
 
     return (<>
+        <title>Sark Boat Trips</title>
+        <meta name="description" content="Explore the beautiful coastline of Sark with Sark Boat Trips unforgettable boat tours. Discover stunning scenery, exciting marine life and create lasting memories. Book now!"></meta>
+        <meta name="keywords" content="boat tours, Sark boat trips, birdwatching tours, dolphin watching, private boat charters, family friendly tours"></meta>
         <section id='heroBanner' className="hero-banner">
             <span>
                 <h1>THE BEST WAY TO SEE SARK</h1>
-                <h3>BOAT TRIPS WITH SARK LOCALS</h3>
+                <h3>BOAT TOURS WITH SARK LOCALS</h3>
             </span>
             <a href='#reservations' >
                 {/* <!-- From Uiverse.io by adamgiebl -->  */}
@@ -97,7 +100,7 @@ function Home() {
         <section id='charters' className="charters centered-section">
             <div className="content">
                 <h2>CHARTERS</h2>
-                <h3>Did you know we do charters?</h3>
+                <h4>Did you know we do charters?</h4>
                 <p>If you are a larger group and/or would just like the boat to yourself we can arrange a charter
                     tour!
                     We can do specific tours such as; a tour to see the sea birds of L’Etac, an early morning
@@ -114,7 +117,7 @@ function Home() {
 
             <div className="grid1 textGrid">
                 <div>
-                    <h3>Sark is the crown jewel of the Channel Islands, nestled in between Guernsey and Jersey.</h3>
+                    <h4>Sark is the crown jewel of the Channel Islands, nestled in between Guernsey and Jersey.</h4>
                     <p>Sark offers a truly unique holiday experience for those wanting to escape the bright lights and
                         noise
                         of
@@ -131,7 +134,7 @@ function Home() {
                 </div>
 
                 <div>
-                    <h3>Did you know?:</h3>
+                    <h4>Did you know?:</h4>
                     <p>Sark has a tidal range of around 10m. which means no trip around the island will be the same, on
                         some
                         tides we can access caves, on others we can get within touching distance of some of the

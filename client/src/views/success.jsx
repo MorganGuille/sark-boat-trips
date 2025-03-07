@@ -37,6 +37,7 @@ function Success() {
 
 
     return (<>
+        <title>Sark Boat Trips | Success</title>
         <div className='stripe-landing'>
             <h1 >Success</h1>
             <p>{`${response.name}, thank you so much for booking your charter tour with us!`}</p>

@@ -8,6 +8,9 @@ import guillemots from "../assets/images/Guillemots.jpg"
 
 function Charters() {
     return (<>
+        <title>Sark Boat Trips | Charters</title>
+        <meta name="description" content="Book a private charter tour with Sark Boat Trips! Explore Sarks facinating coastline, visit secluded bays and swim or SUP from the boat!"></meta>
+        <meta name="keywords" content="Private Charter Tours, Beach explorers, Stand up paddle Board rental, Swimming trips"></meta>
         <section id="charters" className='charterTours' >
             <h2>CHARTER TOURS</h2>
             <div className='grid1'>
@@ -34,8 +37,8 @@ function Charters() {
                     Maybe with a glass of champagne to toast the day! </p>
                 <p><strong>Safety boat.</strong> Whether you’re doing a long distance swim / exploring the island by kayak, safety is paramount. We can stay close and escort you around the island.
                     We also have a wealth of experience and knowledge of the tides around the island and can help you plan a safe route. </p>
-                <h3>If you have any questions or ideas, please contact us and discuss options. We’re sure we can build you an adventure to remember!</h3>
-                <h3>Or use the form below to book your charter trip! please note we require a (refundable) deposit of 20% to reserve a charter tour!</h3>
+                <h4>If you have any questions or ideas, please contact us and discuss options. We’re sure we can build you an adventure to remember!</h4>
+                <h4>Or use the form below to book your charter trip! please note we require a (refundable) deposit of 20% to reserve a charter tour!</h4>
             </div>
         </section>
 

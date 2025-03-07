@@ -1,36 +1,3 @@
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-html {
-    scroll-behavior: smooth;
-    overflow-x: hidden;
-}
-
-body {
-    font-family: sans-serif;
-}
-
-h1 {
-    font-size: 5rem;
-}
-
-h2 {
-    font-size: 3rem;
-    margin: 0.5em 0;
-}
-
-h3 {
-    font-size: 1rem;
-}
-
-p {
-    margin: 1em 0;
-}
-
-
 .hero-banner {
     background: linear-gradient(rgba(0, 0, 0, 0.144), rgba(0, 0, 0, 0.3)), url(../assets/images/hero-banner.jpg) left / cover no-repeat;
     height: 100vh;
@@ -105,7 +72,7 @@ p {
 }
 
 .charters img {
-    
+
     width: 100%;
 
 }

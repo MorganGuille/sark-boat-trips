@@ -1,4 +1,5 @@
 :root {
+
   line-height: 1.5;
   font-weight: 400;
 
@@ -11,8 +12,36 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+* {
+  font-family: Noto Sans, sans-serif;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+}
+
+h1 {
+  font-size: 5rem;
+}
+
+h2 {
+  font-size: 3rem;
+  margin: 0.5em 0;
+}
+
+h3 {
+  font-size: 2rem;
+}
+
+p {
+  margin: 1em 0;
+}
+
 body {
-  font-family: raleway, sans-serif;
   margin: 0;
   padding: 0;
 }
@@ -155,6 +184,7 @@ body {
     width: 15rem;
     height: 7rem;
   }
+
 
 }
 
