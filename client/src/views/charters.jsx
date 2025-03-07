@@ -1,5 +1,5 @@
 import React from 'react'
-import Bookings from './bookings'
+import Bookings from '../components/bookings'
 
 import '../css/charters.css'
 
