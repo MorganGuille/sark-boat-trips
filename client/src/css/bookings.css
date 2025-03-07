@@ -13,3 +13,11 @@
     max-width: 350px;
     text-align: center;
 }
+
+@media (max-width: 1020px) {
+
+    .bookings {
+        flex-direction: column;
+        gap: 1em;
+    }
+}

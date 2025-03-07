@@ -109,3 +109,60 @@
         transform: scale(0.95);
     }
 }
+
+@media (max-width: 1366px) {
+
+
+
+    .centered-section {
+        max-width: 80%;
+    }
+
+    .hero-banner {
+        gap: 20em;
+        background-position: 0% 0%;
+    }
+
+    .sarkIsland {
+        max-width: 80%;
+    }
+
+    .sarkIsland .grid1 {
+        gap: 1em;
+        padding: 1em 0;
+        text-align: start;
+        align-items: center;
+    }
+
+    .sarkIsland img {
+        max-width: 500px;
+        width: 100%;
+
+    }
+
+    .sarkIsland .textGrid {
+        grid-template-columns: auto;
+    }
+
+}
+
+
+@media (max-width: 1020px) {
+
+
+    .centered-section {
+        max-width: 90%;
+    }
+
+    .sarkIsland .grid1 {
+        display: flex;
+        flex-direction: column;
+        gap: 1em;
+        padding: 1em 0;
+        text-align: center;
+        align-items: center;
+    }
+
+
+
+}

@@ -125,155 +125,16 @@ body {
     font-size: 1.2rem;
   }
 
-  .centered-section {
-    max-width: 80%;
-  }
-
-  .hero-banner {
-    gap: 20em;
-    background-position: 0% 0%;
-  }
-
-
-
-
-
-  .image-slider {
-    height: 80vh;
-  }
-
-  .slider-controls button {
-    font-size: 1rem;
-    padding: 20px 10px;
-  }
-
-  .slide {
-    background-size: contain
-  }
-
-  .sarkIsland {
-    max-width: 80%;
-  }
-
-  .sarkIsland .grid1 {
-    gap: 1em;
-    padding: 1em 0;
-    text-align: start;
-    align-items: center;
-  }
-
-  .sarkIsland img {
-    max-width: 500px;
-    width: 100%;
-
-  }
-
-  .sarkIsland .textGrid {
-    grid-template-columns: auto;
-  }
-
-  .reviews {
-    max-width: 80%;
-  }
-
-  .reviewsContainer {
-    justify-content: space-around;
-  }
-
-  .reviewCard {
-    width: 15rem;
-    height: 7rem;
-  }
-
-
 }
 
 
 @media (max-width: 1020px) {
   h1 {
-    font-size: 3rem;
+    font-size: 2.5rem;
   }
 
   h2 {
     font-size: 2rem;
   }
-
-  .hero-banner {
-    gap: 20em;
-    background-position: 10% 75%;
-  }
-
-  .centered-section {
-    max-width: 90%;
-  }
-
-  .sarkIsland .grid1 {
-    display: flex;
-    flex-direction: column;
-    gap: 1em;
-    padding: 1em 0;
-    text-align: center;
-    align-items: center;
-
-  }
-
-  .image-slider {
-    height: 60vh;
-  }
-
-  .slider-controls {
-    visibility: hidden;
-  }
-
-  .slider-controls button {
-    font-size: 0.8em;
-    padding: 10px 8px;
-    margin: 0 3px;
-  }
-
-  .reviews {
-    max-width: 95%;
-  }
-
-  .reviewsContainer {
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    gap: 1em;
-  }
-
-  .reviewCard {
-    width: 90%;
-    height: auto;
-    padding: 1em;
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .reviewCard img {
-    width: 30px;
-    height: auto;
-  }
-
-  .reviewCard span {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .reviewCard p {
-    margin: 0;
-  }
-
-  .bookings {
-    flex-direction: column;
-    gap: 1em;
-  }
-
-  footer {
-    flex-direction: column;
-    padding: 0.5rem;
-    gap: 0em;
-  }
-
 
 }

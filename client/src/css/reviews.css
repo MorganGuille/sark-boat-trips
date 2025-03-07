@@ -36,3 +36,58 @@ a {
 .gold {
     color: goldenrod;
 }
+
+@media (max-width: 1366px) {
+
+    .reviews {
+        max-width: 80%;
+    }
+
+    .reviewsContainer {
+        justify-content: space-around;
+    }
+
+    .reviewCard {
+        width: 15rem;
+        height: 7rem;
+    }
+}
+
+@media (max-width: 800px) {
+
+    .reviews {
+        display: flex;
+        flex-direction: column;
+        max-width: 95%;
+    }
+
+    .reviewsContainer {
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .reviewCard {
+        width: 90%;
+        height: auto;
+        padding: 1em;
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .reviewCard img {
+        width: 30px;
+        height: auto;
+    }
+
+    .reviewCard span {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .reviewCard p {
+        margin: 0;
+    }
+
+}
