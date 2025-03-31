@@ -20,6 +20,9 @@ function Bookings() {
         <section className="bookings">
             <div>
                 <p className='textArea'>Please use the calendar to select a date and then fill out the form to make a booking</p>
+                <p className='textArea'>Prices for 2025 are :</p>
+                <p className='textArea'><strong>Adults</strong> £40 <strong>Children</strong> £25 <strong>Infants</strong> free</p>
+                <p className='textArea'><strong>Private Charter</strong> £400 </p>
                 <MyCalendar setSelectedDate={setSelectedDate} />
 
             </div>
