@@ -365,7 +365,7 @@ const updateBooking = async (req, res) => {
         const mailOptionsAdmin = {
             from: 'sarkboattrips@gmail.com',
             to: 'sarkboattrips@gmail.com',
-            subject: 'Booking <strong style="color: aquamarine;">UPDATED</strong>',
+            subject: 'Booking UPDATED',
             html: `<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
                         <div
                             style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto 4rem auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
