@@ -13,11 +13,11 @@ function MyCalendar({ setSelectedDate }) {
     let currentLoc = useLocation()
 
     const blockDateStart = () => {
-        return currentLoc.pathname === '/dashboard' ? null : new Date("05-01-2025")
+        return currentLoc.pathname === '/dashboard' ? null : new Date("2025-05-01")
     }
 
     const blockDateEnd = () => {
-        return currentLoc.pathname === '/dashboard' ? null : new Date("09-30-2025")
+        return currentLoc.pathname === '/dashboard' ? null : new Date("2025-09-30")
     }
 
     useEffect(() => {
