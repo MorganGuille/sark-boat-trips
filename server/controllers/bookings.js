@@ -79,7 +79,7 @@ const addBooking = async (req, res) => {
                         alt="Sark Boat Trips" width="42" height="42"
                         style="background-color: white; padding: 0.2rem; border-radius: 50px;">
                 <h3>Dear ${firstName},</h3>
-                <p>Your booking for ${adults} adults and ${children} children on ${date} at ${timeslot} has been confirmed.</p>
+                <p>Your booking for ${adults} adults ${childResponse} on ${date} at ${timeslot} has been confirmed.</p>
                 <p>Please be at the <strong>Creux Harbour</strong> shortly before ${timeslot}, bring weather appropriate
                 clothing and any snacks
                 and drinks you'd like.</p>
@@ -117,7 +117,7 @@ const addBooking = async (req, res) => {
                                 <h3>New Booking ${date}</h3>
                                 <p>A new booking has been made by:</p>
                                 <p><strong>${firstName} ${lastName}</strong></p>
-                                <p>for ${adults} adults and ${children} children </p>
+                                <p>for ${adults} adults ${childResponse}</p>
                                 <p>on ${date} at ${timeslot}.</p>
                                 <hr>
                                 <p>Message:</p>
@@ -156,14 +156,14 @@ const addBooking = async (req, res) => {
 };
 
 const deleteBooking = async (req, res) => {
-    const { date, lastName, timeslot } = req.body;
+    const { _id } = req.body;
 
     try {
-        const bookingToDelete = await Bookings.findOne({ date, lastName, timeslot });
-        const delBooking = await Bookings.deleteOne({ date, lastName, timeslot });
+        const bookingToDelete = await Bookings.findOne({ _id: _id });
+        const delBooking = await Bookings.deleteOne({ _id: _id });
 
         if (delBooking.deletedCount === 0) {
-            return res.status(404).send({ ok: false, data: `No booking found for ${lastName} on ${date} at ${timeslot}` });
+            return res.status(404).send({ ok: false, data: `No booking found for booking ID : ${_id}` });
         }
 
         const mailOptionsClient = {
@@ -220,7 +220,7 @@ const deleteBooking = async (req, res) => {
 
         await sendEmail(mailOptionsClient);
         await sendEmail(mailOptionsAdmin);
-        res.send({ ok: true, data: `Booking for ${lastName} on ${date} at ${timeslot} deleted successfully and email sent` });
+        res.send({ ok: true, data: `Booking for ${bookingToDelete.lastName} on ${bookingToDelete.date} at ${bookingToDelete.timeslot} deleted successfully and email sent` });
 
     } catch (error) {
         console.error("Error deleting booking:", error);

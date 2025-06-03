@@ -55,9 +55,7 @@ function Dashboard() {
     const deleteBooking = async (e) => {
         e.preventDefault()
         let booking = {
-            date: e.target.date.value,
-            lastName: e.target.lastName.value,
-            timeslot: e.target.timeslot.value,
+            _id: e.target._id.value
         }
         try {
             const res = await axios.post(`${URL}/bookings/delete`, booking)
@@ -113,17 +111,14 @@ function Dashboard() {
                             </form>
                         </div>
                         <form id='deleteBooking' onSubmit={deleteBooking} className='minorform' >
-                            <input type='text' id="lastName" name="lastName" placeholder='Lastname' />
-                            <input type='text' id="date" name="date" placeholder='Date dd-mm-yyyy' />
-                            <select id="timeslot" name="timeslot" required>
-                                <option value="11am">11am</option>
-                                <option value="2pm">2pm</option>
-                            </select>
+                            <input type='text' id='_id' name='_id' placeholder='Booking ID' />
+
                             <button className='btn' style={{ backgroundColor: 'lightcoral' }}>Delete this booking</button>
-                            {showResponse != null ?
-                                <div className='responseDisplay'><h3>{showResponse}</h3><button className='btn' onClick={() => setResponse(null)}>Confirm</button></div>
-                                : null}
+
                         </form>
+                        {showResponse != null ?
+                            <div className='responseDisplay'><h3>{showResponse}</h3><button className='btn' onClick={() => setResponse(null)}>Confirm</button></div>
+                            : null}
                         <form id='updateAvailability' className='minorform' onSubmit={updateAvailability}>
                             <input type='text' id="date" name="date" placeholder='Date dd-mm-yyyy' />
                             <select id="timeslot" name="timeslot" required>
