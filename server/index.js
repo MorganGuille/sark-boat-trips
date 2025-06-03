@@ -29,6 +29,7 @@ connecting()
 app.use("/bookings", require("./routes/bookings"))
 app.use("/admin", require("./routes/admin"))
 app.use("/charters", require("./routes/charters"))
+app.use("/notes", require("./routes/notes"))
 app.get('/*', function (req, res) {
     res.sendFile(path.join(__dirname, '../client/dist', 'index.html'));
 });

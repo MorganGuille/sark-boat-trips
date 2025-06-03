@@ -12,6 +12,8 @@ function Dashboard() {
     const [selectedDate, setSelectedDate] = useState()
     const [bookings, setBookings] = useState([])
     const [search, setSearch] = useState("")
+    const [noteContent, setNoteContent] = useState("")
+    const [dateNotes, setDateNotes] = useState([])
     const [showResponse, setResponse] = useState(null)
 
 
@@ -83,6 +85,39 @@ function Dashboard() {
         }
     }
 
+    const addOrUpdateNote = async (e) => {
+        e.preventDefault()
+        if (!selectedDate) {
+            setResponse("Please select a date on the calendar first")
+        }
+
+        let noteData = {
+            date: selectedDate,
+            content: noteContent
+        }
+
+        try {
+            const res = await axios.post(`${URL}/notes`, noteData)
+            setResponse(res.data.message || "Note saved successfully!")
+            setNoteContent('')
+            fetchNotesForSelectedDate();
+        } catch (error) {
+            setResponse(error.response?.data?.message || "Failed to save note")
+        }
+    }
+
+    const fetchNotesForSelectedDate = async () => {
+        if (!selectedDate) return
+
+        try {
+            const res = await axios.get(`${URL}/notes/${selectedDate}`)
+            setDateNotes(res.data.data)
+        } catch (error) {
+            console.error("Error fetching notes", error)
+            setDateNotes([])
+        }
+    }
+
     return (<>
         <title>Sark Boat Trips | Dashboard</title>
         <div className='dashboard'>
@@ -103,22 +138,21 @@ function Dashboard() {
 
                 <div className='bookingsDisplay'>
                     <div className='left-grid'>
+
                         <MyCalendar setSelectedDate={setSelectedDate} />
+
                         <div className='minorform'>
-                            <button className='btn' onClick={getBookingsByDate}>Get bookings by date</button>
+                            <button className='btn' onClick={() => { getBookingsByDate(); fetchNotesForSelectedDate() }}>Get bookings by date</button>
                             <form id='bookingsearch' onSubmit={getBookingsByLastName}>
                                 <input type='text' id="lastName" name="lastName" placeholder='get bookings by last name' />
                             </form>
                         </div>
+
                         <form id='deleteBooking' onSubmit={deleteBooking} className='minorform' >
                             <input type='text' id='_id' name='_id' placeholder='Booking ID' />
-
                             <button className='btn' style={{ backgroundColor: 'lightcoral' }}>Delete this booking</button>
-
                         </form>
-                        {showResponse != null ?
-                            <div className='responseDisplay'><h3>{showResponse}</h3><button className='btn' onClick={() => setResponse(null)}>Confirm</button></div>
-                            : null}
+
                         <form id='updateAvailability' className='minorform' onSubmit={updateAvailability}>
                             <input type='text' id="date" name="date" placeholder='Date dd-mm-yyyy' />
                             <select id="timeslot" name="timeslot" required>
@@ -128,11 +162,50 @@ function Dashboard() {
                             <input type="number" id="capacity" name="capacity" placeholder='capacity' required></input>
                             <button className='btn' type="submit">Update Availability</button>
                         </form>
+
+                        <form id='addNote' className='minorform' onSubmit={addOrUpdateNote}>
+                            <textarea
+                                id='notecontent'
+                                name='notecontent'
+                                placeholder='Enter note for the selected date...'
+                                value={noteContent}
+                                onChange={(e) => setNoteContent(e.target.value)}
+                                rows="2"
+                                cols="50"
+                                required>
+                            </textarea>
+                            <button className='btn' type='submit'>Save Note</button>
+                        </form>
+
+                        {showResponse != null ?
+                            <div className="responseBackdrop">
+                                <div className='responseDisplay'><h3>{showResponse}</h3><button className='btn' onClick={() => setResponse(null)}>Confirm</button></div>
+                            </div>
+                            : null}
                     </div>
+
+
                     <div className='right-grid'>
 
                         <BookingForm selectedDate={selectedDate} />
                     </div>
+                </div>
+
+                <div className='notes-section minorform'>
+
+                    <div className='current-notes'>
+                        <h4>{`Notes for ${selectedDate}`}</h4>
+                        {dateNotes.length > 0 ? (
+                            <ul>
+                                {dateNotes.map((note) => (
+                                    <li key={note._id}>
+                                        {note.content}
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (<p>No notes for this date yet.</p>)}
+                    </div>
+
                 </div>
 
                 <div className='bookingsTable'>

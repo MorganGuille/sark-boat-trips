@@ -109,6 +109,35 @@ th {
     overflow-y: scroll;
 }
 
+.notes-section {
+    border: solid black 1px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    width: 90%;
+    margin: auto;
+    margin-bottom: 1rem;
+
+}
+
+.notes-section li {
+    list-style: none;
+}
+
+.responseBackdrop {
+    display: flex;
+    position: fixed;
+    top: 0%;
+    left: 0%;
+    width: 100vw;
+    height: 100vh;
+    backdrop-filter: blur(2px);
+    background-color: transparent;
+    justify-content: center;
+    align-items: center;
+}
+
 .responseDisplay {
     text-align: center;
     display: flex;
