@@ -243,7 +243,7 @@ function BookingForm({ selectedDate }) {
                     </div>
                     <div>
                         <label htmlFor="children">
-                            <span>Number of children</span>
+                            <span>Number of children (14yrs and under)</span>
                         </label>
                         <input type="number" min="0" max="12" id="children" name="children" placeholder="including infants" />
                     </div>
