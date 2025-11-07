@@ -1,0 +1,40 @@
+TRIPS Table (The Availability Schedule)
+This table defines the unique trip slots and their capacity.
+
+CREATE TABLE Trips (
+    trip_id SERIAL PRIMARY KEY,
+    trip_date DATE NOT NULL,
+    timeslot TIME NOT NULL,
+    max_capacity SMALLINT NOT NULL CHECK (max_capacity > 0),
+    is_charter BOOLEAN DEFAULT FALSE,
+    -- Constraint to ensure no duplicate trips on the same date/time
+    UNIQUE (trip_date, timeslot)
+);
+
+
+CUSTOMERS Table (Normalized Customer Data)
+This table holds unique customer details, avoiding data duplication in every booking.
+
+CREATE TABLE Customers (
+    customer_id SERIAL PRIMARY KEY,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    phone VARCHAR(20),
+    email VARCHAR(100) UNIQUE NOT NULL, -- UNIQUE ensures no two customers have the same email
+    accommodation VARCHAR(255)
+);
+
+BOOKINGS Table (The Reservation Record)
+This links a specific customer to a specific trip using Foreign Keys.
+
+CREATE TABLE Bookings (
+    booking_id SERIAL PRIMARY KEY,
+    -- Foreign Key links to the Trips table
+    trip_id INTEGER NOT NULL REFERENCES Trips(trip_id) ON DELETE RESTRICT,
+    -- Foreign Key links to the Customers table
+    customer_id INTEGER NOT NULL REFERENCES Customers(customer_id) ON DELETE RESTRICT,
+    adults_booked SMALLINT NOT NULL CHECK (adults_booked >= 0),
+    children_booked SMALLINT DEFAULT 0 CHECK (children_booked >= 0),
+    message TEXT,
+    booked_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
