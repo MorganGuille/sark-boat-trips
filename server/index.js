@@ -2,12 +2,9 @@ const express = require("express");
 const app = express();
 const PORT = process.env.PORT || 4040;
 
-// const mongoose = require("mongoose")
 const cors = require("cors");
 const path = require("path");
 require("dotenv").config();
-
-// let dbPassword = process.env.atlasDB_password;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -15,6 +12,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 app.use(express.static(__dirname));
 app.use(express.static(path.join(__dirname, "../client/dist")));
+
+// const mongoose = require("mongoose")
+
+// let dbPassword = process.env.atlasDB_password;
 
 // async function connecting() {
 //     try {
@@ -28,6 +29,10 @@ app.use(express.static(path.join(__dirname, "../client/dist")));
 
 const connectMongo = require("./data-access/mongoDB/index");
 connectMongo();
+
+const { getClient, query } = require("./data-access/postgresql/index");
+app.set("db_postgres_query", query);
+app.set("db_postgres_client", getClient);
 
 app.use("/bookings", require("./routes/bookings"));
 app.use("/admin", require("./routes/admin"));
