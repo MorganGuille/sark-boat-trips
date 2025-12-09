@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router'
 import Calendar from 'react-calendar';
 import axios from 'axios';
@@ -12,13 +12,13 @@ function MyCalendar({ setSelectedDate }) {
 
     let currentLoc = useLocation()
 
-    const blockDateStart = () => {
+    const blockDateStart = useMemo(() => {
         return currentLoc.pathname === '/dashboard' ? null : new Date("2025-05-01")
-    }
+    }, [currentLoc.pathname])
 
-    const blockDateEnd = () => {
+    const blockDateEnd = useMemo(() => {
         return currentLoc.pathname === '/dashboard' ? null : new Date("2025-09-30")
-    }
+    }, [currentLoc.pathname])
 
     useEffect(() => {
         fetchMonthAvailability(date);
@@ -121,8 +121,8 @@ function MyCalendar({ setSelectedDate }) {
                 minDetail="year"
                 next2Label={null}
                 prev2Label={null}
-                minDate={blockDateStart()}
-                maxDate={blockDateEnd()}
+                minDate={blockDateStart}
+                maxDate={blockDateEnd}
             />
             <div className="calendarDisplay">
                 <div>
