@@ -1,0 +1,75 @@
+
+
+
+
+// Create customer // 
+
+INSERT INTO
+  customers (
+    first_name,
+    last_name,
+    phone,
+    email,
+    accommodation
+  )
+VALUES
+  (
+    'Morgan',
+    'Guille',
+    '00447911764246',
+    'morgan_guille@hotmail.com',
+    'suesbnb'
+  )
+
+  // Create trip // 
+
+NSERT INTO
+  trips (trip_date, timeslot, max_capacity, is_charter)
+VALUES
+  ('2025-11-27', '14:00:00', 10, FALSE)
+
+
+// Create booking // 
+
+INSERT INTO
+  bookings (
+    trip_id,
+    customer_id,
+    adults_booked,
+    children_booked,
+    message
+  )
+VALUES
+  (1, 1, 2, 1, 'This is a test booking')
+RETURNING
+  booking_id,
+  booked_at
+
+// select specific booking // 
+
+SELECT
+  B.booking_id,
+  T.trip_date,
+  T.timeslot,
+  C.first_name,
+  C.last_name,
+  C.email,
+  B.adults_booked,
+  B.children_booked,
+  B.message
+FROM
+  bookings B
+  JOIN trips T ON B.trip_id = T.trip_id
+  JOIN customers C ON B.customer_id = C.customer_id
+WHERE
+  B.booking_id = 1
+
+
+// check total passengers on booking //
+
+SELECT COALESCE(SUM(adults_booked + children_booked), 0) AS total_booked
+FROM bookings
+WHERE trip_id = 1;
+
+
+
