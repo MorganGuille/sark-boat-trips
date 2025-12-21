@@ -6,19 +6,24 @@ import axios from 'axios';
 import '../css/myCalendar.css';
 import { URL } from '../../config.js'
 
-function MyCalendar({ setSelectedDate }) {
+function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate }) {
     const [date, setDate] = useState(new Date());
     const [availability, setAvailability] = useState({});
 
     let currentLoc = useLocation()
 
-    const blockDateStart = useMemo(() => {
-        return currentLoc.pathname === '/dashboard' ? null : new Date("2025-05-01")
-    }, [currentLoc.pathname])
+    const dbseasonStartDate = useMemo(() => {
+        if (currentLoc.pathname === '/dashboard') return null;
+        if (!seasonStartDate) return null;
+        return new Date(seasonStartDate);
+    }, [currentLoc.pathname, seasonStartDate]);
 
-    const blockDateEnd = useMemo(() => {
-        return currentLoc.pathname === '/dashboard' ? null : new Date("2025-09-30")
-    }, [currentLoc.pathname])
+    const dbseasonEndDate = useMemo(() => {
+        if (currentLoc.pathname === '/dashboard') return null;
+        if (!seasonEndDate) return null;
+        return new Date(seasonEndDate);
+    }, [currentLoc.pathname, seasonEndDate]);
+
 
     useEffect(() => {
         fetchMonthAvailability(date);
@@ -71,7 +76,7 @@ function MyCalendar({ setSelectedDate }) {
         }
     }
 
-    const onChange = (date) => {
+    const handleDateChange = (date) => {
         setDate(date);
         setSelectedDate(formatDate(date))
     };
@@ -111,9 +116,9 @@ function MyCalendar({ setSelectedDate }) {
     return (
         <section className="calendar">
             <Calendar
-                onActiveStartDateChange={({ activeStartDate }) => onChange(activeStartDate)}
-                onChange={() => [onChange]}
-                onClickDay={onChange}
+                onActiveStartDateChange={({ activeStartDate }) => handleDateChange(activeStartDate)}
+                onChange={() => [handleDateChange]}
+                onClickDay={handleDateChange}
                 value={date}
                 tileClassName={setTileClassName}
                 showNeighboringMonth={true}
@@ -121,8 +126,8 @@ function MyCalendar({ setSelectedDate }) {
                 minDetail="year"
                 next2Label={null}
                 prev2Label={null}
-                minDate={blockDateStart}
-                maxDate={blockDateEnd}
+                minDate={dbseasonStartDate}
+                maxDate={dbseasonEndDate}
             />
             <div className="calendarDisplay">
                 <div>

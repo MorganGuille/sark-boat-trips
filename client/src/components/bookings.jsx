@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import MyCalendar from './myCalendar'
 import BookingForm from './bookingForm'
+import { getSeasonDates } from '../services.jsx/seasonDates'
 import '../css/bookings.css'
 
 function Bookings() {
@@ -13,6 +14,30 @@ function Bookings() {
     };
 
     const [selectedDate, setSelectedDate] = useState(formatDate(new Date()))
+    const [seasonStartDate, setSeasonStartDate] = useState('')
+    const [seasonEndDate, setSeasonEndDate] = useState('')
+
+    useEffect(() => {
+        const fetchDates = async () => {
+
+            try {
+                const res = await getSeasonDates()
+                if (res) {
+                    setSeasonStartDate(res.seasonStartDate);
+                    setSeasonEndDate(res.seasonEndDate);
+                }
+            }
+            catch (error) {
+                console.error(error)
+            }
+        }
+        fetchDates()
+
+    }, [])
+
+    if (!seasonStartDate || !seasonEndDate) {
+        return <div>Loading calendar…</div>;
+    }
 
 
     return (<>
@@ -23,7 +48,9 @@ function Bookings() {
                 <p className='textArea'>Prices for 2025 are :</p>
                 <p className='textArea'><strong>Adults</strong>: £40<br /> <strong>Children</strong> (3-14 yrs):  £25 <strong>Infants</strong>: free</p>
                 <p className='textArea'><strong>Private Charter</strong> £400 </p>
-                <MyCalendar setSelectedDate={setSelectedDate} />
+                <MyCalendar setSelectedDate={setSelectedDate} seasonStartDate={seasonStartDate}
+                    seasonEndDate={seasonEndDate}
+                />
 
             </div>
             <BookingForm selectedDate={selectedDate} />

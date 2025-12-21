@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import MyCalendar from '../components/myCalendar'
 import BookingForm from '../components/bookingForm'
+import { getSeasonDates } from '../services.jsx/seasonDates.jsx'
 import axios from 'axios'
 import { URL } from '../../config.js'
 
@@ -15,6 +16,42 @@ function Dashboard() {
     const [noteContent, setNoteContent] = useState("")
     const [dateNotes, setDateNotes] = useState([])
     const [showResponse, setResponse] = useState(null)
+    const [seasonStartDate, setSeasonStartDate] = useState('')
+    const [seasonEndDate, setSeasonEndDate] = useState('')
+
+    useEffect(() => {
+        const fetchDates = async () => {
+
+            try {
+                const res = await getSeasonDates()
+                if (res) {
+                    const start = new Date(res.seasonStartDate).toISOString().split('T')[0];
+                    const end = new Date(res.seasonEndDate).toISOString().split('T')[0]
+                    setSeasonStartDate(start);
+                    setSeasonEndDate(end);
+                }
+            }
+            catch (error) {
+                console.error(error)
+            }
+        }
+        fetchDates()
+
+    }, [])
+
+    const setSeasonDates = async (e) => {
+        e.preventDefault();
+        try {
+            const res = await axios.post(`${URL}/admin/setSeasonDates`, { seasonStartDate, seasonEndDate })
+            setResponse(res.data.data)
+
+        }
+        catch (error) {
+            console.error(error);
+            setResponse("Error Saving Dates")
+        }
+
+    }
 
 
     const checkLogin = async (e) => {
@@ -64,7 +101,7 @@ function Dashboard() {
             setResponse(res.data.data)
         }
         catch (error) {
-            console.log(error)
+            console.error(error)
         }
         e.target.reset()
     }
@@ -81,7 +118,7 @@ function Dashboard() {
             const res = await axios.post(`${URL}/bookings/updateavailability`, update)
             setResponse(res.data.data)
         } catch (error) {
-            console.log(error)
+            console.error(error)
         }
     }
 
@@ -118,6 +155,8 @@ function Dashboard() {
         }
     }
 
+
+
     return (<>
         <title>Sark Boat Trips | Dashboard</title>
         <div className='dashboard'>
@@ -139,7 +178,21 @@ function Dashboard() {
                 <div className='bookingsDisplay'>
                     <div className='left-grid'>
 
-                        <MyCalendar setSelectedDate={setSelectedDate} />
+                        <div className='minorform'>
+                            <form id='setSeasonDates' onSubmit={setSeasonDates}>
+                                <lable>Start Date
+                                    <input type='date' value={seasonStartDate} onChange={(e) => setSeasonStartDate(e.target.value)} required />
+                                </lable>
+                                <lable>End Date
+                                    <input type='date' value={seasonEndDate} onChange={(e) => setSeasonEndDate(e.target.value)} required />
+                                </lable>
+                                <button type='submit' className='btn'>Set Season Dates</button>
+                            </form>
+                        </div>
+
+                        <MyCalendar setSelectedDate={setSelectedDate} seasonStartDate={seasonStartDate}
+                            seasonEndDate={seasonEndDate}
+                        />
 
                         <div className='minorform'>
                             <button className='btn' onClick={() => { getBookingsByDate(); fetchNotesForSelectedDate() }}>Get bookings by date</button>
