@@ -1,39 +1,65 @@
-const express = require('express');
-const app = express()
+const express = require("express");
+const app = express();
 const PORT = process.env.PORT || 4040;
+const helmet = require("helmet");
 
-const mongoose = require("mongoose")
-const cors = require('cors');
-const path = require('path');
-require('dotenv').config()
+const mongoose = require("mongoose");
+const cors = require("cors");
+const path = require("path");
+require("dotenv").config();
 
 let dbPassword = process.env.atlasDB_password;
 
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
+// Trust Heroku proxy
+app.enable("trust proxy");
 
-app.use(cors())
-app.use(express.static(__dirname));
-app.use(express.static(path.join(__dirname, '../client/dist')));
+// HSTS security header
+app.use(
+  helmet.hsts({
+    maxAge: 15552000,
+    includeSubDomains: true,
+    preload: true,
+  })
+);
 
-async function connecting() {
-    try {
-        await mongoose.connect(`mongodb+srv://morganguille:${dbPassword}@bookingsdb.7bty4.mongodb.net/?retryWrites=true&w=majority&appName=BookingsDB`)
-        console.log('Connected to the DB')
-    } catch (error) {
-        console.log('ERROR: Seems like your DB is not running, please start it up !!!');
-    }
-}
-connecting()
-
-app.use("/bookings", require("./routes/bookings"))
-app.use("/admin", require("./routes/admin"))
-app.use("/charters", require("./routes/charters"))
-app.use("/notes", require("./routes/notes"))
-app.get('/*', function (req, res) {
-    res.sendFile(path.join(__dirname, '../client/dist', 'index.html'));
+// Force HTTPS
+app.use((req, res, next) => {
+  if (req.secure) return next();
+  res.redirect(`https://${req.headers.host}${req.url}`);
 });
-app.use(express.static('public'));
 
-app.listen(PORT, () => console.log(`listening on port : ${PORT}`))
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cors());
 
+// Serve client build
+app.use(express.static(path.join(__dirname, "../client/dist")));
+
+// Connect to MongoDB
+async function connecting() {
+  try {
+    await mongoose.connect(
+      `mongodb+srv://morganguille:${dbPassword}@bookingsdb.7bty4.mongodb.net/?retryWrites=true&w=majority&appName=BookingsDB`
+    );
+    console.log("Connected to the DB");
+  } catch (error) {
+    console.log("ERROR: Could not connect to DB");
+  }
+}
+connecting();
+
+// API routes
+app.use("/bookings", require("./routes/bookings"));
+app.use("/admin", require("./routes/admin"));
+app.use("/charters", require("./routes/charters"));
+app.use("/notes", require("./routes/notes"));
+
+// Catch-all for React Router
+app.get("/*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../client/dist/index.html"));
+});
+
+// Optional public folder
+app.use(express.static("public"));
+
+app.listen(PORT, () => console.log(`listening on port : ${PORT}`));
