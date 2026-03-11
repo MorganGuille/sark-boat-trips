@@ -109,7 +109,7 @@ function Home() {
                 <p>For more information and ideas for a charter to suit you, please click below.</p>
                 <NavLink to={'/charters'}><button className='btn'>Discover more and book yours</button></NavLink>
             </div>
-            <img src={charters} alt='Charter trip inside cave' />
+            <img src={charters} alt='Charter trip inside cave' loading='lazy' />
         </section>
         <section id='sarkIsland' className="sarkIsland centered-section">
             <h2>SARK ISLAND</h2>
@@ -156,12 +156,12 @@ function Home() {
                     </a>
                 </div>
                 <div>
-                    <img src={sarkShipping} />
+                    <img src={sarkShipping} alt='Ferry from Guernsey to Sark' loading='lazy' />
                 </div>
             </div>
 
             <div className="grid1">
-                <div><img src={suesbnb} /></div>
+                <div><img src={suesbnb} alt='Sue&apos;s BnB' loading='lazy' /></div>
                 <div>
                     <h2>SUE&apos;S BNB</h2>
                     <p>We also offer 4* accommodation on the island at Sue’s BnB,</p>
