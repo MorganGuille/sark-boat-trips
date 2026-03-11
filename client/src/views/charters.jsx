@@ -3,8 +3,8 @@ import Bookings from '../components/bookings'
 
 import '../css/charters.css'
 
-import charterDerrible from '../assets/images/Charter+Tour+Derrible.jpeg'
-import guillemots from "../assets/images/Guillemots.jpg"
+import charterDerrible from '../assets/images/Charter+Tour+Derrible.webp'
+import guillemots from "../assets/images/Guillemots.webp"
 
 function Charters() {
     return (<>

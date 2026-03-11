@@ -1,7 +1,8 @@
 .hero-banner {
-    background: linear-gradient(rgba(0, 0, 0, 0.144), rgba(0, 0, 0, 0.3)), url(../assets/images/hero-banner.jpg) left / cover no-repeat;
+
     height: 100vh;
-    width: 100vw;
+    height: 100dvh;
+    width: 100%;
     display: flex;
     flex-direction: column;
     color: white;
@@ -9,6 +10,24 @@
     justify-content: center;
     gap: 5em;
     text-align: center;
+
+
+    background-position: left;
+    background-size: cover;
+    background-repeat: no-repeat;
+
+    /*Fallback: Standard JPEG for older browsers */
+    background-image:
+        linear-gradient(rgba(0, 0, 0, 0.144), rgba(0, 0, 0, 0.3)),
+        url('../assets/images/hero-banner.jpeg');
+
+
+    background-image:
+        linear-gradient(rgba(0, 0, 0, 0.144), rgba(0, 0, 0, 0.3)),
+        image-set(url('../assets/images/hero-banner.avif') type("image/avif"),
+            url('../assets/images/hero-banner.webp') type("image/webp"),
+            url('../assets/images/hero-banner.jpg') type("image/jpeg"));
+
 }
 
 /* From Uiverse.io by adamgiebl */
@@ -45,7 +64,7 @@
     border-radius: 0.7em;
     box-shadow: 0.1em 0.1em 0.6em 0.2em #D9A404;
     right: 0.3em;
-    transition: all 0.3s;
+    transition: width 0.3s;
 }
 
 .cssbuttons-io-button:hover .icon {
@@ -112,8 +131,6 @@
 
 @media (max-width: 1366px) {
 
-
-
     .centered-section {
         max-width: 80%;
     }
@@ -137,32 +154,32 @@
     .sarkIsland img {
         max-width: 500px;
         width: 100%;
-
     }
 
     .sarkIsland .textGrid {
         grid-template-columns: auto;
     }
-
 }
 
 
 @media (max-width: 1020px) {
-
 
     .centered-section {
         max-width: 90%;
     }
 
     .sarkIsland .grid1 {
-        display: flex;
-        flex-direction: column;
+        grid-template-columns: 1fr;
         gap: 1em;
         padding: 1em 0;
         text-align: center;
         align-items: center;
     }
+}
 
+@media (max-width: 768px) {
+    .hero-banner {
+        background-position: 10% 90%;
 
-
+    }
 }

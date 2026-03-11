@@ -1,4 +1,3 @@
-import React from 'react'
 import Slideshow from '../components/slideshow'
 import Reviews from '../components/reviews'
 import Bookings from '../components/bookings'
@@ -6,21 +5,21 @@ import VideoPlayer from '../components/videoPlayer'
 
 import { NavLink } from 'react-router'
 
-import gallery1 from '../assets/images/gallery1.jpg'
-import gallery2 from '../assets/images/gallery2.jpg'
-import gallery3 from '../assets/images/gallery3.jpg'
-import gallery4 from '../assets/images/gallery4.jpg'
-import gallery5 from '../assets/images/gallery5.jpg'
-import gallery6 from '../assets/images/gallery6.jpg'
-import gallery7 from '../assets/images/gallery7.jpg'
-import gallery8 from '../assets/images/gallery8.jpeg'
-import gallery9 from '../assets/images/gallery9.jpeg'
-import gallery10 from '../assets/images/gallery10.jpeg'
-import gallery11 from '../assets/images/gallery11.jpg'
+import gallery1 from '../assets/images/gallery1.webp'
+import gallery2 from '../assets/images/gallery2.webp'
+import gallery3 from '../assets/images/gallery3.webp'
+import gallery4 from '../assets/images/gallery4.webp'
+import gallery5 from '../assets/images/gallery5.webp'
+import gallery6 from '../assets/images/gallery6.webp'
+import gallery7 from '../assets/images/gallery7.webp'
+import gallery8 from '../assets/images/gallery8.webp'
+import gallery9 from '../assets/images/gallery9.webp'
+import gallery10 from '../assets/images/gallery10.webp'
+import gallery11 from '../assets/images/gallery11.webp'
 
-import charters from "../assets/images/charters.jpg"
-import sarkShipping from "../assets/images/isle-of-sark-shipping-company.jpg"
-import suesbnb from "../assets/images/SuesbnbextGeorge.jpg"
+import charters from "../assets/images/charters.webp"
+import sarkShipping from "../assets/images/isle-of-sark-shipping-company.webp"
+import suesbnb from "../assets/images/SuesbnbextGeorge.webp"
 
 
 import '../css/home.css'
@@ -124,10 +123,10 @@ function Home() {
                         the city. A visit to our car-free island is like a step back in time and visitors are sure to be
                         blown
                         away by the stunning scenery, bays, coastal paths and cliff top views.</p>
-                    <p>Sark is also the world's first 'Dark Sky' Island, offering spectacular star gazing throughout the
+                    <p>Sark is also the world&apos;s first &apos;Dark Sky&apos; Island, offering spectacular star gazing throughout the
                         year
                         and the Goliout headland is a world recognized Ramsar site</p>
-                    <p>The Island's 22 mile coastline is a treasure trove of small coves, creeks, caves, inlets and
+                    <p>The Island&apos;s 22 mile coastline is a treasure trove of small coves, creeks, caves, inlets and
                         bays,
                         all
                         teaming with sea life both above and below the water. </p>
@@ -164,9 +163,9 @@ function Home() {
             <div className="grid1">
                 <div><img src={suesbnb} /></div>
                 <div>
-                    <h2>SUE'S BNB</h2>
+                    <h2>SUE&apos;S BNB</h2>
                     <p>We also offer 4* accommodation on the island at Sue’s BnB,</p>
-                    <p>‘Sue's B&B is the perfect place for settling into Sark life. Relax in the award winning garden on
+                    <p>‘Sue&apos;s B&B is the perfect place for settling into Sark life. Relax in the award winning garden on
                         sunny days or use it as a base to explore the sandy beaches and hidden caves and at night
                         explore the galaxy with our telescope’</p>
 
