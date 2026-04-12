@@ -35,6 +35,10 @@ app.use(cors());
 // Serve client build
 app.use(express.static(path.join(__dirname, "../client/dist")));
 
+app.get("/robots.txt", (req, res) => {
+  res.sendFile(path.join(__dirname, "../client/dist/robots.txt"));
+});
+
 // Connect to MongoDB
 async function connecting() {
   try {
