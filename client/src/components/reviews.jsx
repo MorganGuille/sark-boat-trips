@@ -1,9 +1,9 @@
 import React from 'react'
 import '../css/reviews.css'
 
-import googleLogo from '../assets/logos/7123025_logo_google_g_icon.png'
-import tripLogo from '../assets/logos/4375113_logo_tripadvisor_icon.png'
-import faceLogo from '../assets/logos/317746_facebook_social media_social_icon.png'
+import googleLogo from '../assets/logos/googleIcon.png'
+import tripLogo from '../assets/logos/tripadvisorIcon.png'
+import faceLogo from '../assets/logos/facebookIcon.png'
 
 function Reviews() {
     return (
@@ -12,7 +12,7 @@ function Reviews() {
             <div className='reviewsContainer'>
                 <a href="https://g.co/kgs/xgNzzxD" target="_blank">
                     <div className='reviewCard'>
-                        <img src={googleLogo} />
+                        <img src={googleLogo} alt="Google Logo" />
                         <div>
                             <p>Google</p>
                             <span>
@@ -24,7 +24,7 @@ function Reviews() {
                 </a>
                 <a href="https://www.tripadvisor.com/Attraction_Review-g186231-d6673939-Reviews-Sark_Boat_Trips-Sark_Channel_Islands.html" target="_blank">
                     <div className='reviewCard'>
-                        <img src={tripLogo} />
+                        <img src={tripLogo} alt="Tripadvisor Logo" />
                         <div>
                             <p>Tripadvisor</p>
                             <span>
@@ -36,7 +36,7 @@ function Reviews() {
                 </a>
                 <a href="https://www.facebook.com/sarkboattrips/reviews" target="_blank">
                     <div className='reviewCard'>
-                        <img src={faceLogo} />
+                        <img src={faceLogo} alt="Facebook Logo" />
                         <div>
                             <p>Facebook</p>
                             <span>
