@@ -47,7 +47,7 @@ function Home() {
         <section id='heroBanner' className="hero-banner">
             <span>
                 <h1>THE BEST WAY TO SEE SARK</h1>
-                <h3>BOAT TOURS WITH SARK LOCALS</h3>
+                <h2>BOAT TOURS WITH SARK LOCALS</h2>
             </span>
             <a href='#reservations' >
                 {/* <!-- From Uiverse.io by adamgiebl -->  */}

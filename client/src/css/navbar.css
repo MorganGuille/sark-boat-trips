@@ -10,7 +10,8 @@
     top: 0;
     padding: 0.5em 0;
     z-index: 999;
-    background-color: rgb(63, 78, 90, 0.8);
+        background-color: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(1px);
 
     & a {
         font-size: 1em;
@@ -19,18 +20,14 @@
         color: rgb(255, 255, 255);
     }
 
-    & a.active {
-        color: rgb(204, 204, 204);
-    }
-
     & a:hover {
         color: rgb(204, 204, 204);
-        transform: scale(1.1);
     }
 }
 
 .sticky-nav {
-    background-color: rgb(63, 78, 90, 0.8);
+        background-color: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(3px);
 
     height: 4rem;
     transition: 0.5s ease-in-out;

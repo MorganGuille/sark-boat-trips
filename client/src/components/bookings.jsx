@@ -45,7 +45,7 @@ function Bookings() {
         <section className="bookings">
             <div>
                 <p className='textArea'>Please use the calendar to select a date and then fill out the form to make a booking</p>
-                <p className='textArea'>Prices for 2025 are :</p>
+                <p className='textArea'>Prices for 2026 are :</p>
                 <p className='textArea'><strong>Adults</strong>: £40<br /> <strong>Children</strong> (3-14 yrs):  £25 <strong>Infants</strong>: free</p>
                 <p className='textArea'><strong>Private Charter</strong> £400 </p>
                 <MyCalendar setSelectedDate={setSelectedDate} seasonStartDate={seasonStartDate}

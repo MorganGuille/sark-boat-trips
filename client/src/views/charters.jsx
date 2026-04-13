@@ -31,8 +31,9 @@ function Charters() {
                 </div>
                 <div><img width="600px" height="auto" src={guillemots} /></div>
             </div>
-            <div>
-                <h3>More ideas</h3>
+            <h3>More ideas</h3>
+            <div className='grid1'>
+
                 <p><strong>Evening cruise/early morning tour.</strong> If you’re looking for an unforgettable end to your day in Sark why not hire us for the evening and take a cruise around the island in the evening light.
                     Maybe with a glass of champagne to toast the day! </p>
                 <p><strong>Safety boat.</strong> Whether you’re doing a long distance swim / exploring the island by kayak, safety is paramount. We can stay close and escort you around the island.

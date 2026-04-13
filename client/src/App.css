@@ -95,6 +95,10 @@ body {
   margin: 2em auto;
 }
 
+.centered-section p {
+  text-align: left;
+}
+
 .stripe-landing {
   display: flex;
   flex-direction: column;

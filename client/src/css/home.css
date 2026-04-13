@@ -30,6 +30,12 @@
 
 }
 
+.hero-banner h2 {
+    font-size: 2.0em;
+    margin: 0;
+
+}
+
 /* From Uiverse.io by adamgiebl */
 .cssbuttons-io-button {
     background: #D9A404;
@@ -140,6 +146,12 @@
         background-position: 0% 0%;
     }
 
+    .hero-banner h2 {
+        font-size: 1.5em;
+        margin: 0;
+
+    }
+
     .sarkIsland {
         max-width: 80%;
     }
@@ -168,6 +180,8 @@
         max-width: 90%;
     }
 
+
+
     .sarkIsland .grid1 {
         grid-template-columns: 1fr;
         gap: 1em;
@@ -182,4 +196,12 @@
         background-position: 10% 90%;
 
     }
+
+    .hero-banner h2 {
+        font-size: 1em;
+        margin: 0;
+
+    }
+
+
 }
