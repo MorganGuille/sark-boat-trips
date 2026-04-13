@@ -132,143 +132,128 @@ function BookingForm({ selectedDate }) {
         }
     }
 
-    return (<>
+    return (
+        <>
+            <section aria-label="Booking Form Section">
+                {checkPageDashboard() && (
+                    <button
+                        className='btn'
+                        onClick={() => setUpdating(!updating)}
+                    >
+                        {updating ? 'Switch to Add New' : 'Switch to Update Existing'}
+                    </button>
+                )}
 
-        <section >
-            {checkPageDashboard() ? <button className='btn' onClick={() => setUpdating(!updating)}>Update/add</button> : null}
+                <form
+                    className='bookingForm'
+                    onSubmit={(e) => actionOnClick(e)}
+                    aria-label={updating ? "Update existing booking" : "Request a new booking"}
+                >
+                    <div>
+                        <span>Required fields are followed by <strong><span aria-hidden="true">*</span></strong></span>
+                    </div>
 
-            <form className='bookingForm' onSubmit={(e) => actionOnClick(e)}>
-                <div>
-                    <span>Required fields are followed by<strong><span aria-label="Required">*</span></strong></span>
-                </div>
+                    {updating ? (
+                        <fieldset>
+                            <legend>Update Settings</legend>
+                            <div>
+                                <label htmlFor="_id">Booking ID <strong>*</strong></label>
+                                <input type="text" id="_id" name="_id" required placeholder="Paste ID here" />
+                            </div>
+                            <div>
+                                <label htmlFor="date">New Date</label>
+                                <input type="text" id="date" name="date" placeholder="dd-mm-yyyy" />
+                            </div>
+                            <div>
+                                <label htmlFor="charter">Status</label>
+                                <select id="charter" name="charter">
+                                    <option value="false">Standard Tour</option>
+                                    <option value="true">Charter Trip</option>
+                                </select>
+                            </div>
+                        </fieldset>
+                    ) : null}
 
-                {updating ? <>
                     <fieldset>
-                        <legend>Updating booking</legend>
-                        <div>
-                            <label htmlFor="_id">
-                                <span>Enter booking _id</span>
-                            </label>
-                            <input type="text" id="_id" name="booking _id"
-                                placeholder="booking_id" />
+                        <legend>Contact Information</legend>
+                        <div role="status" aria-live="polite">
+                            <p style={{ backgroundColor: 'lightgreen', padding: '5px' }}>
+                                {`You are booking ${checkPageCharters() ? 'a private charter' : 'a tour'} for ${selectedDate}`}
+                            </p>
                         </div>
+
                         <div>
-                            <label htmlFor="New date">
-                                <span>New date for Booking</span>
+                            <label htmlFor="timeslot">
+                                Preferred time <strong>*</strong>
                             </label>
-                            <input type="text" id="date" name="updatedate"
-                                placeholder="dd-mm-yyyy" />
-                        </div>
-                        <div>
-                            <label htmlFor="charter">
-                                <span>Charter</span>
-                            </label>
-                            <select id="charter" name="charter" >
-                                <option value="false">Not Charter</option>
-                                <option value="true">Charter Trip</option>
+                            <select id="timeslot" name="timeslot" defaultValue="11am" required={!checkPageDashboard()}>
+                                <option value="11am">11am</option>
+                                <option value="2pm">2pm</option>
                             </select>
                         </div>
+
+                        <div>
+                            <label htmlFor="firstName">First Name <strong>*</strong></label>
+                            <input type="text" id="firstName" name="firstName" placeholder="John" required={!checkPageDashboard()} autoComplete="given-name" />
+                        </div>
+
+                        <div>
+                            <label htmlFor="lastName">Last Name <strong>*</strong></label>
+                            <input type="text" id="lastName" name="lastName" placeholder="Smith" required={!checkPageDashboard()} autoComplete="family-name" />
+                        </div>
+
+                        <div>
+                            <label htmlFor="email">Email <strong>*</strong></label>
+                            <input type="email" id="email" name="email" placeholder="yourname@email.com" required={!checkPageDashboard()} autoComplete="email" />
+                        </div>
+
+                        <div>
+                            <label htmlFor="phone">Phone number <strong>*</strong></label>
+                            <input type="tel" id="phone" name="phone" placeholder="(Include country code)" required={!checkPageDashboard()} autoComplete="tel" />
+                        </div>
+
+                        <div>
+                            <label htmlFor="accommodation">Accommodation</label>
+                            <input type="text" id="accommodation" name="accommodation" placeholder="Where are you staying on Sark?" />
+                        </div>
                     </fieldset>
-                </> : null}
-                <fieldset>
-                    <legend>Contact Information</legend>
-                    <div>
-                        <span style={{ backgroundColor: 'lightgreen' }}>{`You are booking ${checkPageCharters() ? 'a private charter' : ''} for ${selectedDate}`}</span>
+
+                    <fieldset>
+                        <legend>Party Details</legend>
+                        <div>
+                            <label htmlFor="adults">Number of adults <strong>*</strong></label>
+                            <input type="number" min="1" max="12" id="adults" name="adults" placeholder="max 12" required={!checkPageDashboard()} />
+                        </div>
+
+                        <div>
+                            <label htmlFor="children">Number of children (14yrs and under)</label>
+                            <input type="number" min="0" max="12" id="children" name="children" placeholder="including infants" />
+                        </div>
+
+                        <div>
+                            <label htmlFor="message">Any further info / Special requirements</label>
+                            <textarea id='message' name='message' cols="40" rows="4" placeholder={'e.g. mobility needs'} />
+                        </div>
+                    </fieldset>
+
+                    <button className='btn' type="submit" disabled={isSubmitting}>
+                        {isSubmitting ? <span className="submitter" aria-label="Submitting..."></span> : 'Confirm Booking'}
+                    </button>
+                </form>
+
+                {showResponse != null && (
+                    <div className="responseBackdrop" role="dialog" aria-labelledby="response-message" aria-modal="true">
+                        <div className='responseDisplay'>
+                            <h3 id="response-message">{showResponse}</h3>
+                            <button className='btn' onClick={() => setResponse(null)} autoFocus>
+                                Dismiss
+                            </button>
+                        </div>
                     </div>
-                    <div>
-                        <label htmlFor="timeslot">
-                            <span>Preferred time</span>
-                            <strong><span aria-label="required">*</span></strong>
-                        </label>
-                        <select id="timeslot" name="timeslot" defaultValue="11am" required={!checkPageDashboard()}>
-                            <option value="11am">11am</option>
-                            <option value="2pm">2pm</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label htmlFor="firstName">
-                            <span>First Name</span>
-                            <strong><span aria-label="Required">*</span></strong>
-                        </label>
-                        <input type="text" id="firstName" name="firstName" placeholder="John" required={!checkPageDashboard()} />
-
-                    </div>
-                    <div>
-                        <label htmlFor="lastName">
-                            <span>Last Name</span>
-                            <strong><span aria-label="Required">*</span></strong>
-                        </label>
-                        <input type="text" id="lastName" name="lastName" placeholder="Smith" required={!checkPageDashboard()} />
-
-                    </div>
-                    <div>
-                        <label htmlFor="email">
-                            <span>Email: </span>
-                            <strong><span aria-label="required">*</span></strong>
-                        </label>
-                        <input type="email" id="email" name="useremail" placeholder="yourname@email.com" required={!checkPageDashboard()} autoComplete='true' />
-
-                    </div>
-                    <div>
-                        <label htmlFor="phone">
-                            <span>Phone number: </span>
-                            <strong><span aria-label="required">*</span></strong>
-                        </label>
-                        <input type="tel" id="phone" name="userphone" placeholder="(Include country code)"
-                            required={!checkPageDashboard()} autoComplete='true' />
-
-                    </div>
-                    <div>
-                        <label htmlFor="accommodation">
-                            <span>Name of accommodation</span>
-                        </label>
-                        <input type="text" id="accommodation" name="useraccom"
-                            placeholder="Where are you staying on Sark?" />
-                    </div>
-                </fieldset>
-
-
-
-                <fieldset>
-                    <legend>Booking Information</legend>
-                    <div>
-                        <label htmlFor="adults">
-                            <span>Number of adults</span>
-                            <strong><span aria-label="required">*</span></strong>
-                        </label>
-                        <input type="number" min="1" max="12" id="adults" name="adults" placeholder="max 12"
-                            required={!checkPageDashboard()} />
-
-                    </div>
-                    <div>
-                        <label htmlFor="children">
-                            <span>Number of children (14yrs and under)</span>
-                        </label>
-                        <input type="number" min="0" max="12" id="children" name="children" placeholder="including infants" />
-                    </div>
-
-                    <div>
-                        <label htmlFor="message">
-                        </label>
-                        <textarea id='message' name='message' cols="40" rows="4" placeholder={'Any further info'} />
-                    </div>
-
-
-                </fieldset>
-
-
-                <button className='btn' type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? <span className="submitter"></span> : 'Book now!'}
-                </button>
-            </form>
-            {showResponse != null ?
-                <div className="responseBackdrop">
-                    <div className='responseDisplay'><h3>{showResponse}</h3><button className='btn' onClick={() => setResponse(null)}>Confirm</button></div>
-                </div>
-                : null}
-        </section>
-    </>)
+                )}
+            </section>
+        </>
+    )
 }
 
 export default BookingForm

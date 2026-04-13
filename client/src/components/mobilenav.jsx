@@ -18,11 +18,19 @@ function MobileNav() {
 
 
     return (
-        <div
-            className={`${menuOpen ? 'mobileNavOpen' : 'mobileNavClosed'}`}>
-            <span onClick={toggleMenu}
-                className={`burgerIcon ${menuOpen && 'burgerIconOpen'} `}>☰</span>
-            <div className={`mobileLinks ${menuOpen ? 'linksOpen' : 'linksClosed'}`}>
+        <nav
+            className={`${menuOpen ? 'mobileNavOpen' : 'mobileNavClosed'}`}
+            aria-label="Mobile Navigation">
+            <button onClick={toggleMenu}
+                className={`burgerIcon ${menuOpen && 'burgerIconOpen'} `}
+                aria-label={menuOpen ? "Close menu" : "Open menu"}
+                aria-expanded={menuOpen}
+                aria-controls="mobile-menu-links">☰</button>
+            <div
+                id="mobile-menu-links"
+                className={`mobileLinks ${menuOpen ? 'linksOpen' : 'linksClosed'}`}
+                aria-hidden={!menuOpen}
+            >
                 {!checkPage() ? (<a href='#heroBanner'>HOME</a>) : (<NavLink to={'./'}>HOME</NavLink>)}
                 {!checkPage() ? (<a href='#theTour' >THE TOUR</a>) : (null)}
                 {!checkPage() ? (<a href='#charters' >CHARTERS</a>) : (null)}
@@ -32,7 +40,7 @@ function MobileNav() {
             </div>
 
 
-        </div>
+        </nav>
     )
 }
 

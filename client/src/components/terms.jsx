@@ -2,76 +2,54 @@ import React from 'react'
 
 function Terms() {
     return (
-        <div className='popUpDisplay'>
-            <h2>Terms and Conditions - Sark Boat Trips</h2>
+        <article className='popUpDisplay' aria-labelledby="terms-title">
+            <h2 id="terms-title">Terms and Conditions - Sark Boat Trips</h2>
 
             <section>
                 <p><strong>1. Payment</strong></p>
-                <p>Payment is due immediately upon completion of the boat trip, on disembarkation. We accept cash or card. All prices are in GBP.</p>
+                <p>For standard tours, payment is due upon completion of the trip. We accept cash or card (GBP). For private charters, a 20% deposit is required at the time of booking, with the balance payable on the day of the trip.</p>
             </section>
 
             <section>
                 <p><strong>2. Cancellation by You</strong></p>
-                <p>We kindly request that you provide us with at least a days notice of any cancellation or changes to your booking. This allows us to accommodate other customers on our waiting list.</p>
+                <p>Please provide at least 24 hours' notice for cancellations. For private charters, deposits are refundable if cancelled with more than 48 hours' notice, or if we can re-book the slot.</p>
             </section >
 
             <section>
                 <p><strong>3. Cancellation by Sark Boat Trips</strong></p>
-                <p>Sark Boat Trips reserves the right to cancel or reschedule any trip due to:</p>
-                <ul>
-                    <li>Adverse weather conditions.</li>
-                    <li>Mechanical failure.</li>
-                    <li>Insufficient passenger numbers (minimum of 4 passengers).</li>
-                    <li>Other unforeseen circumstances beyond our control.</li>
-                </ul>
-                <p>In the event of a cancellation by Sark Boat Trips, we will endeavor to offer an alternative date or time. If an alternative is not suitable, or if rescheduling is not possible, a full refund will be issued. We will not be liable for any consequential losses.</p>
+                <p>We reserve the right to cancel or reschedule due to adverse weather, mechanical failure, or if minimum passenger numbers (4) are not met for scheduled tours. In these cases, a full refund of any deposits paid will be issued. We are not liable for any consequential losses (e.g., travel or accommodation costs).</p>
             </section >
 
             <section>
-                <p><strong>4. Personal Belongings</strong></p>
-                <p>Passengers are responsible for their personal belongings and equipment. Sark Boat Trips is not liable for any loss, damage, or theft of personal items during the boat trip. We recommend that you keep valuable items secure and protected.</p>
-            </section >
-
-            <section>
-                <p><strong>5. Safety</strong></p>
-                <p>Passengers must adhere to all safety instructions given by the boat operator. Sark Boat Trips reserves the right to refuse passage to any passenger who is deemed to be a safety risk. Passengers must remain seated when the boat is moving. Children must be supervised by a parent or guardian at all times.</p>
+                <p><strong>4. Safety & Conduct</strong></p>
+                <p>Passengers must follow all instructions given by the skipper. We reserve the right to refuse passage to anyone deemed a safety risk, including those under the influence of excessive alcohol. Children must be supervised at all times. Passengers must remain seated while the vessel is underway.</p>
             </section>
+
+            <section>
+                <p><strong>5. Personal Belongings</strong></p>
+                <p>Sark Boat Trips is not liable for loss or damage to personal items (cameras, phones, etc.) while on board. We recommend keeping electronics in waterproof bags.</p>
+            </section >
 
             <section>
                 <p><strong>6. Liability</strong></p>
-                <p>Sark Boat Trips is insured for public liability, once on board.</p>
+                <p>Sark Boat Trips maintains full public liability insurance as required by Guernsey law. Our liability begins once you are on board the vessel and ends upon disembarkation.</p>
             </section>
 
             <section>
-                <p><strong>7. Force Majeure</strong></p>
-                <p>Sark Boat Trips shall not be liable for any failure or delay in performing its obligations under these terms and conditions if such failure or delay is caused by events beyond its reasonable control.</p>
+                <p><strong>7. Medical Conditions</strong></p>
+                <p>Please inform the skipper of any medical conditions, limited mobility, or severe sea sickness before departure so we can ensure your safety and comfort.</p>
             </section>
 
             <section>
-                <p><strong>8. Changes to Terms</strong></p>
-                <p>Sark Boat Trips reserves the right to amend these terms and conditions at any time. Any changes will be posted on our website.</p>
+                <p><strong>8. Governing Law</strong></p>
+                <p>These terms are governed by and construed in accordance with the laws of the Bailiwick of Guernsey.</p>
             </section>
 
             <section>
-                <p><strong>9. Governing Law</strong></p>
-                <p>These terms and conditions shall be governed by and construed in accordance with the laws of Guernsey.</p>
+                <p><strong>9. Wildlife</strong></p>
+                <p>While we know the best spots for puffins, seals, and dolphins, sightings are subject to nature and cannot be guaranteed.</p>
             </section>
-
-            <section>
-                <p><strong>10. Medical Conditions</strong></p>
-                <p>Please inform us of any medical conditions that may affect your ability to participate in the boat trip.</p>
-            </section>
-
-            <section>
-                <p><strong>11. Alcohol and Drugs</strong></p>
-                <p>Alcohol consumption is only permitted at the skippers discression. Illegal drugs are prohibited on board.</p>
-            </section>
-
-            <section>
-                <p><strong>12. Wildlife</strong></p>
-                <p>We will make every effort to view wildlife, but sightings cannot be guaranteed.</p>
-            </section>
-        </div >
+        </article >
     )
 }
 

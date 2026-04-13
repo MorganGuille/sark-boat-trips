@@ -34,16 +34,18 @@ function Navbar() {
 
     return (<>
 
-        <div className={`navbar ${stickyClass}`}>
+        <header className={`navbar ${stickyClass}`}>
+            <a href="#main-content" className="skip-link">Skip to main content</a>
+            <nav className="navbar" aria-label="Primary Navigation">
+                {!checkPage() ? (<a href='#heroBanner'>HOME</a>) : (<NavLink to={'./'}>HOME</NavLink>)}
+                {!checkPage() ? (<a href='#theTour' >THE TOUR</a>) : (null)}
+                {!checkPage() ? (<a href='#charters' >CHARTERS</a>) : (null)}
+                {!checkPage() ? (<a href='#sarkIsland' >SARK ISLAND</a>) : (null)}
+                {!checkPage() ? (<a href='#reviews' >REVIEWS</a>) : (null)}
+                {!checkPage() ? (<a href='#reservations' >RESERVATIONS</a>) : (null)}
+            </nav>
 
-            {!checkPage() ? (<a href='#heroBanner'>HOME</a>) : (<NavLink to={'./'}>HOME</NavLink>)}
-            {!checkPage() ? (<a href='#theTour' >THE TOUR</a>) : (null)}
-            {!checkPage() ? (<a href='#charters' >CHARTERS</a>) : (null)}
-            {!checkPage() ? (<a href='#sarkIsland' >SARK ISLAND</a>) : (null)}
-            {!checkPage() ? (<a href='#reviews' >REVIEWS</a>) : (null)}
-            {!checkPage() ? (<a href='#reservations' >RESERVATIONS</a>) : (null)}
-
-        </div>
+        </header>
 
 
     </>

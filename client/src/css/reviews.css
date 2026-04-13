@@ -3,6 +3,7 @@ a {
     color: inherit;
 }
 
+
 .reviewsContainer {
     margin: 2em 0;
     width: 100%;
@@ -15,13 +16,18 @@ a {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 15rem;
+    width: 250px;
     height: 7rem;
     border: 1px solid black;
     border-radius: 0.5em;
     background-color: white;
     filter: drop-shadow(0.5em 0.5em grey);
     transition: 0.3s ease-in-out;
+}
+
+.reviewCard img {
+    width: 40px;
+    margin-right: 10px;
 }
 
 .reviewCard span {
@@ -48,7 +54,6 @@ a {
     }
 
     .reviewCard {
-        width: 15rem;
         height: 7rem;
     }
 }
@@ -69,7 +74,7 @@ a {
     }
 
     .reviewCard {
-        width: 90%;
+        width: 100%;
         height: auto;
         padding: 1em;
         flex-direction: column;

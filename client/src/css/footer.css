@@ -3,7 +3,7 @@ footer {
     bottom: 0;
     width: 100%;
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     text-align: start;
     align-items: center;
     justify-content: space-evenly;
@@ -15,14 +15,26 @@ footer {
 
 }
 
+.footer-container {
+    display: flex;
+    flex-direction: row;
+    gap: 3em;
+    justify-content: space-evenly;
+    align-items: center;
+}
+
+address.footer-section {
+    font-style: normal;
+}
+
 footer ul {
     list-style: none;
     margin: 0;
 }
 
 footer a:hover {
+    color: rgb(204, 204, 204);
     cursor: pointer;
-    transform: scale(1.1);
 }
 
 .footer-section {
@@ -33,13 +45,16 @@ footer a:hover {
 .footer-links {
     display: flex;
     flex-direction: row;
-    gap: 0.2rem;
+    gap: 0.5rem;
     border: none;
+    padding: 0;
+    margin: 0;
 }
 
 .popUpDisplay {
     backdrop-filter: blur(10px);
     background-color: rgba(255, 255, 255, 0.8);
+    color: black;
     gap: 1em;
     position: fixed;
     bottom: 20%;
@@ -49,21 +64,38 @@ footer a:hover {
     border-radius: 1em;
     overflow-y: scroll;
     padding: 1em;
-    z-index: 900;
+    z-index: 999;
 }
 
 .popUpBackground {
     position: fixed;
-    bottom: 0%;
-    left: 0%;
+    top: 0;
+    left: 0;
     width: 100vw;
     height: 100vh;
     backdrop-filter: blur(2px);
-    z-index: 0;
+    background-color: rgba(0, 0, 0, 0.3);
+    z-index: 998;
 }
 
 .popUpDisplay ul {
     list-style: none;
+}
+
+.footer-btn-link {
+    background: none;
+    border: none;
+    color: inherit;
+    text-decoration: underline;
+    font: inherit;
+    cursor: pointer;
+    padding: 0;
+    display: block;
+    text-align: left;
+}
+
+.footer-btn-link:hover {
+    color: rgb(204, 204, 204);
 }
 
 @media (max-width: 1366px) {
@@ -85,21 +117,28 @@ footer a:hover {
 
 @media (max-width: 1020px) {
     footer {
-        gap: 0.5rem;
+        gap: 1.5rem;
         flex-direction: column;
         text-align: center;
     }
 
-    .popUpDisplay {
-        bottom: 10%;
-        left: 10%;
-        width: 80vw;
-        height: 80vh;
-    }
-
-    .footer-section {
-        display: flex;
+    .footer-container {
         flex-direction: column;
+        gap: 1.5rem;
     }
 
+    .footer-links {
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .footer-btn-link {
+        text-align: center;
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+
+    address.footer-section {
+        align-items: center;
+    }
 }

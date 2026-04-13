@@ -1,5 +1,4 @@
-import React from 'react'
-import { useState } from 'react'
+import React, { useState } from 'react'
 import '../css/footer.css'
 
 import PrivacyPolicy from './privacyPolicy'
@@ -10,44 +9,83 @@ import tripLogo from '../assets/logos/tripadvisorIcon.png'
 import faceLogo from '../assets/logos/facebookIcon.png'
 import instaLogo from '../assets/logos/instagramIcon.png'
 
-
-
 function Footer() {
+    const [showPrivacyP, setshowPrivacyP] = useState(false)
+    const [showTerms, setshowTerms] = useState(false)
 
-    const [showPrivacyP, setshowPrivacyP] = useState(null)
-    const [showTerms, setshowTerms] = useState(null)
-
-    return (<>
-
-        {showPrivacyP ? <><div onClick={() => setshowPrivacyP(false)} className="popUpBackground"></div>
-            <PrivacyPolicy /></>
-            : null}
-
-        {showTerms ? <><div onClick={() => setshowTerms(false)} className="popUpBackground"></div>
-            <Terms /></>
-            : null}
-
-
+    return (
         <footer>
-            <div className="footer-section">
-                <a href="https://maps.app.goo.gl/E2XLJqrGku7eDePZ8" target='_blank'>Sark Boat Trips, Dixcart Ln, Sark, GY10, Guernsey</a>
-                <a href="tel:+44-7911-764-246">+447911764246</a>
-                <a href="mailto:sarkboattrips@gmail.com">sarkboattrips@gmail.com</a>
-            </div>
-            <div className="footer-section">
-                <a onClick={() => setshowPrivacyP(!showPrivacyP)}>Privacy Policy</a>
-                <a onClick={() => setshowTerms(!showTerms)}>Terms and Conditions</a>
-            </div>
-            <fieldset className='footer-links'>
-                <legend>Social links</legend>
-                <a href="https://www.facebook.com/sarkboattrips" target="_blank"><img width={'32px'} src={faceLogo} alt="Facebook Logo" /></a>
-                <a href="https://www.instagram.com/sark_boat_trips/" target="_blank"><img width={'32px'} src={instaLogo} alt="Instagram Logo" /></a>
-                <a href='https://www.tripadvisor.com/Attraction_Review-g186231-d6673939-Reviews-Sark_Boat_Trips-Sark_Channel_Islands.html' target="_blank"><img width={'32px'} src={tripLogo} alt="Tripadvisor Logo" /></a>
-                <a href='https://g.co/kgs/RsJniax' target="_blank"><img width={'32px'} src={googleLogo} alt="Google Logo" /></a>
-            </fieldset>
-        </footer>
+            {showPrivacyP && (
+                <>
+                    <div
+                        onClick={() => setshowPrivacyP(false)}
+                        className="popUpBackground"
+                        aria-hidden="true"
+                    ></div>
+                    <PrivacyPolicy close={() => setshowPrivacyP(false)} />
+                </>
+            )}
 
-    </>)
+            {showTerms && (
+                <>
+                    <div
+                        onClick={() => setshowTerms(false)}
+                        className="popUpBackground"
+                        aria-hidden="true"
+                    ></div>
+                    <Terms close={() => setshowTerms(false)} />
+                </>
+            )}
+
+            <div className="footer-container">
+                <address className="footer-section">
+                    <a href="https://maps.google.com/?q=Sark+Boat+Trips+Dixcart+Ln+Sark" target='_blank' rel="noopener noreferrer">
+                        Sark Boat Trips, Dixcart Ln, Sark, GY10, Guernsey
+                    </a>
+                    <a href="tel:+447911764246" aria-label="Call us at +44 7911 764 246">
+                        +44 7911 764 246
+                    </a>
+                    <a href="mailto:sarkboattrips@gmail.com">sarkboattrips@gmail.com</a>
+                </address>
+
+                <div className="footer-section">
+                    <button
+                        className="footer-btn-link"
+                        onClick={() => setshowPrivacyP(true)}
+                        aria-haspopup="dialog"
+                    >
+                        Privacy Policy
+                    </button>
+                    <button
+                        className="footer-btn-link"
+                        onClick={() => setshowTerms(true)}
+                        aria-haspopup="dialog"
+                    >
+                        Terms and Conditions
+                    </button>
+                </div>
+
+                <nav className='footer-links' aria-label="Social Media Links">
+                    <a href="https://www.facebook.com/sarkboattrips" target="_blank" rel="noopener noreferrer" aria-label="Visit our Facebook page">
+                        <img width={'32px'} src={faceLogo} alt="Facebook" />
+                    </a>
+                    <a href="https://www.instagram.com/sark_boat_trips/" target="_blank" rel="noopener noreferrer" aria-label="Visit our Instagram profile">
+                        <img width={'32px'} src={instaLogo} alt="Instagram" />
+                    </a>
+                    <a href='https://www.tripadvisor.com/Attraction_Review-g186231-d6673939-Reviews-Sark_Boat_Trips-Sark_Channel_Islands.html' target="_blank" rel="noopener noreferrer" aria-label="Check our reviews on Tripadvisor">
+                        <img width={'32px'} src={tripLogo} alt="Tripadvisor" />
+                    </a>
+                    <a href='https://g.co/kgs/RsJniax' target="_blank" rel="noopener noreferrer" aria-label="Find us on Google Maps">
+                        <img width={'32px'} src={googleLogo} alt="Google" />
+                    </a>
+                </nav>
+            </div>
+
+            <div className="footer-bottom">
+                <p>&copy; {new Date().getFullYear()} Sark Boat Trips. All rights reserved.</p>
+            </div>
+        </footer>
+    )
 }
 
 export default Footer

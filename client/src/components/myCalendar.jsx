@@ -12,6 +12,13 @@ function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate }) {
 
     let currentLoc = useLocation()
 
+    const formatDate = (date) => {
+        const year = date.getFullYear();
+        const month = (`0${date.getMonth() + 1}`).slice(-2);
+        const day = (`0${date.getDate()}`).slice(-2);
+        return `${day}-${month}-${year}`;
+    };
+
     const dbseasonStartDate = useMemo(() => {
         if (currentLoc.pathname === '/dashboard') return null;
         if (!seasonStartDate) return null;
@@ -24,17 +31,9 @@ function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate }) {
         return new Date(seasonEndDate);
     }, [currentLoc.pathname, seasonEndDate]);
 
-
     useEffect(() => {
         fetchMonthAvailability(date);
     }, [date]);
-
-    const formatDate = (date) => {
-        const year = date.getFullYear();
-        const month = (`0${date.getMonth() + 1}`).slice(-2);
-        const day = (`0${date.getDate()}`).slice(-2);
-        return `${day}-${month}-${year}`;
-    };
 
     const fetchMonthAvailability = async (date) => {
         const year = date.getFullYear();
@@ -43,7 +42,6 @@ function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate }) {
         const lastDayOfMonth = new Date(year, month + 1, 0);
 
         const dates = [];
-
         for (let day = firstDayOfMonth.getDate(); day <= lastDayOfMonth.getDate(); day++) {
             const currentDate = new Date(year, month, day);
             dates.push(formatDate(currentDate))
@@ -63,9 +61,7 @@ function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate }) {
                     newAvailability[formattedDate] = null;
                 }
             })
-
             setAvailability(newAvailability);
-
         } catch (error) {
             console.error(error);
             const newAvailability = {};
@@ -85,60 +81,79 @@ function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate }) {
         if (view === 'month') {
             const formattedDate = formatDate(date);
             const tileAvailability = availability[formattedDate];
-
-            if (!tileAvailability) {
-                return null;
-            }
+            if (!tileAvailability) return null;
 
             const available11am = tileAvailability['11am'];
             const available2pm = tileAvailability['2pm'];
 
-            if (available11am === 0 && available2pm === 0) {
-                return 'fully-booked';
-            } else if (available11am < 12 || available2pm < 12) {
-                return 'partially-booked';
-            } else {
-                return 'available';
+            if (available11am === 0 && available2pm === 0) return 'fully-booked';
+            if (available11am < 12 || available2pm < 12) return 'partially-booked';
+            return 'available';
+        }
+        return null;
+    };
+
+    const setTileContent = ({ date, view }) => {
+        if (view === 'month') {
+            const formattedDate = formatDate(date);
+            const tileAvailability = availability[formattedDate];
+            if (tileAvailability) {
+                return (
+                    <span className="sr-only">
+                        {tileAvailability['11am']} spaces at 11am, {tileAvailability['2pm']} spaces at 2pm.
+                    </span>
+                );
             }
         }
         return null;
     };
 
-    const color11am = () => {
-        return availability[formatDate(date)]?.['11am'] > 6 ? 'green' : 'darkred'
-    }
-
-    const color2pm = () => {
-        return availability[formatDate(date)]?.['2pm'] > 6 ? 'green' : 'darkred'
-    }
-
+    const color11am = () => availability[formatDate(date)]?.['11am'] > 6 ? 'green' : 'darkred';
+    const color2pm = () => availability[formatDate(date)]?.['2pm'] > 6 ? 'green' : 'darkred';
 
     return (
-        <section className="calendar">
-            <Calendar
-                onActiveStartDateChange={({ activeStartDate }) => handleDateChange(activeStartDate)}
-                onChange={() => [handleDateChange]}
-                onClickDay={handleDateChange}
-                value={date}
-                tileClassName={setTileClassName}
-                showNeighboringMonth={true}
-                maxDetail="month"
-                minDetail="year"
-                next2Label={null}
-                prev2Label={null}
-                minDate={dbseasonStartDate}
-                maxDate={dbseasonEndDate}
-            />
-            <div className="calendarDisplay">
+        <section className="calendar-container" aria-label="Trip Availability Calendar">
+            <div className="calendar-wrapper">
+                <Calendar
+                    onActiveStartDateChange={({ activeStartDate }) => handleDateChange(activeStartDate)}
+                    onChange={handleDateChange}
+                    onClickDay={handleDateChange}
+                    value={date}
+                    tileClassName={setTileClassName}
+                    tileContent={setTileContent}
+                    showNeighboringMonth={true}
+                    maxDetail="month"
+                    minDetail="year"
+                    next2Label={null}
+                    prev2Label={null}
+                    minDate={dbseasonStartDate}
+                    maxDate={dbseasonEndDate}
+                    inputRef={(ref) => ref && ref.setAttribute('aria-label', 'Select a date for your boat trip')}
+                />
+            </div>
+
+            <div
+                className="calendarDisplay"
+                aria-live="polite"
+                aria-atomic="true"
+            >
+                <p>Availability for : {date.toDateString()}:</p>
                 <div>
-                    <span >11:00 AM: </span>
-                    <span style={{ color: color11am() }}>{!availability[formatDate(date)]?.['11am'] && availability[formatDate(date)]?.['11am'] != 0 ? <span className='loader'></span> : `${availability[formatDate(date)]?.['11am']} spaces available`}</span>
+                    <span>11:00 AM: </span>
+                    <span style={{ color: color11am() }}>
+                        {!availability[formatDate(date)] && availability[formatDate(date)] !== 0
+                            ? <span className='loader' aria-label="Loading spaces"></span>
+                            : `${availability[formatDate(date)]?.['11am']} spaces available`}
+                    </span>
                 </div>
                 <div>
                     <span>2:00 PM: </span>
-                    <span style={{ color: color2pm() }}>{!availability[formatDate(date)]?.['2pm'] && availability[formatDate(date)]?.['2pm'] != 0 ? <span className='loader'></span> : `${availability[formatDate(date)]?.['2pm']} spaces available`} </span>
+                    <span style={{ color: color2pm() }}>
+                        {!availability[formatDate(date)] && availability[formatDate(date)] !== 0
+                            ? <span className='loader' aria-label="Loading spaces"></span>
+                            : `${availability[formatDate(date)]?.['2pm']} spaces available`}
+                    </span>
                 </div>
-
             </div>
         </section>
     );

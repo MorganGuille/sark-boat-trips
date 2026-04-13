@@ -19,7 +19,6 @@ function Bookings() {
 
     useEffect(() => {
         const fetchDates = async () => {
-
             try {
                 const res = await getSeasonDates()
                 if (res) {
@@ -32,30 +31,38 @@ function Bookings() {
             }
         }
         fetchDates()
-
     }, [])
 
     if (!seasonStartDate || !seasonEndDate) {
-        return <div>Loading calendar…</div>;
+        return <div aria-live="polite" aria-busy="true">Loading calendar…</div>;
     }
 
-
-    return (<>
-
-        <section className="bookings">
+    return (
+        <section className="bookings" aria-label="Booking and Availability">
             <div>
+                <h2 className='textArea'>Make a Reservation</h2>
                 <p className='textArea'>Please use the calendar to select a date and then fill out the form to make a booking</p>
-                <p className='textArea'>Prices for 2026 are :</p>
-                <p className='textArea'><strong>Adults</strong>: £40<br /> <strong>Children</strong> (3-14 yrs):  £25 <strong>Infants</strong>: free</p>
-                <p className='textArea'><strong>Private Charter</strong> £400 </p>
-                <MyCalendar setSelectedDate={setSelectedDate} seasonStartDate={seasonStartDate}
+
+
+                <div className='textArea' aria-label="Pricing information">
+                    <p>Prices for 2026 are :</p>
+                    <p>
+                        <strong>Adults</strong>: £40<br />
+                        <strong>Children</strong> (3-14 yrs): £25<br />
+                        <strong>Infants</strong>: free
+                    </p>
+                    <p><strong>Private Charter</strong>: £400</p>
+                </div>
+
+                <MyCalendar
+                    setSelectedDate={setSelectedDate}
+                    seasonStartDate={seasonStartDate}
                     seasonEndDate={seasonEndDate}
                 />
-
             </div>
+
             <BookingForm selectedDate={selectedDate} />
         </section>
-    </>
     )
 }
 

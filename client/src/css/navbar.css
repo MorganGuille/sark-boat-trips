@@ -10,7 +10,7 @@
     top: 0;
     padding: 0.5em 0;
     z-index: 999;
-        background-color: rgba(0, 0, 0, 0.3);
+    background-color: rgba(0, 0, 0, 0.3);
     backdrop-filter: blur(1px);
 
     & a {
@@ -26,7 +26,7 @@
 }
 
 .sticky-nav {
-        background-color: rgba(0, 0, 0, 0.3);
+    background-color: rgba(0, 0, 0, 0.3);
     backdrop-filter: blur(3px);
 
     height: 4rem;
@@ -50,6 +50,21 @@
     display: none;
 }
 
+.skip-link {
+    position: absolute;
+    top: -100px;
+    left: 0;
+    background: #000;
+    color: #fff;
+    padding: 10px;
+    z-index: 1000;
+    transition: top 0.3s;
+}
+
+.skip-link:focus {
+    top: 0;
+}
+
 
 
 @media (max-width: 1020px) {
@@ -69,6 +84,8 @@
     }
 
     .burgerIcon {
+        background: none;
+        border: none;
         display: block;
         width: 5rem;
         height: 5rem;

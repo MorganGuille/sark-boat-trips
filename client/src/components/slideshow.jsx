@@ -1,7 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import '../css/slideshow.css';
-// Note: You can actually delete this uuidv4 import if you aren't using it elsewhere in this file!
-import { v4 as uuidv4 } from 'uuid';
 
 function Slideshow({ images, interval = 5000 }) {
 
@@ -71,7 +69,6 @@ function Slideshow({ images, interval = 5000 }) {
                         <div
                             key={index}
                             className={`slide ${index === currentIndex ? 'active' : ''}`}
-                            // Only load the URL if it's visible or about to be
                             style={{ backgroundImage: isVisible ? `url(${image})` : 'none' }}
                         ></div>
                     );
