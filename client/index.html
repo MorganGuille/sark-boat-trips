@@ -27,33 +27,43 @@
     <meta name="twitter:card" content="summary_large_image" />
 
     <script type="application/ld+json">
-            {
-              "@context": "https://schema.org",
-              "@type": "LocalBusiness",
-              "name": "Sark Boat Trips",
-              "image": "https://www.sarkboattrips.com/seo/socialimg.jpg",
-              "url": "https://www.sarkboattrips.com",
-              "address": {
-                "@type": "PostalAddress",
-                "addressLocality": "Sark",
-                "addressRegion": "Channel Islands",
-                "addressCountry": "UK"
+      [
+        {
+          "@context": "https://schema.org",
+          "@type": "LocalBusiness",
+          "name": "Sark Boat Trips",
+          "image": "https://www.sarkboattrips.com/seo/socialimg.jpg",
+          "url": "https://www.sarkboattrips.com",
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "Sark",
+            "addressRegion": "Channel Islands",
+            "addressCountry": "UK"
+          }
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "Tour",
+          "name": "Sark Coastal Activity & Boat Tour",
+          "description": "The best way to see the island. Perfect for those looking for Sark activities and wildlife.",
+          "itinerary": {
+            "@type": "ItemList",
+            "itemListElement": [
+              { "@type": "ListItem", "name": "Creux Harbour", "position": 1 },
+              {
+                "@type": "ListItem",
+                "name": "Puffin Watching at L'Etac",
+                "position": 2
+              },
+              {
+                "@type": "ListItem",
+                "name": "Exploring Sea Caves",
+                "position": 3
               }
-            }
-            {
-        "@context": "https://schema.org",
-        "@type": "Tour",
-        "name": "Sark Coastal Activity & Boat Tour",
-        "description": "The best way to see the island. Perfect for those looking for Sark activities and wildlife.",
-        "itinerary": {
-          "@type": "ItemList",
-          "itemListElement": [
-            { "@type": "ListItem", "name": "Creux Harbour", "position": 1 },
-            { "@type": "ListItem", "name": "Puffin Watching at L'Etac", "position": 2 },
-            { "@type": "ListItem", "name": "Exploring Sea Caves", "position": 3 }
-          ]
+            ]
+          }
         }
-      }
+      ]
     </script>
 
     <title>Sark Boat Trips | Top Things to Do & Activities on Sark</title>
@@ -63,8 +73,8 @@
     />
   </head>
 
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
 </html>

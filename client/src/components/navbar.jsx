@@ -8,17 +8,17 @@ function Navbar() {
 
     const [stickyClass, setStickyClass] = useState('');
 
-    useEffect(() => {
-        window.addEventListener('scroll', stickNavbar);
-        return () => window.removeEventListener('scroll', stickNavbar);
-    }, []);
-
     const stickNavbar = () => {
         if (window !== undefined) {
             let scrollPosition = window.scrollY;
             scrollPosition > 850 ? setStickyClass('sticky-nav') : setStickyClass('');
         }
     };
+
+    useEffect(() => {
+        window.addEventListener('scroll', stickNavbar);
+        return () => window.removeEventListener('scroll', stickNavbar);
+    }, []);
 
     /// logic for showing / hiding navlinks below
 

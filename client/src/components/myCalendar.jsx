@@ -31,10 +31,6 @@ function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate }) {
         return new Date(seasonEndDate);
     }, [currentLoc.pathname, seasonEndDate]);
 
-    useEffect(() => {
-        fetchMonthAvailability(date);
-    }, [date]);
-
     const fetchMonthAvailability = async (date) => {
         const year = date.getFullYear();
         const month = date.getMonth();
@@ -71,6 +67,10 @@ function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate }) {
             setAvailability(newAvailability);
         }
     }
+
+    useEffect(() => {
+        fetchMonthAvailability(date);
+    }, [date]);
 
     const handleDateChange = (date) => {
         setDate(date);

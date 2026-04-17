@@ -1,5 +1,5 @@
 import { useLayoutEffect, useEffect } from "react";
-import { BrowserRouter as Router, Route, Routes, useLocation } from "react-router";
+import { Routes, Route, useLocation } from "react-router";
 import './App.css';
 
 import Navbar from './components/navbar';
@@ -30,21 +30,21 @@ function App() {
 
   return (
     <>
-      <Router>
-        <Wrapper>
-          <Navbar />
-          <MobileNav />
-          <Routes>
-            <Route path='/' element={<Home />} />
-            <Route path='/bookings' element={<Bookings />} />
-            <Route path='/charters' element={<Charters />} />
-            <Route path='/dashboard' element={<Dashboard />} />
-            <Route path='/success' element={<Success />} />
-            <Route path='/canceled' element={<Canceled />} />
-            <Route path='*' element={<NotFound />} />
-          </Routes>
-        </Wrapper>
-      </Router>
+
+      <Wrapper>
+        <Navbar />
+        <MobileNav />
+        <Routes>
+          <Route path='/' element={<Home />} />
+          <Route path='/bookings' element={<Bookings />} />
+          <Route path='/charters' element={<Charters />} />
+          <Route path='/dashboard' element={<Dashboard />} />
+          <Route path='/success' element={<Success />} />
+          <Route path='/canceled' element={<Canceled />} />
+          <Route path='*' element={<NotFound />} />
+        </Routes>
+      </Wrapper>
+
       <Footer />
     </>
   )
