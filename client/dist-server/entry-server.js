@@ -3064,7 +3064,6 @@ function Charters() {
             }
           ) })
         ] }),
-        /* @__PURE__ */ jsx("h3", { children: "More ideas" }),
         /* @__PURE__ */ jsxs("section", { "aria-labelledby": "more-ideas-title", children: [
           /* @__PURE__ */ jsx("h3", { id: "more-ideas-title", children: "More ideas" }),
           /* @__PURE__ */ jsxs("div", { className: "grid1", children: [

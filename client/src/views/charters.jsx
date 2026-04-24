@@ -46,7 +46,6 @@ function Charters() {
                         />
                     </div>
                 </article>
-                <h3>More ideas</h3>
                 <section aria-labelledby="more-ideas-title">
                     <h3 id="more-ideas-title">More ideas</h3>
                     <div className='grid1'>
