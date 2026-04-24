@@ -2391,7 +2391,7 @@ function Reviews() {
       /* @__PURE__ */ jsx("h2", { id: "reviews-heading", children: "REVIEWS" }),
       /* @__PURE__ */ jsxs("div", { className: "reviewsContainer", children: [
         /* @__PURE__ */ jsx("a", { href: "https://g.co/kgs/xgNzzxD", target: "_blank", rel: "noopener noreferrer", "aria-label": "Read our reviews on Google", children: /* @__PURE__ */ jsxs("div", { className: "reviewCard", children: [
-          /* @__PURE__ */ jsx("img", { src: googleLogo, alt: "Google" }),
+          /* @__PURE__ */ jsx("img", { src: googleLogo }),
           /* @__PURE__ */ jsxs("div", { children: [
             /* @__PURE__ */ jsx("p", { children: "Google" }),
             /* @__PURE__ */ jsxs("span", { "aria-label": "5.0 out of 5 stars", children: [
@@ -2401,7 +2401,7 @@ function Reviews() {
           ] })
         ] }) }),
         /* @__PURE__ */ jsx("a", { href: "https://www.tripadvisor.com/Attraction_Review-g186231-d6673939-Reviews-Sark_Boat_Trips-Sark_Channel_Islands.html", target: "_blank", rel: "noopener noreferrer", "aria-label": "Read our reviews on Tripadvisor", children: /* @__PURE__ */ jsxs("div", { className: "reviewCard", children: [
-          /* @__PURE__ */ jsx("img", { src: tripLogo, alt: "Tripadvisor" }),
+          /* @__PURE__ */ jsx("img", { src: tripLogo }),
           /* @__PURE__ */ jsxs("div", { children: [
             /* @__PURE__ */ jsx("p", { children: "Tripadvisor" }),
             /* @__PURE__ */ jsxs("span", { "aria-label": "5.0 out of 5 stars", children: [
@@ -2411,7 +2411,7 @@ function Reviews() {
           ] })
         ] }) }),
         /* @__PURE__ */ jsx("a", { href: "https://www.facebook.com/sarkboattrips/reviews", target: "_blank", rel: "noopener noreferrer", "aria-label": "Read our reviews on Facebook", children: /* @__PURE__ */ jsxs("div", { className: "reviewCard", children: [
-          /* @__PURE__ */ jsx("img", { src: faceLogo, alt: "Facebook" }),
+          /* @__PURE__ */ jsx("img", { src: faceLogo }),
           /* @__PURE__ */ jsxs("div", { children: [
             /* @__PURE__ */ jsx("p", { children: "Facebook" }),
             /* @__PURE__ */ jsxs("span", { "aria-label": "5.0 out of 5 stars", children: [
@@ -2973,7 +2973,7 @@ function Home() {
       /* @__PURE__ */ jsxs("section", { id: "charters", className: "charters centered-section", "aria-labelledby": "charters-heading", children: [
         /* @__PURE__ */ jsxs("div", { id: "charters-heading", className: "content", children: [
           /* @__PURE__ */ jsx("h2", { children: "CHARTERS" }),
-          /* @__PURE__ */ jsx("h4", { children: "Did you know we do charters?" }),
+          /* @__PURE__ */ jsx("h3", { children: "Did you know we do charters?" }),
           /* @__PURE__ */ jsx("p", { children: "If you are a larger group and/or would just like the boat to yourself we can arrange a charter tour! We can do specific tours such as; a tour to see the sea birds of L’Etac, an early morning / late evening cruise." }),
           /* @__PURE__ */ jsx("p", { children: " Or perhaps you fancy a trip around to one of Sark’s secluded bays. We can provide SUP’s, snorkeling gear and even a packed lunch." }),
           /* @__PURE__ */ jsx("p", { children: "For more information and ideas for a charter to suit you, please click below." }),
@@ -2985,13 +2985,13 @@ function Home() {
         /* @__PURE__ */ jsx("h2", { id: "island-heading", children: "SARK ISLAND" }),
         /* @__PURE__ */ jsxs("div", { className: "grid1 textGrid", children: [
           /* @__PURE__ */ jsxs("div", { children: [
-            /* @__PURE__ */ jsx("h4", { children: "Sark is the crown jewel of the Channel Islands, nestled in between Guernsey and Jersey." }),
+            /* @__PURE__ */ jsx("h3", { children: "Sark is the crown jewel of the Channel Islands, nestled in between Guernsey and Jersey." }),
             /* @__PURE__ */ jsx("p", { children: "Sark offers a truly unique holiday experience for those wanting to escape the bright lights and noise of the city. A visit to our car-free island is like a step back in time and visitors are sure to be blown away by the stunning scenery, bays, coastal paths and cliff top views." }),
             /* @__PURE__ */ jsx("p", { children: "Sark is also the world's first 'Dark Sky' Island, offering spectacular star gazing throughout the year and the Goliout headland is a world recognized Ramsar site" }),
             /* @__PURE__ */ jsx("p", { children: "The Island's 22 mile coastline is a treasure trove of small coves, creeks, caves, inlets and bays, all teaming with sea life both above and below the water. " })
           ] }),
           /* @__PURE__ */ jsxs("div", { children: [
-            /* @__PURE__ */ jsx("h4", { children: "Did you know?:" }),
+            /* @__PURE__ */ jsx("h3", { children: "Did you know?:" }),
             /* @__PURE__ */ jsx("p", { children: "Sark has a tidal range of around 10m. which means no trip around the island will be the same, on some tides we can access caves, on others we can get within touching distance of some of the off-shore rocks." }),
             /* @__PURE__ */ jsx("p", { children: "On a ‘Spring low’ tide we can show you some of the many scrambling routes on Sark." })
           ] })

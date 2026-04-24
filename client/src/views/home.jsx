@@ -100,7 +100,7 @@ function Home() {
             <section id='charters' className="charters centered-section" aria-labelledby="charters-heading">
                 <div id="charters-heading" className="content">
                     <h2>CHARTERS</h2>
-                    <h4>Did you know we do charters?</h4>
+                    <h3>Did you know we do charters?</h3>
                     <p>If you are a larger group and/or would just like the boat to yourself we can arrange a charter
                         tour!
                         We can do specific tours such as; a tour to see the sea birds of L’Etac, an early morning
@@ -117,7 +117,7 @@ function Home() {
 
                 <div className="grid1 textGrid">
                     <div>
-                        <h4>Sark is the crown jewel of the Channel Islands, nestled in between Guernsey and Jersey.</h4>
+                        <h3>Sark is the crown jewel of the Channel Islands, nestled in between Guernsey and Jersey.</h3>
                         <p>Sark offers a truly unique holiday experience for those wanting to escape the bright lights and
                             noise
                             of
@@ -134,7 +134,7 @@ function Home() {
                     </div>
 
                     <div>
-                        <h4>Did you know?:</h4>
+                        <h3>Did you know?:</h3>
                         <p>Sark has a tidal range of around 10m. which means no trip around the island will be the same, on
                             some
                             tides we can access caves, on others we can get within touching distance of some of the

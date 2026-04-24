@@ -16,7 +16,7 @@ function Reviews() {
 
                 <a href="https://g.co/kgs/xgNzzxD" target="_blank" rel="noopener noreferrer" aria-label="Read our reviews on Google">
                     <div className='reviewCard'>
-                        <img src={googleLogo} alt="Google" />
+                        <img src={googleLogo} />
                         <div>
                             <p>Google</p>
                             {/* 3. ACCESSIBLE RATINGS: Hide the visual stars from screen readers 
@@ -31,7 +31,7 @@ function Reviews() {
 
                 <a href="https://www.tripadvisor.com/Attraction_Review-g186231-d6673939-Reviews-Sark_Boat_Trips-Sark_Channel_Islands.html" target="_blank" rel="noopener noreferrer" aria-label="Read our reviews on Tripadvisor">
                     <div className='reviewCard'>
-                        <img src={tripLogo} alt="Tripadvisor" />
+                        <img src={tripLogo} />
                         <div>
                             <p>Tripadvisor</p>
                             <span aria-label="5.0 out of 5 stars">
@@ -44,7 +44,7 @@ function Reviews() {
 
                 <a href="https://www.facebook.com/sarkboattrips/reviews" target="_blank" rel="noopener noreferrer" aria-label="Read our reviews on Facebook">
                     <div className='reviewCard'>
-                        <img src={faceLogo} alt="Facebook" />
+                        <img src={faceLogo} />
                         <div>
                             <p>Facebook</p>
                             <span aria-label="5.0 out of 5 stars">
