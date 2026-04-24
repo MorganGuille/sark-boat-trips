@@ -2391,7 +2391,7 @@ function Reviews() {
       /* @__PURE__ */ jsx("h2", { id: "reviews-heading", children: "REVIEWS" }),
       /* @__PURE__ */ jsxs("div", { className: "reviewsContainer", children: [
         /* @__PURE__ */ jsx("a", { href: "https://g.co/kgs/xgNzzxD", target: "_blank", rel: "noopener noreferrer", "aria-label": "Read our reviews on Google", children: /* @__PURE__ */ jsxs("div", { className: "reviewCard", children: [
-          /* @__PURE__ */ jsx("img", { src: googleLogo }),
+          /* @__PURE__ */ jsx("img", { src: googleLogo, alt: "" }),
           /* @__PURE__ */ jsxs("div", { children: [
             /* @__PURE__ */ jsx("p", { children: "Google" }),
             /* @__PURE__ */ jsxs("span", { "aria-label": "5.0 out of 5 stars", children: [
@@ -2401,7 +2401,7 @@ function Reviews() {
           ] })
         ] }) }),
         /* @__PURE__ */ jsx("a", { href: "https://www.tripadvisor.com/Attraction_Review-g186231-d6673939-Reviews-Sark_Boat_Trips-Sark_Channel_Islands.html", target: "_blank", rel: "noopener noreferrer", "aria-label": "Read our reviews on Tripadvisor", children: /* @__PURE__ */ jsxs("div", { className: "reviewCard", children: [
-          /* @__PURE__ */ jsx("img", { src: tripLogo }),
+          /* @__PURE__ */ jsx("img", { src: tripLogo, alt: "" }),
           /* @__PURE__ */ jsxs("div", { children: [
             /* @__PURE__ */ jsx("p", { children: "Tripadvisor" }),
             /* @__PURE__ */ jsxs("span", { "aria-label": "5.0 out of 5 stars", children: [
@@ -2411,7 +2411,7 @@ function Reviews() {
           ] })
         ] }) }),
         /* @__PURE__ */ jsx("a", { href: "https://www.facebook.com/sarkboattrips/reviews", target: "_blank", rel: "noopener noreferrer", "aria-label": "Read our reviews on Facebook", children: /* @__PURE__ */ jsxs("div", { className: "reviewCard", children: [
-          /* @__PURE__ */ jsx("img", { src: faceLogo }),
+          /* @__PURE__ */ jsx("img", { src: faceLogo, alt: "" }),
           /* @__PURE__ */ jsxs("div", { children: [
             /* @__PURE__ */ jsx("p", { children: "Facebook" }),
             /* @__PURE__ */ jsxs("span", { "aria-label": "5.0 out of 5 stars", children: [
