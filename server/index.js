@@ -61,9 +61,9 @@ app.use("/notes", require("./routes/notes"));
 // Optional public folder
 app.use(express.static("public"));
 
-app.listen(PORT, () => console.log(`listening on port : ${PORT}`));
-
 // Catch-all for React Router
 app.get("/*", (req, res) => {
   res.sendFile(path.join(__dirname, "../client/dist/index.html"));
 });
+
+app.listen(PORT, () => console.log(`listening on port : ${PORT}`));
