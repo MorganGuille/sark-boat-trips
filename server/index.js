@@ -19,7 +19,7 @@ app.use(
     maxAge: 15552000,
     includeSubDomains: true,
     preload: true,
-  })
+  }),
 );
 
 // Force HTTPS
@@ -43,7 +43,7 @@ app.get("/robots.txt", (req, res) => {
 async function connecting() {
   try {
     await mongoose.connect(
-      `mongodb+srv://morganguille:${dbPassword}@bookingsdb.7bty4.mongodb.net/?retryWrites=true&w=majority&appName=BookingsDB`
+      `mongodb+srv://morganguille:${dbPassword}@bookingsdb.7bty4.mongodb.net/?retryWrites=true&w=majority&appName=BookingsDB`,
     );
     console.log("Connected to the DB");
   } catch (error) {
@@ -58,12 +58,12 @@ app.use("/admin", require("./routes/admin"));
 app.use("/charters", require("./routes/charters"));
 app.use("/notes", require("./routes/notes"));
 
-// Catch-all for React Router
-app.get("/*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../client/dist/index.html"));
-});
-
 // Optional public folder
 app.use(express.static("public"));
 
 app.listen(PORT, () => console.log(`listening on port : ${PORT}`));
+
+// Catch-all for React Router
+app.get("/*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../client/dist/index.html"));
+});
