@@ -2906,8 +2906,8 @@ const gallery9 = "/assets/gallery9-gu9XnqTu.webp";
 const gallery10 = "/assets/gallery10-DWgTHhDF.webp";
 const gallery11 = "/assets/gallery11-9cZYrAYV.webp";
 const charters = "/assets/charters-CuL-VIhQ.webp";
-const sarkShipping = "/assets/isle-of-sark-shipping-company-2xQAbQ08.webp";
 const suesbnb = "/assets/SuesbnbextGeorge-BhCwF8SH.webp";
+const sarkMap = "/assets/map_web_blue-C6zRbRib.webp";
 function Home() {
   const images = [
     gallery1,
@@ -3003,7 +3003,7 @@ function Home() {
             /* @__PURE__ */ jsx("p", { children: "Visit the Isle of Sark shipping website for more info and online booking" }),
             /* @__PURE__ */ jsx("a", { href: "https://www.sarkshipping.gg", target: "_blank", rel: "noopener noreferrer", children: /* @__PURE__ */ jsx("p", { children: "www.sarkshipping.gg (opens in new tab)" }) })
           ] }),
-          /* @__PURE__ */ jsx("div", { children: /* @__PURE__ */ jsx("img", { src: sarkShipping, alt: "Ferry from Guernsey to Sark", loading: "lazy" }) })
+          /* @__PURE__ */ jsx("div", { children: /* @__PURE__ */ jsx("img", { src: sarkMap, alt: "Map of Sark Island", loading: "lazy" }) })
         ] }),
         /* @__PURE__ */ jsxs("div", { className: "grid1", children: [
           /* @__PURE__ */ jsx("div", { children: /* @__PURE__ */ jsx("img", { src: suesbnb, alt: "Sue's BnB", loading: "lazy" }) }),

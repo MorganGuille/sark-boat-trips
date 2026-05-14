@@ -18,8 +18,8 @@ import gallery10 from '../assets/images/gallery10.webp'
 import gallery11 from '../assets/images/gallery11.webp'
 
 import charters from "../assets/images/charters.webp"
-import sarkShipping from "../assets/images/isle-of-sark-shipping-company.webp"
 import suesbnb from "../assets/images/SuesbnbextGeorge.webp"
+import sarkMap from "../assets/images/map_web_blue.webp"
 
 
 import '../css/home.css'
@@ -157,7 +157,7 @@ function Home() {
                         </a>
                     </div>
                     <div>
-                        <img src={sarkShipping} alt='Ferry from Guernsey to Sark' loading='lazy' />
+                        <img src={sarkMap} alt='Map of Sark Island' loading='lazy' />
                     </div>
                 </div>
 
