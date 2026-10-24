@@ -31,7 +31,7 @@ const getAvailability = async (date, timeslot) => {
         const availabilitySettings = await Availability.findOne({ date, timeslot });
         const capacity = availabilitySettings ? availabilitySettings.capacity : 12;
 
-        const existingBookings = await Bookings.find({ date, timeslot });
+        const existingBookings = await Bookings.find({ date, timeslot, status: { $ne: 'cancelled' } });
         let total = 0;
         existingBookings.forEach(booking => {
             total += (booking.adults + booking.children);

@@ -1,4 +1,4 @@
-function BookingsTable({ bookings, showDate, onEdit, onDelete }) {
+function BookingsTable({ bookings, showDate, onEdit, onCancel, onRestore, onDeletePermanently }) {
 
     const guests = (booking) => {
         const children = Number(booking.children) || 0
@@ -23,13 +23,16 @@ function BookingsTable({ bookings, showDate, onEdit, onDelete }) {
                     </tr>
                 </thead>
                 <tbody>
-                    {bookings.map((booking) => (
-                        <tr key={booking._id}>
+                    {bookings.map((booking) => {
+                        const isCancelled = booking.status === 'cancelled'
+                        return (
+                        <tr key={booking._id} className={isCancelled ? 'cancelledRow' : undefined}>
                             {showDate ? <td>{booking.date}</td> : null}
                             <td>{booking.timeslot}</td>
                             <td>
                                 {[booking.firstName, booking.lastName].filter(Boolean).join(' ') || '(no name)'}
                                 {booking.charter === 'true' ? <span className='badge'>Charter</span> : null}
+                                {isCancelled ? <span className='badge badgeCancelled'>Cancelled</span> : null}
                             </td>
                             <td>{guests(booking)}</td>
                             <td>
@@ -41,11 +44,17 @@ function BookingsTable({ bookings, showDate, onEdit, onDelete }) {
                             <td>{booking.accommodation}</td>
                             <td className='messageCell'>{booking.message}</td>
                             <td className='actionsCell'>
-                                <button type='button' className='btn btnSmall' onClick={() => onEdit(booking)}>Edit</button>
-                                <button type='button' className='btn btnSmall btnDanger' onClick={() => onDelete(booking)}>Delete</button>
+                                {isCancelled ? (<>
+                                    <button type='button' className='btn btnSmall' onClick={() => onRestore(booking)}>Restore</button>
+                                    <button type='button' className='btn btnSmall btnDanger' onClick={() => onDeletePermanently(booking)}>Delete permanently</button>
+                                </>) : (<>
+                                    <button type='button' className='btn btnSmall' onClick={() => onEdit(booking)}>Edit</button>
+                                    <button type='button' className='btn btnSmall btnDanger' onClick={() => onCancel(booking)}>Cancel</button>
+                                </>)}
                             </td>
                         </tr>
-                    ))}
+                        )
+                    })}
                 </tbody>
             </table>
         </div>

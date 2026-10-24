@@ -9,7 +9,9 @@ router.post('/monthAvailability', controller.checkMonthAvail)
 
 // Dashboard only
 router.post('/admin-add', requireAuth, controller.adminAddBooking)
-router.post('/delete', requireAuth, controller.deleteBooking)
+router.post('/cancel', requireAuth, controller.cancelBooking)
+router.post('/restore', requireAuth, controller.restoreBooking)
+router.post('/permanently-delete', requireAuth, controller.permanentlyDeleteBooking)
 router.get('/:date', requireAuth, controller.checkDate)
 router.get('/search/:search', requireAuth, controller.search)
 router.post('/update/:id', requireAuth, controller.updateBooking);

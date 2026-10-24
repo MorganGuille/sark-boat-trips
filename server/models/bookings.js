@@ -41,6 +41,15 @@ const bookingsSchema = new mongoose.Schema({
     },
     charter: {
         type: String
+    },
+    // Bookings without a status (created before cancelling existed) count as active
+    status: {
+        type: String,
+        enum: ['active', 'cancelled'],
+        default: 'active',
+    },
+    cancelledAt: {
+        type: Date,
     }
 });
 

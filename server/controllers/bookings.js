@@ -27,7 +27,7 @@ const getAvailability = async (date, timeslot) => {
         const availabilitySettings = await Availability.findOne({ date, timeslot });
         const capacity = availabilitySettings ? availabilitySettings.capacity : 12;
 
-        const existingBookings = await Bookings.find({ date, timeslot });
+        const existingBookings = await Bookings.find({ date, timeslot, status: { $ne: 'cancelled' } });
         let total = 0;
         existingBookings.forEach(booking => {
             total += (booking.adults + booking.children);
@@ -57,6 +57,11 @@ const updateAvailability = async (req, res) => {
     }
 };
 
+
+const bookingName = (booking) => [booking.firstName, booking.lastName].filter(Boolean).join(' ') || 'this booking';
+
+// Day view and search hide cancelled bookings unless asked (?includeCancelled=true)
+const statusFilter = (req) => req.query.includeCancelled === 'true' ? {} : { status: { $ne: 'cancelled' } };
 
 // Public bookings must include everything we need to contact the customer
 const isCompleteBooking = (booking) =>
@@ -148,7 +153,8 @@ const addBooking = async (req, res) => {
             try {
                 await sendEmail(mailOptionsClient);
                 await sendEmail(mailOptionsAdmin);
-                let newBooking = await Bookings.create(req.body);
+                const { status, cancelledAt, ...bookingData } = req.body;
+                let newBooking = await Bookings.create(bookingData);
                 res.send({
                     ok: true, data: `Thanks ${firstName}, your booking for ${adults} adults ${childResponse} on
                             ${date} at ${timeslot} has been reserved. Please check your email for confirmation (Dont forget to check the spam folder!)`
@@ -202,20 +208,23 @@ const adminAddBooking = async (req, res) => {
     }
 };
 
-const deleteBooking = async (req, res) => {
+const cancelBooking = async (req, res) => {
     const { _id } = req.body;
 
     try {
-        const bookingToDelete = await Bookings.findOne({ _id: _id });
-        const delBooking = await Bookings.deleteOne({ _id: _id });
+        const cancelledBooking = await Bookings.findOneAndUpdate(
+            { _id, status: { $ne: 'cancelled' } },
+            { $set: { status: 'cancelled', cancelledAt: new Date() } },
+            { new: true }
+        );
 
-        if (delBooking.deletedCount === 0) {
-            return res.status(404).send({ ok: false, data: `No booking found for booking ID : ${_id}` });
+        if (!cancelledBooking) {
+            return res.status(404).send({ ok: false, data: `No active booking found for booking ID : ${_id}` });
         }
 
         const mailOptionsClient = {
             from: 'sarkboattrips@gmail.com',
-            to: bookingToDelete.email,
+            to: cancelledBooking.email,
             subject: 'Booking CANCELLED - Sark Boat Trips',
             html: `<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
                         <div
@@ -223,8 +232,8 @@ const deleteBooking = async (req, res) => {
                             <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTbfVS_8hzPlk9unxom9wpjtPJyZ_7XgpjsuA&s"
                                 alt="Sark Boat Trips" width="42" height="42"
                                 style="background-color: white; padding: 0.2rem; border-radius: 50px;">
-                            <h3>Dear ${bookingToDelete.firstName},</h3>
-                            <p>Your booking on ${bookingToDelete.date} at ${bookingToDelete.timeslot} has been <strong
+                            <h3>Dear ${cancelledBooking.firstName},</h3>
+                            <p>Your booking on ${cancelledBooking.date} at ${cancelledBooking.timeslot} has been <strong
                                     style="color: lightcoral;">CANCELLED</strong>.
                             </p>
                             <p>If this is a mistake please contact us</p>
@@ -248,15 +257,15 @@ const deleteBooking = async (req, res) => {
         const mailOptionsAdmin = {
             from: 'sarkboattrips@gmail.com',
             to: 'sarkboattrips@gmail.com',
-            subject: `Booking CANCELLED ${bookingToDelete.date}`,
+            subject: `Booking CANCELLED ${cancelledBooking.date}`,
             html: `<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
                     <div
                         style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto 4rem auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
                         <h3>Booking <strong style="color: lightcoral;">CANCELLED</strong></h3>
-                        <p>Name : ${bookingToDelete.firstName} ${bookingToDelete.lastName} </p>
-                        <p>Date : ${bookingToDelete.date} at ${bookingToDelete.timeslot}</p>
-                        <p>Email : ${bookingToDelete.email} </p>
-                        <p>Phone : ${bookingToDelete.phone} </p>
+                        <p>Name : ${cancelledBooking.firstName} ${cancelledBooking.lastName} </p>
+                        <p>Date : ${cancelledBooking.date} at ${cancelledBooking.timeslot}</p>
+                        <p>Email : ${cancelledBooking.email} </p>
+                        <p>Phone : ${cancelledBooking.phone} </p>
                         <hr>
                         <br>
                         <a style="background-color: rgb(5, 171, 116); color: white; text-decoration: none; padding: 0.5rem;"
@@ -265,12 +274,73 @@ const deleteBooking = async (req, res) => {
                 </div>`
         };
 
-        if (bookingToDelete.email) await sendEmail(mailOptionsClient);
-        await sendEmail(mailOptionsAdmin);
-        res.send({ ok: true, data: `Booking for ${[bookingToDelete.firstName, bookingToDelete.lastName].filter(Boolean).join(' ') || 'this booking'} on ${bookingToDelete.date} at ${bookingToDelete.timeslot} deleted successfully${bookingToDelete.email ? ' and email sent' : ''}` });
+        const who = bookingName(cancelledBooking);
+        try {
+            if (cancelledBooking.email) await sendEmail(mailOptionsClient);
+            await sendEmail(mailOptionsAdmin);
+        } catch (emailError) {
+            // The booking is already cancelled, so report that and flag the email problem
+            return res.send({ ok: true, data: `Booking for ${who} on ${cancelledBooking.date} at ${cancelledBooking.timeslot} cancelled, but the email could not be sent` });
+        }
+        res.send({ ok: true, data: `Booking for ${who} on ${cancelledBooking.date} at ${cancelledBooking.timeslot} cancelled${cancelledBooking.email ? ' and email sent' : ''}` });
 
     } catch (error) {
-        console.error("Error deleting booking:", error);
+        console.error("Error cancelling booking:", error);
+        res.status(500).send({ ok: false, data: "An error occurred. Please try again later." });
+    }
+};
+
+const restoreBooking = async (req, res) => {
+    const { _id } = req.body;
+
+    try {
+        const booking = await Bookings.findOne({ _id, status: 'cancelled' });
+        if (!booking) {
+            return res.status(404).send({ ok: false, data: "No cancelled booking found with that ID." });
+        }
+
+        const adults = Number(booking.adults) || 0;
+        const children = Number(booking.children) || 0;
+        const availability = await getAvailability(booking.date, booking.timeslot);
+        if (availability < adults + children) {
+            return res.send({ ok: false, data: `Can't restore: only ${availability} spaces left at ${booking.timeslot} on ${booking.date}.` });
+        }
+
+        booking.status = 'active';
+        booking.cancelledAt = undefined;
+        // validateBeforeSave is off because bookings made on the dashboard may be incomplete
+        await booking.save({ validateBeforeSave: false });
+
+        const who = bookingName(booking);
+        if (!booking.email) {
+            return res.send({ ok: true, data: `Booking for ${who} on ${booking.date} at ${booking.timeslot} restored (no email address, so no confirmation was sent)` });
+        }
+        try {
+            await sendEmail(buildConfirmationEmail({
+                email: booking.email, firstName: booking.firstName || 'guest', adults, childResponse: children > 0 ? `and ${children} children` : '', date: booking.date, timeslot: booking.timeslot,
+            }));
+        } catch (emailError) {
+            return res.send({ ok: true, data: `Booking for ${who} on ${booking.date} at ${booking.timeslot} restored, but the confirmation email could not be sent` });
+        }
+        res.send({ ok: true, data: `Booking for ${who} on ${booking.date} at ${booking.timeslot} restored and confirmation email sent` });
+    } catch (error) {
+        console.error("Error restoring booking:", error);
+        res.status(500).send({ ok: false, data: "An error occurred. Please try again later." });
+    }
+};
+
+// Only cancelled bookings can be removed for good, e.g. when a customer asks for their data to be erased
+const permanentlyDeleteBooking = async (req, res) => {
+    const { _id } = req.body;
+
+    try {
+        const deleted = await Bookings.findOneAndDelete({ _id, status: 'cancelled' });
+        if (!deleted) {
+            return res.status(404).send({ ok: false, data: "Only cancelled bookings can be permanently deleted." });
+        }
+        res.send({ ok: true, data: `Booking for ${bookingName(deleted)} on ${deleted.date} at ${deleted.timeslot} permanently deleted` });
+    } catch (error) {
+        console.error("Error permanently deleting booking:", error);
         res.status(500).send({ ok: false, data: "An error occurred. Please try again later." });
     }
 };
@@ -279,7 +349,7 @@ const checkDate = async (req, res) => {
     let date = req.params.date
     try {
 
-        let bookings = await Bookings.find({ date: date })
+        let bookings = await Bookings.find({ date: date, ...statusFilter(req) })
         res.send({ ok: true, data: bookings })
     }
     catch (error) {
@@ -318,7 +388,7 @@ const checkMonthAvail = async (req, res) => {
 const search = async (req, res) => {
     let search = req.params.search;
     try {
-        let bookings = await Bookings.find({ lastName: { $regex: search, $options: 'i' } });
+        let bookings = await Bookings.find({ lastName: { $regex: search, $options: 'i' }, ...statusFilter(req) });
         res.send({ ok: true, data: bookings });
     } catch (error) {
         console.error("Error searching bookings:", error);
@@ -370,6 +440,9 @@ const updateBooking = async (req, res) => {
 
 
         const oldBooking = await Bookings.findOne({ _id: bookingId });
+        if (oldBooking && oldBooking.status === 'cancelled') {
+            return res.status(409).send({ ok: false, data: 'This booking is cancelled. Restore it before editing.' });
+        }
 
         const updatedBooking = await Bookings.findOneAndUpdate(
             { _id: bookingId },
@@ -443,5 +516,5 @@ const updateBooking = async (req, res) => {
 }
 
 
-module.exports = { addBooking, adminAddBooking, deleteBooking, checkDate, checkMonthAvail, search, updateBooking, updateAvailability }
+module.exports = { addBooking, adminAddBooking, cancelBooking, restoreBooking, permanentlyDeleteBooking, checkDate, checkMonthAvail, search, updateBooking, updateAvailability }
 

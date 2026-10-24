@@ -27,6 +27,7 @@ const sortBookings = (bookings) =>
     [...bookings].sort((a, b) =>
         parseDate(a.date) - parseDate(b.date) ||
         TIMESLOTS.indexOf(a.timeslot) - TIMESLOTS.indexOf(b.timeslot) ||
+        (a.status === 'cancelled') - (b.status === 'cancelled') ||
         a.lastName.localeCompare(b.lastName))
 
 // The search endpoint treats the term as a regex, so match what was typed literally
@@ -40,6 +41,7 @@ function Dashboard() {
     const [tab, setTab] = useState('bookings')
     const [view, setView] = useState({ type: 'date' })
     const [searchTerm, setSearchTerm] = useState('')
+    const [showCancelled, setShowCancelled] = useState(false)
     const [bookings, setBookings] = useState([])
     const [bookingsStatus, setBookingsStatus] = useState('loading')
     const [editing, setEditing] = useState(null)
@@ -66,7 +68,7 @@ function Dashboard() {
                 const path = view.type === 'search'
                     ? `search/${encodeURIComponent(escapeRegex(view.term))}`
                     : selectedDate
-                const res = await authAxios.get(`${URL}/bookings/${path}`)
+                const res = await authAxios.get(`${URL}/bookings/${path}`, { params: showCancelled ? { includeCancelled: true } : {} })
                 if (cancelled) return
                 setBookings(sortBookings(res.data.data))
                 setBookingsStatus('ready')
@@ -80,7 +82,7 @@ function Dashboard() {
         loadBookings()
 
         return () => { cancelled = true }
-    }, [loggedin, view, selectedDate, refreshKey])
+    }, [loggedin, view, selectedDate, showCancelled, refreshKey])
 
     useEffect(() => {
         if (!loggedin) return
@@ -139,18 +141,40 @@ function Dashboard() {
         setView({ type: 'date' })
     }
 
-    const deleteBooking = async (booking) => {
-        const who = [booking.firstName, booking.lastName].filter(Boolean).join(' ') || 'this booking'
-        const emailNote = booking.email ? 'The customer will be emailed a cancellation.' : 'There is no email address, so no cancellation will be sent.'
-        if (!window.confirm(`Delete the booking for ${who} on ${booking.date} at ${booking.timeslot}?\n\n${emailNote}`)) return
+    const bookingAction = async (path, booking) => {
         try {
-            const res = await authAxios.post(`${URL}/bookings/delete`, { _id: booking._id })
-            showNotice(res.data.data)
+            const res = await authAxios.post(`${URL}/bookings/${path}`, { _id: booking._id })
+            showNotice(res.data.data, res.data.ok === false ? 'error' : 'success')
         } catch (error) {
             if (error.response?.status === 401) return
-            showNotice(error.response?.data?.data || 'Could not delete booking', 'error')
+            showNotice(error.response?.data?.data || 'Something went wrong', 'error')
         } finally {
             refreshBookings()
+        }
+    }
+
+    const describe = (booking) => {
+        const who = [booking.firstName, booking.lastName].filter(Boolean).join(' ') || 'this booking'
+        return `${who} on ${booking.date} at ${booking.timeslot}`
+    }
+
+    const cancelBooking = (booking) => {
+        const emailNote = booking.email ? 'The customer will be emailed a cancellation.' : 'There is no email address, so no cancellation will be sent.'
+        if (window.confirm(`Cancel the booking for ${describe(booking)}?\n\n${emailNote}\nYou can restore it later using "Show cancelled".`)) {
+            bookingAction('cancel', booking)
+        }
+    }
+
+    const restoreBooking = (booking) => {
+        const emailNote = booking.email ? 'The customer will be sent a new confirmation email.' : 'There is no email address, so no confirmation will be sent.'
+        if (window.confirm(`Restore the booking for ${describe(booking)}?\n\n${emailNote}`)) {
+            bookingAction('restore', booking)
+        }
+    }
+
+    const deletePermanently = (booking) => {
+        if (window.confirm(`Permanently delete the booking for ${describe(booking)}?\n\nThis removes the booking record for good and cannot be undone.`)) {
+            bookingAction('permanently-delete', booking)
         }
     }
 
@@ -190,7 +214,9 @@ function Dashboard() {
         </>)
     }
 
-    const guestCount = bookings.reduce((sum, b) => sum + (Number(b.adults) || 0) + (Number(b.children) || 0), 0)
+    const activeBookings = bookings.filter((b) => b.status !== 'cancelled')
+    const cancelledCount = bookings.length - activeBookings.length
+    const guestCount = activeBookings.reduce((sum, b) => sum + (Number(b.adults) || 0) + (Number(b.children) || 0), 0)
     const searching = view.type === 'search'
 
     return (<>
@@ -242,11 +268,21 @@ function Dashboard() {
                                     <p className='muted'>
                                         {bookingsStatus === 'ready'
                                             ? (bookings.length
-                                                ? `${bookings.length} booking${bookings.length === 1 ? '' : 's'} · ${guestCount} guest${guestCount === 1 ? '' : 's'}`
+                                                ? [
+                                                    activeBookings.length
+                                                        ? `${activeBookings.length} booking${activeBookings.length === 1 ? '' : 's'} · ${guestCount} guest${guestCount === 1 ? '' : 's'}`
+                                                        : 'No active bookings',
+                                                    cancelledCount ? `${cancelledCount} cancelled` : null,
+                                                ].filter(Boolean).join(' · ')
                                                 : 'No bookings')
                                             : ' '}
                                     </p>
                                 </div>
+                                <div className='bookingsTools'>
+                                <label className='toggle'>
+                                    <input type='checkbox' checked={showCancelled} onChange={(e) => setShowCancelled(e.target.checked)} />
+                                    Show cancelled
+                                </label>
                                 <form className='searchForm' onSubmit={search} role='search'>
                                     <label className='sr-only' htmlFor='lastNameSearch'>Search by last name</label>
                                     <input id='lastNameSearch' type='search' placeholder='Search by last name'
@@ -254,13 +290,15 @@ function Dashboard() {
                                     <button type='submit' className='btn btnSmall'>Search</button>
                                     {searching ? <button type='button' className='btn btnSmall btnGhost' onClick={clearSearch}>Back to day</button> : null}
                                 </form>
+                                </div>
                             </div>
 
                             {bookingsStatus === 'loading' ? <p className='muted' aria-busy='true'>Loading bookings…</p> : null}
                             {bookingsStatus === 'error' ? <p className='seasonError' role='alert'>Could not load bookings. Try again in a moment.</p> : null}
                             {bookingsStatus === 'ready' && bookings.length ? (
                                 <BookingsTable bookings={bookings} showDate={searching}
-                                    onEdit={setEditing} onDelete={deleteBooking} />
+                                    onEdit={setEditing} onCancel={cancelBooking}
+                                    onRestore={restoreBooking} onDeletePermanently={deletePermanently} />
                             ) : null}
                             {bookingsStatus === 'ready' && !bookings.length ? (
                                 <p className='emptyState'>{searching ? 'No bookings found with that last name.' : 'Nothing booked for this day yet.'}</p>
