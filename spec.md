@@ -32,7 +32,7 @@ Written after reading the whole codebase and testing the booking and dashboard f
 | P1-9 | Server | No error reporting, backup check, or separation of sandbox and production | S |
 | P1-10 | Server | Dates stored as `dd-mm-yyyy` strings | M–L |
 | P2-1 | Owner | Printable day sheet and CSV export | S–M |
-| P2-2 | Owner | Weather tools: close a trip, notify everyone on a slot | M |
+| P2-2 | Owner | Trip tools: change a trip's time for one day, close a trip, notify everyone on it. **Do P2-11 and P2-10 first** | M–L |
 | P2-3 | Owner | Month overview and better search | M |
 | P2-4 | Owner | Per-booking notes and payment status | M |
 | P2-5 | Owner | Deliberate overbooking override | S |
@@ -214,14 +214,35 @@ Written after reading the whole codebase and testing the booking and dashboard f
 
 ## P2: improvements
 
+> **Reminder: move off the free Gmail address (P2-11, then P2-10) before building the bulk-email features (P2-2).**
+> A burst of "your trip time has changed" or "your trip is cancelled" emails, all sent at once from a free `@gmail.com` address, is exactly what gets blocked or sent to spam, and customers need those emails to arrive. So the order is: P2-11 (one place for the sender address and contact details), then P2-10 (a proper email service and your own domain with SPF, DKIM and DMARC records), and only then P2-2. The same applies to the day-before reminders (P2-7) and the manage-my-booking emails (P2-6).
+
 ### Owner side
 
 #### P2-1 `[Owner]` Printable day sheet and CSV export
 For each trip: names, party sizes, phone numbers, accommodation and notes, on one printable page, plus CSV export for a date range. This is the single most useful daily tool for running the boat.
 
-#### P2-2 `[Owner]` Weather tools
-- A "Close this trip" button (capacity 0 with one click).
-- "Notify everyone on this trip" with a template and a preview, so a weather change is one action instead of a phone call per booking. Optionally let each customer's email offer to move to another slot.
+#### P2-2 `[Owner]` Trip tools: change a trip's time for one day, close a trip, notify everyone on it
+**Needs P2-11 and P2-10 first** (see the reminder at the top of this section).
+
+- **Change a trip's departure time for one day.** For example, it is rough at 11am, so the 11am trip goes at 12pm instead, and everyone booked on it is emailed the new time.
+  - **Free choice of time.** The owner types any time, not a fixed list.
+  - **Keep the trip, change its time.** The trip stays "the 11am trip" (that name is its identity in bookings, seat counts, charters and the calendar). A small new record says "on this date, this trip departs at this time". Nothing existing changes, there is no data migration, and a day with no record works exactly as it does today. Cancel, restore and charters keep working untouched. (Moving every booking onto a new "12pm" trip instead was considered and rejected: it would create a second trip next to the 11am one and everything would have to move with it.)
+  - **New collection**, one record per date and trip: `{ date, timeslot, departureTime, previousTime, reason, changedAt }`, unique on date and trip. Time is stored as 24-hour `HH:MM` and shown the way the site shows times now (`12pm`, `12:30pm`). Valid times are real times within a sensible window, for example 06:00 to 21:00.
+  - **Dashboard (Availability tab).** Pick the day on the calendar, choose the trip and the new time, optionally add a reason ("rough conditions this morning"). A preview comes first: "5 bookings will be emailed; 1 has no email address (name, phone), so you need to call them", plus a warning if the new time clashes with the other trip (the owner decides). Confirm saves the change and sends the emails, then reports "4 sent, 1 failed" and names any failures, with a way to resend to them. "Reset to normal time" saves the reset and emails everyone that the usual time is back. A badge on the day shows that a trip has a changed time.
+  - **Customer email.** "Your trip on 15 July now leaves at 12pm instead of 11am (rough conditions this morning). Please be at Creux Harbour shortly before 12pm. If the new time doesn't suit you, just reply or contact us and we'll sort something out." Only active bookings are emailed, so cancelled ones are not. Anyone who books after the change sees and receives the new time straight away. Once P2-6 (manage-my-booking link) exists, the email also gets a cancel option.
+  - **Everywhere a time is shown must use the new time**, not just the emails:
+    - the booking cutoff in `validateBooking.js` (a trip moved to 12pm stays bookable until 11am)
+    - the public calendar and booking form ("11am trip, now leaving 12pm")
+    - the seat counts response the calendar reads
+    - every email that mentions the time (about 20 places in `bookings.js` and `charters.js`)
+    - the dashboard bookings table
+    - the day sheet (P2-1) and the day-before reminders (P2-7)
+  - **Save first, then email,** like the rest of the app: the change is saved before any email goes out, and a failed email never undoes it.
+- **Close this trip.** One click sets capacity to 0, with an option to cancel the bookings already on it and notify those customers (for example a weather cancellation).
+- **Notify everyone on this trip.** A time change, a weather cancellation and "close this trip" all need to email everyone booked on one trip, so build it **once** as a reusable function (preview the recipients, send with a template and an optional reason, report per-person success or failure, list anyone without an email address) and use it for all three.
+- **Optionally** offer each customer a way to move to another trip.
+- **Done when:** changing a trip's time saves the new time, emails exactly the active bookings on that trip once, shows the new time on the public calendar, form and every later email, enforces the cutoff against the new time, and resetting puts everything back. Test it with the fake mailer and a fixed clock, as in earlier items.
 
 #### P2-3 `[Owner]` Month overview and better search
 Bookings and guests per day and slot on the calendar, an "upcoming bookings" list, and search by email, phone and date range (today only last name works).
@@ -240,6 +261,8 @@ One place to find everything held for an email address, export it, and erase it 
 #### P2-6 `[Customer]` Manage-my-booking link
 A signed link in the confirmation email where the customer can view their booking and cancel it (up to a cutoff you choose) or request a change. It cuts down on phone calls and emails.
 
+The "your trip time has changed" email from P2-2 should include this link, so a customer who can't make the new time can cancel straight from the email. (Until this exists, that email just asks them to reply or contact you.)
+
 #### P2-7 `[Customer]` Reminder email the day before
 Meeting point, what to bring and a weather note. Run it with Heroku Scheduler. It reduces no-shows. Needs P1-10 to query "tomorrow's bookings" reliably.
 
@@ -256,7 +279,7 @@ Meeting point, what to bring and a weather note. Run it with Heroku Scheduler. I
 - **Fix:** Prerender each public route to its own file and have the server serve the right one. Add `sitemap.xml`, add `Disallow: /dashboard` to `robots.txt`, and a `noindex` meta tag on the dashboard, success and canceled pages.
 
 #### P2-10 `[Server]` Move off Gmail SMTP
-**The owner plans to leave the free `@gmail.com` address soon** (it gets blocked and lands in spam). `sarkboattrips@gmail.com` is hard-coded about 30 times: 24 in the booking and charter controllers (as sender and as the owner's own address), plus the success, canceled, footer and privacy pages, and the SMTP login in `.env`. Do P2-11 first (one place for the sender address, owner address and contact details), then switch. With a custom domain, also set up SPF, DKIM and DMARC records so the emails aren't treated as spam.
+**The owner plans to leave the free `@gmail.com` address soon** (it gets blocked and lands in spam). `sarkboattrips@gmail.com` is hard-coded about 30 times: 24 in the booking and charter controllers (as sender and as the owner's own address), plus the success, canceled, footer and privacy pages, and the SMTP login in `.env`. Do P2-11 first (one place for the sender address, owner address and contact details), then switch. **Do both before P2-2 (changing a trip's time and notifying everyone on it)**, which sends many emails at once. With a custom domain, also set up SPF, DKIM and DMARC records so the emails aren't treated as spam.
 Gmail SMTP has daily sending limits, weaker deliverability (your own email asks customers to check spam), and it ties delivery to one personal account. Use a transactional service (Resend, Postmark or SES) behind one `mailer.js` module that also holds the three email layouts now copied across the code, the HTML escaping (P1-5), and failure alerts to you.
 
 #### P2-11 `[Server]` Business settings hard-coded in many files
@@ -285,8 +308,10 @@ Booking checks availability and then creates the record, which isn't atomic. Two
 1. **Safety (P0 plus P1-6):** P0-1, P0-5, P1-6, then P0-2, P0-3, P0-4 as one Stripe pass.
 2. **Correctness:** P1-3, P1-1, P1-2, P1-4, P1-5, with P1-8 (tests and CI) built alongside so each fix has a test.
 3. **Foundations:** P1-10 (date format), P1-9, P1-7, P3-1, P3-2.
-4. **Owner value:** P2-1, P2-2, P2-3, P2-4.
-5. **Customer growth and SEO:** P2-9, P2-6, P2-7, P2-8, P2-10.
+4. **Owner value that needs no bulk email:** P2-1, P2-3, P2-4.
+5. **Email foundation:** P2-11 (one place for the sender address, contact details and trip times), then P2-10 (a proper email service and your own domain instead of the free Gmail address).
+6. **Trip tools:** P2-2 (change a trip's time, close a trip, notify everyone on it). Only after step 5, because it sends many emails at once.
+7. **Customer growth and SEO:** P2-9, P2-6, P2-7, P2-8.
 
 ## Decisions needed from you
 
