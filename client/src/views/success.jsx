@@ -66,8 +66,19 @@ function Success() {
                         </>
                     ) : (
                         <>
-                            <h1>Something went wrong</h1>
-                            <p>We couldn't verify your session. Please contact us if you believe this is an error.</p>
+                            <h1>We couldn&apos;t confirm your booking</h1>
+                            <p>
+                                If you completed the payment, please don&apos;t pay again. We receive every payment directly,
+                                but please contact us so we can check and confirm your charter.
+                            </p>
+                            <address style={{ fontStyle: 'normal' }}>
+                                <p>
+                                    Email: <a href="mailto:sarkboattrips@gmail.com">sarkboattrips@gmail.com</a>
+                                </p>
+                                <p>
+                                    WhatsApp: <a href="https://wa.me/447911764246">+44 7911 764 246</a>
+                                </p>
+                            </address>
                         </>
                     )}
                 </div>

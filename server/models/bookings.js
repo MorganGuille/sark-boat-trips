@@ -50,6 +50,12 @@ const bookingsSchema = new mongoose.Schema({
     },
     cancelledAt: {
         type: Date,
+    },
+    // Set on paid charters. The unique index means one Stripe payment can only ever create one booking
+    stripeSessionId: {
+        type: String,
+        unique: true,
+        sparse: true,
     }
 });
 

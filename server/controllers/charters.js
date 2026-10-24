@@ -94,43 +94,9 @@ const createCheckOutSession = async (req, res) => {
     }
 };
 
-const verifyPayment = async (req, res) => {
-    let { session_id } = req.query;
-    console.log('verifying payment for session id:', session_id)
-    try {
-        ///// get session from stripe ////
-        const session = await stripe.checkout.sessions.retrieve(session_id);
-        let { ...charterData } = session.metadata
-        let date = session.metadata.date
-        let timeslot = session.metadata.timeslot
-        let email = session.metadata.email
-
-        const availability = await getAvailability(charterData.date, charterData.timeslot);
-
-        if (availability != 12) {
-            return res.json({ ok: false, message: 'No availability ', date: charterData.date, name: charterData.firstName });
-
-        }
-
-        if (session.payment_status === 'paid') {
-
-            ///// if payment was successful, create booking ////
-            let newBooking = await Bookings.create(charterData);
-            console.log('Booking successful for:', charterData);
-
-            //// and update capacity of that timeslot to 0 ////
-            let totalpax = (Number(charterData.adults) + Number(charterData.children))
-            // let delta = 12 - totalpax
-
-            let newCapacity = await Availability.findOneAndUpdate(
-
-                { date, timeslot },
-                { capacity: totalpax },
-                { upsert: true, new: true }
-            );
-            const mailOptionsClient = {
+const charterConfirmationEmail = (charterData) => ({
                 from: 'sarkboattrips@gmail.com',
-                to: email,
+                to: charterData.email,
                 subject: 'PRIVATE CHARTER Confirmation Sark Boat Trips',
                 html: `<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
                             <div
@@ -164,12 +130,12 @@ const verifyPayment = async (req, res) => {
                                 </div>
                             </div>
                         </div>`,
-            };
+            });
 
-            const mailOptionsAdmin = {
+const charterAdminEmail = (charterData) => ({
                 from: 'sarkboattrips@gmail.com',
                 to: 'sarkboattrips@gmail.com',
-                subject: `New CHARTER on : ${date}`,
+                subject: `New CHARTER on : ${charterData.date}`,
                 html: `<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
                             <div
                                 style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto 4rem auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
@@ -189,27 +155,131 @@ const verifyPayment = async (req, res) => {
                                     href="https://www.sarkboattrips.com/dashboard" target='_blank'>Go to dashboard</a>
                             </div>
                         </div>`,
-            };
-            try {
-                await sendEmail(mailOptionsClient);
-                await sendEmail(mailOptionsAdmin);
+            });
 
-            } catch (emailError) {
-                console.error("Email sending failed:", emailError);
-                res.status(500).json({ ok: false, data: "Booking confirmed, but email sending failed. Please contact us." });
-            }
+// Plain text on purpose: this one is for the owner and needs no layout
+const charterConflictEmail = (charterData, sessionId) => ({
+    from: 'sarkboattrips@gmail.com',
+    to: 'sarkboattrips@gmail.com',
+    subject: `ACTION NEEDED: paid charter on ${charterData.date} clashes with existing bookings`,
+    text: `A customer paid for a private charter, but the ${charterData.timeslot} trip on ${charterData.date} already had bookings when the payment arrived.
 
-            res.json({ ok: true, message: 'Payment verified and charter added', date: charterData.date, name: charterData.firstName });
+The charter has been saved as a booking and the customer has been sent their confirmation, so you need to either move or cancel the other bookings, or refund this payment in Stripe.
 
-        } else if ((session.payment_status === 'unpaid')) {
-            res.json({ ok: false, message: 'Payment not completed', date: charterData.date, name: charterData.firstName });
-        }
+Name: ${charterData.firstName} ${charterData.lastName}
+Email: ${charterData.email}
+Phone: ${charterData.phone}
+Stripe session: ${sessionId}`,
+});
+
+// Everything that follows a paid charter checkout. The Stripe webhook, a Stripe retry and the
+// customer's /success page can all arrive for the same payment, in any order, so this is safe to
+// call repeatedly: the booking is keyed on the Stripe session id, and only the call that
+// actually creates it sends the emails.
+const fulfillCheckoutSession = async (session) => {
+    const charterData = { ...session.metadata };
+
+    const existing = await Bookings.findOne({ stripeSessionId: session.id });
+    if (existing) return { booking: existing, created: false };
+
+    // Someone may have booked the slot while this customer was paying
+    const conflict = (await getAvailability(charterData.date, charterData.timeslot)) !== 12;
+
+    let booking;
+    try {
+        booking = await Bookings.create({ ...charterData, stripeSessionId: session.id });
     } catch (error) {
-        console.error('Error verifying payment:', error);
-        res.status(500).json({ ok: false, message: 'Internal Server Error' });
+        if (error.code === 11000) {
+            // A parallel call created it between our check and our insert
+            return { booking: await Bookings.findOne({ stripeSessionId: session.id }), created: false };
+        }
+        throw error;
     }
+    console.log('Charter booking created for:', charterData);
+
+    if (!conflict) {
+        //// block the slot by capping its capacity at the party size ////
+        const totalpax = (Number(charterData.adults) || 0) + (Number(charterData.children) || 0);
+        await Availability.findOneAndUpdate(
+            { date: charterData.date, timeslot: charterData.timeslot },
+            { capacity: totalpax },
+            { upsert: true, new: true }
+        );
+    }
+
+    // The booking is saved, so a failed email must not undo it: log it and carry on
+    const emails = [charterConfirmationEmail(charterData), conflict ? charterConflictEmail(charterData, session.id) : charterAdminEmail(charterData)];
+    for (const mail of emails) {
+        try {
+            await sendEmail(mail);
+        } catch (emailError) {
+            console.error('Charter email failed:', mail.subject, emailError);
+        }
+    }
+
+    return { booking, created: true, conflict };
+};
+
+// Called by Stripe itself when a payment completes, so the booking exists even if the
+// customer never makes it back to the /success page. It is mounted in index.js, before
+// express.json(), because verifying the signature needs the raw request body.
+const webhook = async (req, res) => {
+    const secret = process.env.STRIPE_WEBHOOK_SECRET;
+    if (!secret) {
+        console.error('STRIPE_WEBHOOK_SECRET is not set, cannot accept Stripe webhooks');
+        return res.status(503).send('Webhook not configured');
+    }
+
+    let event;
+    try {
+        event = stripe.webhooks.constructEvent(req.body, req.headers['stripe-signature'], secret);
+    } catch (error) {
+        console.error('Stripe webhook signature check failed:', error.message);
+        return res.status(400).send('Invalid signature');
+    }
+
+    if (event.type === 'checkout.session.completed' || event.type === 'checkout.session.async_payment_succeeded') {
+        const session = event.data.object;
+        if (session.payment_status === 'paid' && session.metadata?.charter === 'true') {
+            // If this throws (e.g. the database is down) Stripe gets a 500 and retries later
+            await fulfillCheckoutSession(session);
+        }
+    }
+
+    res.json({ received: true });
+};
+
+// The /success page asks this once the customer comes back from Stripe. It uses the same
+// fulfilment as the webhook, so it works whichever of the two gets there first (and when
+// no webhook is configured yet, e.g. when testing locally). It always sends exactly one response.
+const verifyPayment = async (req, res) => {
+    const { session_id } = req.query;
+    if (typeof session_id !== 'string' || !session_id.startsWith('cs_')) {
+        return res.status(400).json({ ok: false, message: 'Missing or invalid payment session' });
+    }
+
+    let session;
+    try {
+        session = await stripe.checkout.sessions.retrieve(session_id);
+    } catch (error) {
+        if (error.type === 'StripeInvalidRequestError') {
+            return res.status(404).json({ ok: false, message: 'Payment not found' });
+        }
+        throw error;
+    }
+
+    const { date, firstName } = session.metadata || {};
+    if (session.metadata?.charter !== 'true') {
+        return res.status(404).json({ ok: false, message: 'Payment not found' });
+    }
+    if (session.payment_status !== 'paid') {
+        return res.json({ ok: false, message: 'Payment not completed', date, name: firstName });
+    }
+
+    await fulfillCheckoutSession(session);
+    res.json({ ok: true, message: 'Payment verified and charter booked', date, name: firstName });
 };
 
 
 
-module.exports = { createCheckOutSession, verifyPayment }
+module.exports = { createCheckOutSession, verifyPayment, webhook }

@@ -37,6 +37,14 @@ app.use((req, res, next) => {
   res.redirect(301, `https://${req.headers.host}${req.url}`);
 });
 
+// Stripe webhooks need the raw request body to verify their signature, so this route
+// is registered before express.json() and parses the body itself.
+app.post(
+  "/charters/webhook",
+  express.raw({ type: "application/json" }),
+  require("./middleware/asyncHandler")(require("./controllers/charters").webhook),
+);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
