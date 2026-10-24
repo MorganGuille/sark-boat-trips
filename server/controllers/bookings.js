@@ -3,6 +3,7 @@ const Bookings = require("../models/bookings");
 const Availability = require('../models/availability');
 const nodemailer = require('nodemailer');
 const { getAvailability, isSlotEmpty } = require('../utils/availability');
+const { safeHtml } = require('../utils/safeHtml');
 const { validatePublicBooking, validateAdminBooking, validateAvailabilitySetting } = require('../utils/validateBooking');
 
 
@@ -70,7 +71,7 @@ const buildConfirmationEmail = ({ email, firstName, adults, childResponse, date,
                 from: 'sarkboattrips@gmail.com',
                 to: email,
                 subject: 'Booking Confirmation Sark Boat Trips',
-                html: `<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
+                html: safeHtml`<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
                 <div style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto 4rem auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
                 <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTbfVS_8hzPlk9unxom9wpjtPJyZ_7XgpjsuA&s"
                         alt="Sark Boat Trips" width="42" height="42"
@@ -126,7 +127,7 @@ const addBooking = async (req, res) => {
                 from: 'sarkboattrips@gmail.com',
                 to: 'sarkboattrips@gmail.com',
                 subject: `New Booking ${date}`,
-                html: `<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
+                html: safeHtml`<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
                             <div
                                 style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto 4rem auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
                                 <h3>New Booking ${date}</h3>
@@ -227,7 +228,7 @@ const cancelBooking = async (req, res) => {
             from: 'sarkboattrips@gmail.com',
             to: cancelledBooking.email,
             subject: 'Booking CANCELLED - Sark Boat Trips',
-            html: `<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
+            html: safeHtml`<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
                         <div
                             style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto 4rem auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
                             <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTbfVS_8hzPlk9unxom9wpjtPJyZ_7XgpjsuA&s"
@@ -259,7 +260,7 @@ const cancelBooking = async (req, res) => {
             from: 'sarkboattrips@gmail.com',
             to: 'sarkboattrips@gmail.com',
             subject: `Booking CANCELLED ${cancelledBooking.date}`,
-            html: `<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
+            html: safeHtml`<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
                     <div
                         style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto 4rem auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
                         <h3>Booking <strong style="color: lightcoral;">CANCELLED</strong></h3>
@@ -414,7 +415,7 @@ const updatedBookingClientEmail = (booking) => ({
             from: 'sarkboattrips@gmail.com',
             to: booking.email,
             subject: 'Booking UPDATED - Sark Boat Trips',
-            html: `<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
+            html: safeHtml`<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
                         <div
                             style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto 4rem auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
                             <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTbfVS_8hzPlk9unxom9wpjtPJyZ_7XgpjsuA&s"
@@ -446,7 +447,7 @@ const updatedBookingAdminEmail = (booking) => ({
             from: 'sarkboattrips@gmail.com',
             to: 'sarkboattrips@gmail.com',
             subject: 'Booking UPDATED',
-            html: `<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
+            html: safeHtml`<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
                         <div
                             style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto 4rem auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
                             <h3>Booking <strong style="color: aquamarine;">UPDATED</strong></h3>
