@@ -147,7 +147,13 @@ Written after reading the whole codebase and testing the booking and dashboard f
 - **Fix:** Show the server's message for every failure, in the existing popup or inline, for both the normal and charter forms. Keep what the customer typed. Add a generic "something went wrong, please call or email us" fallback.
 
 ### P1-3 `[Server]` No server-side validation of dates, party size, timeslot or email format
-- **Status: PARTLY DONE.** Email format and maximum lengths are now checked (`server/utils/validateBooking.js`, used by the public booking and charter checkout). Still to do: dates (valid, not in the past, within the season), timeslot from a list, party-size bounds, and the Guernsey-timezone cutoff.
+- **Status: DONE** (24 Oct 2026, not yet deployed). All the rules live in `server/utils/validateBooking.js`.
+  - **Public bookings and charter checkout** (same rules, as the owner chose): all fields required, valid email, length limits, a real calendar date, not in the past, inside the season (or "Bookings aren't open yet" if no season is set), trip time must be 11am or 2pm, adults a whole number from 1 to 12, children a whole number from 0 to 12. Online booking closes **1 hour before the trip starts**, measured in Guernsey time, not the server's UTC clock, and it handles the summer and winter clock change.
+  - **Dashboard add and edit:** whatever is entered must make sense (real date, real trip time, whole numbers, valid email, booking type true/false), but details may be missing and past dates and dates outside the season are allowed. Editing only checks the fields that are filled in.
+  - **Availability settings:** real date, real trip time, whole-number capacity from 0 to 100.
+  - Values sent as lists or objects are rejected everywhere, as are prototype-style trip times like `constructor`.
+  - Verified with 33 unit checks on a fixed clock and 41 checks through the real server. Every earlier suite was re-run and still passes.
+  - Still hard-coded in that file (move to settings with P2-11): the trip times and their start hours, the 12 limit and the 60-minute cutoff.
 - **Problem:** The booking calendar limits dates in the browser only. A direct API call can book a past date, a date outside the season, a nonsense date string, 500 adults, or a timeslot that doesn't exist. Email format isn't checked. (The public route now requires non-empty fields, but nothing more.)
 - **Fix:** One shared validation module used by add, admin-add and update:
   - date format, not in the past, within the season (public only)
@@ -287,5 +293,5 @@ Booking checks availability and then creates the record, which isn't atomic. Two
 - **Stripe webhook (P0-2):** is it OK to configure one in the Stripe dashboard? Do you want a refund flow for cancelled charters in P2-4?
 - **Email provider (P2-10):** are you happy to move from Gmail to Resend, Postmark or SES, and to change the "from" address if needed?
 - **Self-service cancellation (P2-6):** how close to the trip should customers be allowed to cancel themselves, if at all?
-- **Cutoff (P1-3):** should the website stop taking same-day bookings at some time?
+- ~~**Cutoff (P1-3)**~~ Decided: customers can book until 1 hour before the trip; charters follow the same rule.
 - **Settings in the dashboard (P2-11):** which settings do you want to change yourself (prices, capacity, timeslots)?
