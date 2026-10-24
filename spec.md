@@ -96,6 +96,12 @@ Written after reading the whole codebase and testing the booking and dashboard f
 - **Done when:** refreshing `/success` shows the same confirmation, and an email failure never triggers a second response.
 
 ### P0-4 `[Server]` Cancelling a charter never frees the slot
+- **Status: DONE in code (24 Oct 2026). Run the cleanup script against production when deploying** (see the go-live checklist in `CLAUDE.md`).
+  - The seat-counting logic now lives once in `server/utils/availability.js` (it was copied in two controllers). A trip with an active charter booking shows 0 spaces, so cancelling the charter frees the trip and restoring it blocks the trip again. Nothing writes to the capacity setting any more.
+  - Charters need a trip that is open and has no other bookings, instead of the hard-coded "exactly 12 free". A trip limited to 8 seats can now be chartered, and a closed trip (0 seats) can't.
+  - Restoring a cancelled charter is refused while the trip has other bookings. Marking an existing booking as a charter (Edit, "Status") now blocks the trip, and marking it back frees it.
+  - `server/scripts/cleanup-charter-capacity.js` removes the old capacity rows that charters left behind (dry run by default, `--apply` to delete). It only deletes rows that match a charter booking on the same trip with the party size as capacity, and lists any other custom capacity for review. Dry run on the sandbox found nothing to remove.
+  - Verified with 31 checks, and the earlier Stripe webhook and browser cancel/restore suites were re-run and still pass.
 - **Problem:** A paid charter blocks the slot by overwriting the `Availability` capacity to the party size (`capacity: totalpax` in `verifyPayment`) and relying on `availability === 12` elsewhere. Cancel or delete the booking and the capacity override stays, so the slot never frees and that trip shows only the party's number of seats. This predates the cancel feature but the cancel feature makes it easy to hit. It also means charters stop working if you ever set a default capacity other than 12.
 - **Fix:**
   - Work out availability as: a trip is full if there is an active charter booking for that date and slot; otherwise `capacity` minus active party sizes.
