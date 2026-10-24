@@ -4,6 +4,7 @@ const Availability = require('../models/availability');
 const nodemailer = require('nodemailer');
 const { getAvailability, isSlotEmpty } = require('../utils/availability');
 const { safeHtml } = require('../utils/safeHtml');
+const { settings } = require('../utils/settings');
 const { validatePublicBooking, validateAdminBooking, validateAvailabilitySetting } = require('../utils/validateBooking');
 
 
@@ -145,7 +146,7 @@ const addBooking = async (req, res) => {
                                 <hr>
                                 <br>
                                 <a style="background-color: rgb(5, 171, 116); color: white; text-decoration: none; padding: 0.5rem;"
-                                    href="https://www.sarkboattrips.com/dashboard" target='_blank'>Go to dashboard</a>
+                                    href="${settings.dashboardUrl}" target='_blank'>Go to dashboard</a>
                             </div>
                         </div>`,
             };
@@ -271,7 +272,7 @@ const cancelBooking = async (req, res) => {
                         <hr>
                         <br>
                         <a style="background-color: rgb(5, 171, 116); color: white; text-decoration: none; padding: 0.5rem;"
-                            href="https://www.sarkboattrips.com/dashboard" target='_blank'>Go to dashboard</a>
+                            href="${settings.dashboardUrl}" target='_blank'>Go to dashboard</a>
                     </div>
                 </div>`
         };
@@ -458,7 +459,7 @@ const updatedBookingAdminEmail = (booking) => ({
                             <hr>
                             <br>
                             <a style="background-color: rgb(5, 171, 116); color: white; text-decoration: none; padding: 0.5rem;"
-                                href="https://www.sarkboattrips.com/dashboard" target='_blank'>Go to dashboard</a>
+                                href="${settings.dashboardUrl}" target='_blank'>Go to dashboard</a>
                         </div>
                     </div>`,
         });

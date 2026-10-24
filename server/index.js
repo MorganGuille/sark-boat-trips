@@ -19,8 +19,11 @@ for (const key of ["JWT_SECRET", "admin_username", "admin_password_hash"]) {
   }
 }
 
-// Trust Heroku's single proxy hop (keeps req.ip honest for rate limiting)
-app.set("trust proxy", 1);
+// How many proxies sit in front of the app (Heroku, Render, Railway and Fly all have one). This
+// keeps req.ip honest for rate limiting and lets req.secure see HTTPS. Set TRUST_PROXY if your
+// host has a different number.
+const proxyHops = Number.parseInt(process.env.TRUST_PROXY ?? "1", 10);
+app.set("trust proxy", Number.isInteger(proxyHops) && proxyHops >= 0 ? proxyHops : 1);
 
 // HSTS security header
 app.use(
@@ -91,5 +94,13 @@ app.use(require("./middleware/errorHandler"));
 process.on("unhandledRejection", (reason) => {
   console.error("Unhandled rejection:", reason);
 });
+
+const { settings } = require("./utils/settings");
+console.log(
+  settings.stripe.problem
+    ? `Charter payments are OFF: ${settings.stripe.problem}`
+    : `Charter payments are ON (Stripe ${settings.stripe.mode} mode), customers return to ${settings.publicUrl}`,
+);
+settings.warnings.forEach((warning) => console.warn(`Warning: ${warning}`));
 
 app.listen(PORT, () => console.log(`listening on port : ${PORT}`));

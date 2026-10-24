@@ -3,11 +3,15 @@ const nodemailer = require('nodemailer');
 const { isSlotEmpty } = require('../utils/availability');
 const { safeHtml } = require('../utils/safeHtml');
 const { validatePublicBooking } = require('../utils/validateBooking');
+const { settings } = require('../utils/settings');
 
-const stripe = require('stripe')(process.env.STRIPEKEY);
+// With no usable key the placeholder is only there so webhooks can still be verified (that needs
+// the signing secret, not a key). Nothing else calls Stripe while settings.stripe.problem is set.
+const stripe = require('stripe')(settings.stripe.key || 'sk_test_not_configured');
 
-const YOUR_DOMAIN = 'https://secret-eyrie-44762-a52d7fb9dbaa.herokuapp.com'
-// const YOUR_DOMAIN = 'http://localhost:5173'
+const paymentsOff = {
+    data: "Charter payments aren't available right now. Please contact us to book your charter.",
+};
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -35,6 +39,11 @@ const sendEmail = async (mailOptions) => {
 const forStripe = (value) => String(value ?? '').slice(0, 500);
 
 const createCheckOutSession = async (req, res) => {
+    if (settings.stripe.problem) {
+        console.error('Charter checkout refused:', settings.stripe.problem);
+        return res.status(503).json({ ok: false, ...paymentsOff });
+    }
+
     const { ...newBooking } = req.body
 
     const problem = await validatePublicBooking(newBooking);
@@ -52,13 +61,13 @@ const createCheckOutSession = async (req, res) => {
 
         const session = await stripe.checkout.sessions.create({
             line_items: [{
-                price: 'price_1QzL9TBMZ6qJyKg9hrBauqD6',
+                price: settings.priceId,
                 quantity: 1,
 
             }],
             mode: 'payment',
-            success_url: `${YOUR_DOMAIN}/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${YOUR_DOMAIN}/canceled`,
+            success_url: `${settings.publicUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${settings.publicUrl}/canceled`,
             metadata: {
                 timeslot: forStripe(newBooking.timeslot),
                 firstName: forStripe(newBooking.firstName),
@@ -140,7 +149,7 @@ const charterAdminEmail = (charterData) => ({
                                 <hr>
                                 <br>
                                 <a style="background-color: rgb(5, 171, 116); color: white; text-decoration: none; padding: 0.5rem;"
-                                    href="https://www.sarkboattrips.com/dashboard" target='_blank'>Go to dashboard</a>
+                                    href="${settings.dashboardUrl}" target='_blank'>Go to dashboard</a>
                             </div>
                         </div>`,
             });
@@ -231,6 +240,11 @@ const webhook = async (req, res) => {
 // fulfilment as the webhook, so it works whichever of the two gets there first (and when
 // no webhook is configured yet, e.g. when testing locally). It always sends exactly one response.
 const verifyPayment = async (req, res) => {
+    if (settings.stripe.problem) {
+        console.error('Payment check refused:', settings.stripe.problem);
+        return res.status(503).json({ ok: false, message: paymentsOff.data });
+    }
+
     const { session_id } = req.query;
     if (typeof session_id !== 'string' || !session_id.startsWith('cs_')) {
         return res.status(400).json({ ok: false, message: 'Missing or invalid payment session' });
