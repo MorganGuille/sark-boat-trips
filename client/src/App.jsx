@@ -1,4 +1,4 @@
-import { useLayoutEffect, useEffect } from "react";
+import { useEffect } from "react";
 import { Routes, Route, useLocation } from "react-router";
 import './App.css';
 

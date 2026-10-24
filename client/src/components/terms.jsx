@@ -1,4 +1,3 @@
-import React from 'react'
 
 function Terms() {
     return (
@@ -12,7 +11,7 @@ function Terms() {
 
             <section>
                 <p><strong>2. Cancellation by You</strong></p>
-                <p>Please provide at least 24 hours' notice for cancellations. For private charters, deposits are refundable if cancelled with more than 48 hours' notice, or if we can re-book the slot.</p>
+                <p>Please provide at least 24 hours&apos; notice for cancellations. For private charters, deposits are refundable if cancelled with more than 48 hours&apos; notice, or if we can re-book the slot.</p>
             </section >
 
             <section>

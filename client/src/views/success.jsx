@@ -1,4 +1,4 @@
-import { React, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import axios from 'axios'
 import { URL } from '../../config.js'
 
@@ -51,7 +51,7 @@ function Success() {
 
                             <section aria-label="Next steps" style={{ marginTop: '20px' }}>
                                 <p>
-                                    If you haven't already, please contact us to arrange your trip and let us know what we can do for you!
+                                    If you haven&apos;t already, please contact us to arrange your trip and let us know what we can do for you!
                                 </p>
 
                                 <address style={{ fontStyle: 'normal' }}>

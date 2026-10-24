@@ -1,4 +1,3 @@
-import React from 'react'
 import { Link } from 'react-router'
 
 function Canceled() {
@@ -12,7 +11,7 @@ function Canceled() {
                     <h2>Payment Not Processed</h2>
                     <p>
                         Uh oh, it looks like something went wrong with your payment or the session was canceled.
-                        Don't worry—your card has not been charged.
+                        Don&apos;t worry—your card has not been charged.
                     </p>
                 </div>
 

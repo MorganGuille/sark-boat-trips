@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router'
 import '../css/navbar.css'
 

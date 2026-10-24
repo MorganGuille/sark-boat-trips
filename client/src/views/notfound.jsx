@@ -1,4 +1,3 @@
-import React from 'react'
 import { Link } from 'react-router' // Use Link for internal SPA routing
 
 function NotFound() {
@@ -13,7 +12,7 @@ function NotFound() {
                 </div>
 
                 <p style={{ fontSize: '1.2rem', marginBottom: '2rem' }}>
-                    It looks like you've gone off course. The page you are looking for has been washed away or doesn't exist.
+                    It looks like you&apos;ve gone off course. The page you are looking for has been washed away or doesn&apos;t exist.
                 </p>
 
                 <Link className='btn' to='/' aria-label="Return to the Sark Boat Trips home page">

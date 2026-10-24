@@ -1,4 +1,3 @@
-import React from 'react'
 import '../css/reviews.css'
 
 import googleLogo from '../assets/logos/googleIcon.png'

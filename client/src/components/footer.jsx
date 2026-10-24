@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import '../css/footer.css'
 
 import PrivacyPolicy from './privacyPolicy'
