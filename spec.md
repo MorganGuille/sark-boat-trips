@@ -73,6 +73,11 @@ Written after reading the whole codebase and testing the booking and dashboard f
 - **Done when:** a test that makes Stripe throw gets a 4xx or 5xx JSON response and the server keeps serving requests.
 
 ### P0-2 `[Server]` Charter booking only exists if the customer's browser reaches `/success`
+- **Status: DONE in code (24 Oct 2026), but the webhook still needs setting up in Stripe.** Until the owner does that, behaviour is the same as before: the booking is created when the customer reaches `/success`.
+  - `POST /charters/webhook` verifies Stripe's signature and creates the booking and emails. It is mounted in `index.js` before `express.json()` because it needs the raw body.
+  - Booking creation is one function (`fulfillCheckoutSession`) shared by the webhook and `/success`. It is keyed on the Stripe session id (unique sparse index), so a retry, a parallel call or a refresh can't duplicate the booking or the emails.
+  - If someone else took the slot while the customer was paying, the paid charter is still saved and the customer is confirmed, but the owner gets an `ACTION NEEDED` email to move or cancel the other bookings, or to refund in Stripe. There is no automatic refund.
+  - Verified with 31 checks: forged and wrong-secret signatures are rejected, retries and refreshes create nothing new, eight simultaneous requests give one booking and one pair of emails, and the unpaid, unknown and non-charter cases behave. Signatures were produced with Stripe's own signing function and the network call that fetches a session was faked. The first real end-to-end check is Stripe's "Send test webhook" button after setup.
 - **Problem:** The booking is created in [verifyPayment](server/controllers/charters.js), which is only called by the `/success` page in the customer's browser. If they pay and then close the tab, lose signal on the ferry, or the page fails to load, **the customer has paid and no booking exists** and you get no email.
 - **Fix:**
   - Add a Stripe webhook (`checkout.session.completed`) at a raw-body route, with signature verification.
@@ -82,6 +87,7 @@ Written after reading the whole codebase and testing the booking and dashboard f
 - **Done when:** paying and closing the tab immediately still produces one booking and both emails.
 
 ### P0-3 `[Server]` `verifyPayment` double-responds, can hang, and fails on refresh
+- **Status: DONE** as part of P0-2. Every request now gets exactly one response, every payment status is handled, an unknown session gives a 404, and refreshing `/success` shows the same confirmation. If confirmation fails, the page now tells the customer not to pay again and gives contact details.
 - **Problem** (from reading the code):
   - If sending email fails, it sends a 500 and then falls through to `res.json(...)` again. The second send throws "headers already sent" inside the `catch`, which is an unhandled rejection and crashes the process.
   - If `payment_status` is anything other than `paid` or `unpaid`, no response is sent and the request hangs.
