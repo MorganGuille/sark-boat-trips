@@ -165,6 +165,12 @@ Written after reading the whole codebase and testing the booking and dashboard f
 - **Done when:** each bad input gets a 400 with a specific message and has a test.
 
 ### P1-4 `[Server]` Editing a booking ignores availability and always emails the customer
+- **Status: DONE** (24 Oct 2026, not yet deployed).
+  - **Edits must fit.** Moving a booking to another date or trip, adding people, or making it a charter checks the destination first, ignoring the booking itself. If it doesn't fit, nothing is saved and the dashboard says "the 11am trip on 15-07-2026 has only 4 spaces left. Raise the trip's capacity first if you want to fit more people in." Taking people away or editing contact details never needs room, so an already over-full trip can still be edited. A deliberate overbooking override is still P2-5.
+  - **"Email the customer about this change"** checkbox on the edit form, ticked by default. Unticked, the change is saved and the customer isn't emailed (the owner still gets a copy). It says so in the confirmation, and notes when there is no email address on file. Older callers that don't send the flag still email the customer.
+  - **Details can be cleared.** An empty value now clears a name, phone, email, accommodation or message. A field that isn't sent is left alone, and the date, trip time and booking type can't be blanked. A blank adults box leaves the number alone so the seats aren't freed by accident; a blank children box means none.
+  - A booking ID that doesn't exist (or is malformed) gets a clean 404 before anything else happens. Saving with no changes says so and sends no emails. The emails read sensibly for bookings with missing details (no "undefined"), and the customer's email shows the new date and time.
+  - Verified with 38 server checks and a browser test of the edit form; every earlier suite was re-run and still passes.
 - **Problem:** [updateBooking](server/controllers/bookings.js) doesn't re-check capacity when the date, timeslot or party size changes, so edits can overbook a trip. It always emails the customer and admin. Falsy values are ignored, so you can't clear a field such as accommodation. It builds the email before checking the booking exists.
 - **Fix:**
   - Re-check availability for the new date, slot and size, excluding this booking.
