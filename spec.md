@@ -179,6 +179,12 @@ Written after reading the whole codebase and testing the booking and dashboard f
   - Return 404 before building the email.
 
 ### P1-5 `[Server]` Customer text is put into HTML emails unescaped
+- **Status: DONE** (24 Oct 2026, not yet deployed).
+  - A new template tag, `safeHtml` in `server/utils/safeHtml.js`, escapes every value placed into an email's HTML while leaving the template's own tags alone. All 8 HTML email templates (booking confirmation, owner notices, update, cancel, charter confirmation and owner notice) now use it, so a value added to a template later is covered automatically. Missing values show as empty text instead of the word "undefined".
+  - Hostile text is escaped, not rejected: the booking keeps exactly what the customer typed, and the email shows it as plain words (so a name like O'Brien & Sons prints correctly, and `<script>` just appears as the text "<script>").
+  - Other places were already safe: the dashboard and the booking popup are built with React, which escapes text, and the email regex stops anything but a plain address in the "to" field. The plain-text owner alert for a charter clash needs no escaping.
+  - Verified with 22 checks that send hostile names, messages, accommodation and phone numbers through every email-sending path (booking, dashboard add, edit, cancel, restore, charter payment) and inspect the raw HTML of all 10 emails. All earlier suites were re-run and still pass.
+  - When the single mailer module (P2-10) is built, keep using `safeHtml` for every template.
 - **Problem:** First name, message, accommodation and so on are interpolated straight into the HTML of the admin and customer emails. A customer (or bot) can inject markup or links into an email that comes from your address.
 - **Fix:** One `escapeHtml` helper used by every template. This is easiest as part of P2-10 (a single mailer module).
 
