@@ -1,10 +1,9 @@
 const express = require("express");
 const app = express();
 const PORT = process.env.PORT || 4040;
-const helmet = require("helmet");
 
 const mongoose = require("mongoose");
-const cors = require("cors");
+const { securityHeaders, permissionsPolicy, corsFor, corsSummary } = require("./middleware/security");
 const path = require("path");
 require("dotenv").config();
 
@@ -25,14 +24,9 @@ for (const key of ["JWT_SECRET", "admin_username", "admin_password_hash"]) {
 const proxyHops = Number.parseInt(process.env.TRUST_PROXY ?? "1", 10);
 app.set("trust proxy", Number.isInteger(proxyHops) && proxyHops >= 0 ? proxyHops : 1);
 
-// HSTS security header
-app.use(
-  helmet.hsts({
-    maxAge: 15552000,
-    includeSubDomains: true,
-    preload: true,
-  }),
-);
+// Security headers (HSTS, Content Security Policy and friends), see middleware/security.js
+app.use(securityHeaders());
+app.use(permissionsPolicy);
 
 // Force HTTPS (production only, so local http://localhost works)
 app.use((req, res, next) => {
@@ -50,7 +44,9 @@ app.post(
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
+// No-op in production unless CORS_ORIGINS is set: the site and its API are the same site
+const corsMiddleware = corsFor();
+if (corsMiddleware) app.use(corsMiddleware);
 
 // Serve client build
 app.use(express.static(path.join(__dirname, "../client/dist")));
@@ -102,5 +98,6 @@ console.log(
     : `Charter payments are ON (Stripe ${settings.stripe.mode} mode), customers return to ${settings.publicUrl}`,
 );
 settings.warnings.forEach((warning) => console.warn(`Warning: ${warning}`));
+console.log(corsSummary());
 
 app.listen(PORT, () => console.log(`listening on port : ${PORT}`));
