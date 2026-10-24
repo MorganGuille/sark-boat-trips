@@ -9,10 +9,20 @@
   "scripts": {
     "start": "node server/index.js",
     "build": "cd client && npm install && npm run build",
-    "heroku-postbuild": "npm run build"
+    "heroku-postbuild": "npm run build",
+    "lint": "cd client && npm run lint",
+    "test": "node server/test/prepare.js && node --test --test-concurrency=4 \"server/test/**/*.test.js\"",
+    "test:e2e": "playwright test --config e2e/playwright.config.js",
+    "check": "npm run lint && npm test && npm run test:e2e"
   },
   "engines": {
     "node": "22.11.0"
+  },
+  "config": {
+    "mongodbMemoryServer": {
+      "version": "8.2.6",
+      "disablePostinstall": "1"
+    }
   },
   "dependencies": {
     "axios": "^1.13.2",
@@ -26,5 +36,10 @@
     "mongoose": "^8.20.4",
     "nodemailer": "^7.0.12",
     "stripe": "^17.7.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "mongodb-memory-server": "^11.3.0",
+    "supertest": "^7.3.1"
   }
 }
