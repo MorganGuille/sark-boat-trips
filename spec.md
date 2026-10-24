@@ -132,6 +132,12 @@ Written after reading the whole codebase and testing the booking and dashboard f
 ## P1: important
 
 ### P1-1 `[Server]` Booking is saved after the emails, so failures leave inconsistent state
+- **Status: DONE** (24 Oct 2026, not yet deployed).
+  - The public booking is saved first and the emails go out after. If an email fails, the booking is kept and the customer is told it is reserved but their confirmation email couldn't be sent, so they should note the details. The owner's email then gets "CUSTOMER EMAIL FAILED, please contact them" in its subject.
+  - The same rule applies to the dashboard's add and edit: a failed email is reported in the message, but the saved change is never turned into an error. (Cancel, restore and the charter webhook already worked this way.)
+  - The success message no longer has stray spaces or line breaks.
+  - Verified with 19 checks that fail the customer's email, the owner's email, or both on each flow, and the earlier P0-2 and P0-5 suites still pass.
+  - Remaining gap: if Gmail is down, the owner alert email can fail too. The only trace is the server log and the saved booking in the dashboard. Error reporting (P1-9) closes that gap.
 - **Problem:** In [addBooking](server/controllers/bookings.js) the confirmation and admin emails are sent first and the booking is created afterwards. If sending fails, the booking is never created, but the response says "Booking confirmed, but email sending failed". If creation fails after the emails are sent, the customer has a confirmation for a booking that doesn't exist.
 - **Fix:** Create the booking first, then send emails. If an email fails, keep the booking, tell the customer it is booked and that the email failed, and email or flag the owner. Use the same order for the charter flow.
 
