@@ -36,7 +36,7 @@ const forStripe = (value) => String(value ?? '').slice(0, 500);
 const createCheckOutSession = async (req, res) => {
     const { ...newBooking } = req.body
 
-    const problem = validatePublicBooking(newBooking);
+    const problem = await validatePublicBooking(newBooking);
     if (problem) {
         return res.status(400).json({ ok: false, data: problem });
     }

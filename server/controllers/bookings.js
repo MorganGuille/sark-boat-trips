@@ -2,7 +2,7 @@ const Bookings = require("../models/bookings");
 const Availability = require('../models/availability');
 const nodemailer = require('nodemailer');
 const { getAvailability, isSlotEmpty } = require('../utils/availability');
-const { validatePublicBooking } = require('../utils/validateBooking');
+const { validatePublicBooking, validateAdminBooking, validateAvailabilitySetting } = require('../utils/validateBooking');
 
 
 const transporter = nodemailer.createTransport({
@@ -37,6 +37,11 @@ const trySend = async (mailOptions) => {
 
 const updateAvailability = async (req, res) => {
     const { date, timeslot, capacity } = req.body;
+
+    const problem = validateAvailabilitySetting(req.body);
+    if (problem) {
+        return res.status(400).send({ ok: false, data: problem });
+    }
 
     try {
         let availability = await Availability.findOneAndUpdate(
@@ -101,7 +106,7 @@ const addBooking = async (req, res) => {
     let childResponse = ``
     Number(children) > 0 ? childResponse = `and ${children} children` : childResponse = ``
 
-    const problem = validatePublicBooking(req.body);
+    const problem = await validatePublicBooking(req.body);
     if (problem) {
         return res.status(400).send({ ok: false, data: problem });
     }
@@ -171,8 +176,9 @@ const adminAddBooking = async (req, res) => {
     const adults = Number(req.body.adults) || 0;
     const children = Number(req.body.children) || 0;
 
-    if (!date || !timeslot) {
-        return res.status(400).send({ ok: false, data: "A date and timeslot are required." });
+    const problem = validateAdminBooking(req.body, { requireTrip: true });
+    if (problem) {
+        return res.status(400).send({ ok: false, data: problem });
     }
 
     try {
@@ -402,6 +408,11 @@ const search = async (req, res) => {
 
 
 const updateBooking = async (req, res) => {
+    const problem = validateAdminBooking(req.body);
+    if (problem) {
+        return res.status(400).send({ ok: false, data: problem });
+    }
+
     const updateObject = {};
 
     if (req.body.date) {
