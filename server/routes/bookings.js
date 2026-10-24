@@ -2,11 +2,15 @@ const express = require('express'),
     router = express.Router(),
     requireAuth = require('../middleware/requireAuth.js'),
     asyncHandler = require('../middleware/asyncHandler.js'),
+    honeypot = require('../middleware/honeypot.js'),
+    { bookingByIp, bookingByEmail, availabilityByIp } = require('../middleware/rateLimiters.js'),
     controller = require('../controllers/bookings.js');
 
 // Public: used by the booking page
-router.post('/add', asyncHandler(controller.addBooking));
-router.post('/monthAvailability', asyncHandler(controller.checkMonthAvail))
+router.post('/add', bookingByIp, bookingByEmail,
+    honeypot((res) => res.send({ ok: true, data: 'Thanks, your booking request has been received.' })),
+    asyncHandler(controller.addBooking));
+router.post('/monthAvailability', availabilityByIp, asyncHandler(controller.checkMonthAvail))
 
 // Dashboard only
 router.post('/admin-add', requireAuth, asyncHandler(controller.adminAddBooking))

@@ -43,6 +43,7 @@ function BookingForm({ selectedDate, booking, onResult, onDone }) {
             date: selectedDate,
             accommodation: e.target.accommodation.value,
             message: e.target.message.value,
+            website_url: e.target.website_url?.value,
             charter: 'false'
         }
 
@@ -50,14 +51,17 @@ function BookingForm({ selectedDate, booking, onResult, onDone }) {
             let response = checkPageDashboard()
                 ? await authAxios.post(`${URL}/bookings/admin-add`, newBooking)
                 : await axios.post(`${URL}/bookings/add`, newBooking)
-            showResult(response.data.data, response.data.ok === false ? 'error' : 'success')
-            if (response.data.ok !== false) onDone?.()
+            const failed = response.data.ok === false
+            showResult(response.data.data, failed ? 'error' : 'success')
+            if (!failed) {
+                e.target.reset()
+                onDone?.()
+            }
         } catch (error) {
             console.log(error)
-            if (onResult) onResult(error.response?.data?.data || 'Could not add booking', 'error')
+            showResult(error.response?.data?.data || 'Sorry, we could not make your booking. Please try again, or contact us to book.', 'error')
         } finally {
             setIsSubmitting(false)
-            e.target.reset()
         }
     }
 
@@ -76,6 +80,7 @@ function BookingForm({ selectedDate, booking, onResult, onDone }) {
             date: selectedDate,
             accommodation: e.target.accommodation.value,
             message: e.target.message.value,
+            website_url: e.target.website_url?.value,
             charter: 'true'
         }
 
@@ -241,6 +246,14 @@ function BookingForm({ selectedDate, booking, onResult, onDone }) {
                             <textarea id='message' name='message' cols="40" rows="4" placeholder={'e.g. mobility needs'} defaultValue={booking?.message} />
                         </div>
                     </fieldset>
+
+                    {!checkPageDashboard() && (
+                        // Hidden from people (off-screen, skipped by Tab and screen readers); bots tend to fill it in
+                        <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px', width: '1px', height: '1px', overflow: 'hidden' }}>
+                            <label htmlFor="website_url">Leave this field empty</label>
+                            <input type="text" id="website_url" name="website_url" tabIndex={-1} autoComplete="off" />
+                        </div>
+                    )}
 
                     <button className='btn' type="submit" disabled={isSubmitting}>
                         {isSubmitting ? <span className="submitter" aria-label="Submitting..."></span> : updating ? 'Save changes' : 'Confirm Booking'}

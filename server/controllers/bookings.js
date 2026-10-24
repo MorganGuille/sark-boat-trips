@@ -2,6 +2,7 @@ const Bookings = require("../models/bookings");
 const Availability = require('../models/availability');
 const nodemailer = require('nodemailer');
 const { getAvailability, isSlotEmpty } = require('../utils/availability');
+const { validatePublicBooking } = require('../utils/validateBooking');
 
 
 const transporter = nodemailer.createTransport({
@@ -46,12 +47,6 @@ const bookingName = (booking) => [booking.firstName, booking.lastName].filter(Bo
 // Day view and search hide cancelled bookings unless asked (?includeCancelled=true)
 const statusFilter = (req) => req.query.includeCancelled === 'true' ? {} : { status: { $ne: 'cancelled' } };
 
-// Public bookings must include everything we need to contact the customer
-const isCompleteBooking = (booking) =>
-    ['date', 'timeslot', 'firstName', 'lastName', 'phone', 'email']
-        .every((key) => typeof booking[key] === 'string' && booking[key].trim()) &&
-    Number(booking.adults) >= 1;
-
 const buildConfirmationEmail = ({ email, firstName, adults, childResponse, date, timeslot }) => ({
                 from: 'sarkboattrips@gmail.com',
                 to: email,
@@ -95,8 +90,9 @@ const addBooking = async (req, res) => {
     let childResponse = ``
     Number(children) > 0 ? childResponse = `and ${children} children` : childResponse = ``
 
-    if (!isCompleteBooking(req.body)) {
-        return res.status(400).send({ ok: false, data: "Please fill in all the required fields." });
+    const problem = validatePublicBooking(req.body);
+    if (problem) {
+        return res.status(400).send({ ok: false, data: problem });
     }
 
     try {
@@ -348,6 +344,13 @@ const checkDate = async (req, res) => {
 
 const checkMonthAvail = async (req, res) => {
     const { dates } = req.body;
+
+    // The calendar asks for one month (at most 31 days) at a time
+    const valid = Array.isArray(dates) && dates.length > 0 && dates.length <= 31 &&
+        dates.every((date) => typeof date === 'string' && /^\d{2}-\d{2}-\d{4}$/.test(date));
+    if (!valid) {
+        return res.status(400).send({ ok: false, data: "Invalid dates." });
+    }
 
     try {
         const availabilityData = await Promise.all(
