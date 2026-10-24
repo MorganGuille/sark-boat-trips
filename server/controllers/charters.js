@@ -1,6 +1,6 @@
 const Bookings = require("../models/bookings");
-const Availability = require('../models/availability');
 const nodemailer = require('nodemailer');
+const { isSlotEmpty } = require('../utils/availability');
 
 const stripe = require('stripe')(process.env.STRIPEKEY);
 
@@ -26,24 +26,6 @@ const sendEmail = async (mailOptions) => {
     }
 };
 
-const getAvailability = async (date, timeslot) => {
-    try {
-        const availabilitySettings = await Availability.findOne({ date, timeslot });
-        const capacity = availabilitySettings ? availabilitySettings.capacity : 12;
-
-        const existingBookings = await Bookings.find({ date, timeslot, status: { $ne: 'cancelled' } });
-        let total = 0;
-        existingBookings.forEach(booking => {
-            total += (booking.adults + booking.children);
-        });
-
-        return capacity - total;
-    } catch (error) {
-        console.error("Error calculating availability:", error);
-        throw error;
-    }
-};
-
 // ----------------
 
 
@@ -56,9 +38,8 @@ const createCheckOutSession = async (req, res) => {
     try {
         /// check for availability before sending to stripe ////
 
-        const availability = await getAvailability(newBooking.date, newBooking.timeslot);
-
-        if (availability !== 12) {
+        // A charter needs the whole trip to itself
+        if (!(await isSlotEmpty(newBooking.date, newBooking.timeslot))) {
             return res.send({ ok: false, data: `No spaces available at ${newBooking.timeslot} on ${newBooking.date}!` });
         }
 
@@ -183,7 +164,7 @@ const fulfillCheckoutSession = async (session) => {
     if (existing) return { booking: existing, created: false };
 
     // Someone may have booked the slot while this customer was paying
-    const conflict = (await getAvailability(charterData.date, charterData.timeslot)) !== 12;
+    const conflict = !(await isSlotEmpty(charterData.date, charterData.timeslot));
 
     let booking;
     try {
@@ -196,16 +177,6 @@ const fulfillCheckoutSession = async (session) => {
         throw error;
     }
     console.log('Charter booking created for:', charterData);
-
-    if (!conflict) {
-        //// block the slot by capping its capacity at the party size ////
-        const totalpax = (Number(charterData.adults) || 0) + (Number(charterData.children) || 0);
-        await Availability.findOneAndUpdate(
-            { date: charterData.date, timeslot: charterData.timeslot },
-            { capacity: totalpax },
-            { upsert: true, new: true }
-        );
-    }
 
     // The booking is saved, so a failed email must not undo it: log it and carry on
     const emails = [charterConfirmationEmail(charterData), conflict ? charterConflictEmail(charterData, session.id) : charterAdminEmail(charterData)];

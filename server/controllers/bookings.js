@@ -1,6 +1,7 @@
 const Bookings = require("../models/bookings");
 const Availability = require('../models/availability');
 const nodemailer = require('nodemailer');
+const { getAvailability, isSlotEmpty } = require('../utils/availability');
 
 
 const transporter = nodemailer.createTransport({
@@ -18,24 +19,6 @@ const sendEmail = async (mailOptions) => {
         return info;
     } catch (error) {
         console.error('Error sending email:', error);
-        throw error;
-    }
-};
-
-const getAvailability = async (date, timeslot) => {
-    try {
-        const availabilitySettings = await Availability.findOne({ date, timeslot });
-        const capacity = availabilitySettings ? availabilitySettings.capacity : 12;
-
-        const existingBookings = await Bookings.find({ date, timeslot, status: { $ne: 'cancelled' } });
-        let total = 0;
-        existingBookings.forEach(booking => {
-            total += (booking.adults + booking.children);
-        });
-
-        return capacity - total;
-    } catch (error) {
-        console.error("Error calculating availability:", error);
         throw error;
     }
 };
@@ -301,6 +284,11 @@ const restoreBooking = async (req, res) => {
 
         const adults = Number(booking.adults) || 0;
         const children = Number(booking.children) || 0;
+
+        if (booking.charter === 'true' && !(await isSlotEmpty(booking.date, booking.timeslot))) {
+            return res.send({ ok: false, data: `Can't restore this charter: the ${booking.timeslot} trip on ${booking.date} already has other bookings (or is closed).` });
+        }
+
         const availability = await getAvailability(booking.date, booking.timeslot);
         if (availability < adults + children) {
             return res.send({ ok: false, data: `Can't restore: only ${availability} spaces left at ${booking.timeslot} on ${booking.date}.` });
