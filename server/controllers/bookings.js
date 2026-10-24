@@ -24,6 +24,17 @@ const sendEmail = async (mailOptions) => {
     }
 };
 
+// For emails sent after a booking change has already been saved: a failed email is reported
+// (true or false) and logged by sendEmail, but never undoes or hides the saved change.
+const trySend = async (mailOptions) => {
+    try {
+        await sendEmail(mailOptions);
+        return true;
+    } catch {
+        return false;
+    }
+};
+
 const updateAvailability = async (req, res) => {
     const { date, timeslot, capacity } = req.body;
 
@@ -129,20 +140,22 @@ const addBooking = async (req, res) => {
                             </div>
                         </div>`,
             };
-            try {
-                await sendEmail(mailOptionsClient);
-                await sendEmail(mailOptionsAdmin);
-                const { status, cancelledAt, ...bookingData } = req.body;
-                let newBooking = await Bookings.create(bookingData);
-                res.send({
-                    ok: true, data: `Thanks ${firstName}, your booking for ${adults} adults ${childResponse} on
-                            ${date} at ${timeslot} has been reserved. Please check your email for confirmation (Dont forget to check the spam folder!)`
+            // Save first: the booking must exist even if an email can't be sent
+            const { status, cancelledAt, ...bookingData } = req.body;
+            await Bookings.create(bookingData);
 
-                });
-            } catch (emailError) {
-                console.error("Email sending failed:", emailError);
-                res.status(500).send({ ok: false, data: "Booking confirmed, but email sending failed. Please contact us." });
-            }
+            const confirmationSent = await trySend(mailOptionsClient);
+            if (!confirmationSent) mailOptionsAdmin.subject += ' (CUSTOMER EMAIL FAILED, please contact them)';
+            await trySend(mailOptionsAdmin);
+
+            const party = `${adults} adults${childResponse ? ` ${childResponse}` : ''}`;
+            const reserved = `Thanks ${firstName}, your booking for ${party} on ${date} at ${timeslot} has been reserved.`;
+            res.send({
+                ok: true,
+                data: confirmationSent
+                    ? `${reserved} Please check your email for confirmation (Dont forget to check the spam folder!)`
+                    : `${reserved} However, we couldn't send your confirmation email, so please make a note of these details and contact us if you have any questions.`,
+            });
         } else {
             res.send({ ok: false, data: `No spaces available at ${timeslot} on ${date}!` });
         }
@@ -175,10 +188,10 @@ const adminAddBooking = async (req, res) => {
 
         const who = [firstName, lastName].filter(Boolean).join(' ') || 'the booking';
         if (email) {
-            await sendEmail(buildConfirmationEmail({
+            const sent = await trySend(buildConfirmationEmail({
                 email, firstName: firstName || 'guest', adults, childResponse: children > 0 ? `and ${children} children` : '', date, timeslot,
             }));
-            return res.send({ ok: true, data: `Booking for ${who} on ${date} at ${timeslot} saved and confirmation email sent` });
+            return res.send({ ok: true, data: `Booking for ${who} on ${date} at ${timeslot} saved${sent ? ' and confirmation email sent' : ', but the confirmation email could not be sent'}` });
         }
         res.send({ ok: true, data: `Booking for ${who} on ${date} at ${timeslot} saved (no email address, so no confirmation was sent)` });
     } catch (error) {
@@ -497,9 +510,11 @@ const updateBooking = async (req, res) => {
         if (!updatedBooking) {
             return res.status(404).send({ ok: false, data: 'Booking not found!' });
         }
-        if (updatedBooking.email) await sendEmail(mailOptionsClient);
-        await sendEmail(mailOptionsAdmin);
-        res.send({ ok: true, data: `Booking for ${[updatedBooking.firstName, updatedBooking.lastName].filter(Boolean).join(' ') || 'this booking'} on ${updatedBooking.date} updated successfully${updatedBooking.email ? ' and email sent' : ''}` });
+        // The booking is already updated, so email problems are reported but don't fail the request
+        const customerEmailed = updatedBooking.email ? await trySend(mailOptionsClient) : null;
+        await trySend(mailOptionsAdmin);
+        const emailNote = customerEmailed === null ? '' : customerEmailed ? ' and email sent' : ', but the email to the customer could not be sent';
+        res.send({ ok: true, data: `Booking for ${[updatedBooking.firstName, updatedBooking.lastName].filter(Boolean).join(' ') || 'this booking'} on ${updatedBooking.date} updated successfully${emailNote}` });
     } catch (error) {
         res.status(500).send({ ok: false, data: "Error updating booking", error });
         console.log(error);
