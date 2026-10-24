@@ -27,10 +27,11 @@ const line = (row) => `  ${row.date} ${row.timeslot}  capacity ${row.capacity}${
 
 (async () => {
   await mongoose.connect(
-    `mongodb+srv://morganguille:${process.env.atlasDB_password}@bookingsdb.7bty4.mongodb.net/${dbname}?retryWrites=true&w=majority&appName=BookingsDB`,
+    process.env.MONGODB_URI ||
+      `mongodb+srv://morganguille:${process.env.atlasDB_password}@bookingsdb.7bty4.mongodb.net/${dbname}?retryWrites=true&w=majority&appName=BookingsDB`,
   );
   const db = mongoose.connection.db;
-  console.log(`Database: ${dbname} (${apply ? "APPLYING changes" : "report only, nothing will be changed"})\n`);
+  console.log(`Database: ${dbname || mongoose.connection.name} (${apply ? "APPLYING changes" : "report only, nothing will be changed"})\n`);
 
   const charters = await db.collection("bookings").find({ charter: "true" }).toArray();
   const partySizes = new Map();

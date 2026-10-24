@@ -13,13 +13,15 @@ const checklogin = async (req, res) => {
   const { userName, password } = req.body;
   try {
     // Always run both checks so a wrong username takes as long as a wrong password
-    const userOk = safeEqual(userName ?? "", process.env.admin_username);
+    // Only real text counts: String(["owner"]) would otherwise pass as "owner"
+    const isText = typeof userName === "string" && typeof password === "string";
+    const userOk = safeEqual(isText ? userName : "", process.env.admin_username);
     const passOk = await bcrypt.compare(
-      String(password ?? ""),
+      isText ? password : "",
       process.env.admin_password_hash,
     );
 
-    if (userOk && passOk) {
+    if (isText && userOk && passOk) {
       const token = jwt.sign({ role: "admin" }, process.env.JWT_SECRET, {
         expiresIn: "8h",
       });
