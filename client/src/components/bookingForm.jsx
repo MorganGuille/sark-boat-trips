@@ -91,6 +91,7 @@ function BookingForm({ selectedDate, booking, onResult, onDone }) {
             }
         } catch (error) {
             console.error("Error creating checkout session:", error);
+            showResult(error.response?.data?.data || "Sorry, something went wrong starting your payment. You have not been charged. Please try again, or contact us to book.", 'error');
         } finally {
             setIsSubmitting(false);
         }

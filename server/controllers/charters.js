@@ -47,14 +47,20 @@ const getAvailability = async (date, timeslot) => {
 // ----------------
 
 
+// Stripe allows at most 500 characters per metadata value
+const forStripe = (value) => String(value ?? '').slice(0, 500);
+
 const createCheckOutSession = async (req, res) => {
     const { ...newBooking } = req.body
 
-    /// check for availability before sending to stripe ////
+    try {
+        /// check for availability before sending to stripe ////
 
-    const availability = await getAvailability(newBooking.date, newBooking.timeslot);
+        const availability = await getAvailability(newBooking.date, newBooking.timeslot);
 
-    if (availability === 12) {
+        if (availability !== 12) {
+            return res.send({ ok: false, data: `No spaces available at ${newBooking.timeslot} on ${newBooking.date}!` });
+        }
 
         const session = await stripe.checkout.sessions.create({
             line_items: [{
@@ -66,24 +72,26 @@ const createCheckOutSession = async (req, res) => {
             success_url: `${YOUR_DOMAIN}/success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${YOUR_DOMAIN}/canceled`,
             metadata: {
-                timeslot: newBooking.timeslot,
-                firstName: newBooking.firstName,
-                lastName: newBooking.lastName,
-                email: newBooking.email,
-                phone: newBooking.phone,
-                adults: newBooking.adults,
-                children: newBooking.children,
-                date: newBooking.date,
-                accommodation: newBooking.accommodation,
-                message: newBooking.message,
-                charter: newBooking.charter,
+                timeslot: forStripe(newBooking.timeslot),
+                firstName: forStripe(newBooking.firstName),
+                lastName: forStripe(newBooking.lastName),
+                email: forStripe(newBooking.email),
+                phone: forStripe(newBooking.phone),
+                adults: forStripe(newBooking.adults),
+                children: forStripe(newBooking.children),
+                date: forStripe(newBooking.date),
+                accommodation: forStripe(newBooking.accommodation),
+                message: forStripe(newBooking.message),
+                charter: forStripe(newBooking.charter),
             },
         });
 
         res.json({ url: session.url });
-    } else { res.send({ ok: false, data: `No spaces available at ${newBooking.timeslot} on ${newBooking.date}!` }); }
-
-
+    } catch (error) {
+        // Stripe or the database failed: tell the customer, and keep the server running
+        console.error('Error creating checkout session:', error);
+        res.status(502).json({ ok: false, data: "We couldn't start the payment. You have not been charged. Please try again, or contact us to book." });
+    }
 };
 
 const verifyPayment = async (req, res) => {

@@ -76,4 +76,12 @@ app.get("/*", (req, res) => {
   res.sendFile(path.join(__dirname, "../client/dist/index.html"));
 });
 
+// Must come after every route
+app.use(require("./middleware/errorHandler"));
+
+// Last resort: log a stray rejected promise instead of letting it kill the server
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled rejection:", reason);
+});
+
 app.listen(PORT, () => console.log(`listening on port : ${PORT}`));

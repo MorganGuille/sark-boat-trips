@@ -2,6 +2,7 @@ const express = require("express"),
   router = express.Router(),
   rateLimit = require("express-rate-limit"),
   requireAuth = require("../middleware/requireAuth.js"),
+  asyncHandler = require("../middleware/asyncHandler.js"),
   controller = require("../controllers/admin.js");
 
 const loginLimiter = rateLimit({
@@ -12,8 +13,8 @@ const loginLimiter = rateLimit({
   message: { ok: false, data: "Too many login attempts, try again later" },
 });
 
-router.post("/login", loginLimiter, controller.checklogin);
-router.get("/getSeasonDates", controller.getSeasonDates);
-router.post("/setSeasonDates", requireAuth, controller.setSeasonDates);
+router.post("/login", loginLimiter, asyncHandler(controller.checklogin));
+router.get("/getSeasonDates", asyncHandler(controller.getSeasonDates));
+router.post("/setSeasonDates", requireAuth, asyncHandler(controller.setSeasonDates));
 
 module.exports = router;
