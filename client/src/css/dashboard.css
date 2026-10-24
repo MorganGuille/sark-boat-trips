@@ -1,191 +1,545 @@
-.dashboard {
-    min-height: 90vh;
-}
-
-.padded {
-    padding-top: 3em;
-}
-
-.padded button {
-    max-height: fit-content;
-    max-width: fit-content;
-}
-
-.padded form {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.logoutButton {
-    align-self: flex-end;
-    background-color: rgba(240, 128, 128, 0.664);
-    padding: 0.2em;
-    border-radius: 0.5em;
-    cursor: pointer;
-}
-
-.bookingsDisplay {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1em;
-    padding: 1em;
-    text-align: center;
-    max-width: 80%;
-    margin: 2em auto;
-    padding-top: 2em;
-}
-
-.left-grid {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-}
-
-.right-grid {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
+/* Global on purpose: other forms on the site rely on this input spacing */
 input {
     padding: 0.5em;
     margin: 0.5em;
 }
 
-.logged {
-    width: 10em;
-    background-color: aquamarine;
-    padding: 0.2em;
-    border-radius: 0.5em;
+/* ---------- Layout ---------- */
+
+.dashboard {
+    max-width: 1400px;
+    margin: 0 auto;
+    /* the site navbar is absolutely positioned (4rem), so leave room for it */
+    padding: 5rem 1rem 1rem;
+    min-height: 90vh;
+    color: #213547;
 }
 
-.notLogged {
-    background-color: lightcoral;
-    padding: 0.2em;
-    border-radius: 0.5em;
+.dashboard h1 {
+    font-size: 1.4rem;
+    margin: 0;
 }
 
-.minorform {
+.dashboard h2 {
+    font-size: 1.2rem;
+    margin: 0;
+}
 
+.dashCard {
+    background: #fff;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.dashHeader {
     display: flex;
-    flex-direction: row;
-    margin-top: 1em;
-    max-width: 100%;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1.5rem;
+    padding: 0.75rem 1rem;
 }
 
-.minorform button {
-    max-height: fit-content;
-    max-width: fit-content;
+.dashHeader h1 {
+    margin-right: auto;
+}
+
+.dashGrid {
+    display: grid;
+    grid-template-columns: 380px minmax(0, 1fr);
+    gap: 1rem;
+    margin-top: 1rem;
+    align-items: start;
+}
+
+.dashSide {
+    padding: 1rem;
+    position: sticky;
+    top: 5rem;
+}
+
+.dashMain {
+    min-width: 0;
+}
+
+/* ---------- Buttons and inputs ---------- */
+
+.dashboard .btn {
+    background: #04BF8A;
+    color: #fff;
+    border: 0;
+    border-radius: 0.5rem;
+    padding: 0.65em 1.2em;
+    margin: 0;
+    font-size: 0.95rem;
+    cursor: pointer;
+}
+
+.dashboard .btn:hover:not(:disabled) {
+    background: #0f7ae5;
+}
+
+.dashboard .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.dashboard .btnSmall {
+    padding: 0.4em 0.9em;
+    font-size: 0.85rem;
+}
+
+.dashboard .btnGhost {
+    background: transparent;
+    color: #3f4e5a;
+    border: 1px solid #c9ced3;
+}
+
+.dashboard .btnGhost:hover:not(:disabled) {
+    background: #eef0f2;
+}
+
+.dashboard .btnDanger {
+    background: #fff;
+    color: #b3261e;
+    border: 1px solid #e3a8a4;
+}
+
+.dashboard .btnDanger:hover:not(:disabled) {
+    background: #fdeceb;
+}
+
+.dashboard .btnLink {
+    background: none;
+    border: 0;
+    padding: 0;
+    margin-left: 0.5rem;
+    color: #0f7ae5;
+    font-size: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.dashPanel > .btnLink {
+    display: inline-block;
+    margin: 0 0 1rem;
+}
+
+.dashboard form button {
+    width: auto;
+    max-width: none;
+}
+
+.dashboard input:not([type='checkbox']),
+.dashboard select,
+.dashboard textarea {
+    padding: 0.5rem 0.6rem;
+    margin: 0;
+    border: 1px solid #c9ced3;
+    border-radius: 0.4rem;
+    font-size: 0.95rem;
+    background: #fff;
+}
+
+.dashboard textarea {
+    width: 100%;
+    max-width: 100%;
+    resize: vertical;
+}
+
+.dashboard label {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.muted {
+    color: #5b6773;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+/* ---------- Season dates (header) ---------- */
+
+.seasonInline {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.seasonLabel {
+    font-weight: 600;
+}
+
+.seasonSaved {
+    color: #0a7a55;
+    font-size: 0.9rem;
+}
+
+.seasonError {
+    color: #b3261e;
+    font-size: 0.9rem;
+}
+
+/* ---------- Tabs ---------- */
+
+.dashTabs {
+    display: flex;
+    gap: 0.25rem;
+    padding: 0.5rem 0.75rem 0;
+    border-bottom: 1px solid #e1e4e8;
+    overflow-x: auto;
+}
+
+.dashTab {
+    background: none;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -1px;
+    padding: 0.7rem 1rem;
+    font-size: 0.95rem;
+    color: #5b6773;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.dashTab:hover {
+    color: #213547;
+}
+
+.dashTab[aria-selected='true'] {
+    color: #213547;
+    font-weight: 600;
+    border-bottom-color: #04BF8A;
+}
+
+.count {
+    display: inline-block;
+    min-width: 1.3rem;
+    margin-left: 0.4rem;
+    padding: 0 0.35rem;
+    border-radius: 999px;
+    background: #04BF8A;
+    color: #fff;
+    font-size: 0.75rem;
+    text-align: center;
+}
+
+.dashPanel {
+    padding: 1rem 1.25rem 1.5rem;
+}
+
+.notice {
+    position: sticky;
+    top: 4.5rem;
+    z-index: 5;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin: 0.75rem 1rem 0;
+    padding: 0.6rem 0.9rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+.notice.success {
+    background: #e3f7ef;
+    color: #0a5c40;
+    border: 1px solid #9fdcc3;
+}
+
+.notice.error {
+    background: #fdeceb;
+    color: #8c1d18;
+    border: 1px solid #e3a8a4;
+}
+
+.notice button {
+    background: none;
+    border: 0;
+    color: inherit;
+    font-size: 1.3rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+/* ---------- Bookings tab ---------- */
+
+.panelHead {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.searchForm {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.searchForm input {
+    min-width: 14rem;
+}
+
+.tableWrap {
+    position: relative; /* contains the visually hidden header text so it can't widen the page */
+    overflow-x: auto;
+    border: 1px solid #e1e4e8;
+    border-radius: 0.5rem;
 }
 
 .bookingsTable {
-    align-items: center;
-    overflow-x: auto;
-}
-
-table {
-    align-self: center;
-    margin: auto;
+    width: 100%;
     border-collapse: collapse;
-    margin-bottom: 5em;
-    width: 90%;
-    overflow-x: auto;
+    font-size: 0.9rem;
+    text-align: left;
 }
 
-td,
-th {
-    text-align: center;
-    border: solid black 1px;
-    height: 1.5em;
-    padding: 0.5em;
-    overflow: auto;
+.bookingsTable th {
+    padding: 0.6rem 0.75rem;
+    background: #f4f6f8;
+    font-weight: 600;
+    text-align: left;
     white-space: nowrap;
 }
 
-.message {
-    overflow-wrap: normal;
-    overflow-y: scroll;
+.bookingsTable td {
+    padding: 0.6rem 0.75rem;
+    border-top: 1px solid #e1e4e8;
+    vertical-align: top;
 }
 
-.notes-section {
-    border: solid black 1px;
+.bookingsTable tbody tr:hover {
+    background: #fafbfc;
+}
+
+.messageCell {
+    min-width: 12rem;
+    max-width: 20rem;
+}
+
+.actionsCell {
+    white-space: nowrap;
+}
+
+.dashboard .actionsCell .btn + .btn {
+    margin-left: 0.4rem;
+}
+
+.badge {
+    display: inline-block;
+    margin-left: 0.5rem;
+    padding: 0.05rem 0.45rem;
+    border-radius: 999px;
+    background: #e8f1fe;
+    color: #0b57b0;
+    font-size: 0.75rem;
+}
+
+.emptyState {
+    padding: 2rem 1rem;
+    border: 1px dashed #c9ced3;
+    border-radius: 0.5rem;
+    text-align: center;
+    color: #5b6773;
+}
+
+.dayNote p {
+    margin: 0.4rem 0 0;
+}
+
+.dayNote {
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    background: #fff8e1;
+    border: 1px solid #f0dca0;
+    border-radius: 0.5rem;
+}
+
+/* ---------- Availability and notes ---------- */
+
+.panelForm {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    text-align: center;
-    width: 90%;
-    margin: auto;
-    margin-bottom: 1rem;
-
+    align-items: flex-start;
+    gap: 0.9rem;
+    max-width: 32rem;
 }
 
-.notes-section li {
+.dashboard .fieldRow {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    width: 100%;
+    max-width: 22rem;
+    margin: 0;
+}
+
+.notesPanel {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 40rem;
+}
+
+.noteList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
     list-style: none;
 }
 
-.responseBackdrop {
+.noteList li {
     display: flex;
-    position: fixed;
-    top: 0%;
-    left: 0%;
-    width: 100vw;
-    height: 100vh;
-    backdrop-filter: blur(2px);
-    background-color: transparent;
-    justify-content: center;
-    align-items: center;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    background: #fff8e1;
+    border: 1px solid #f0dca0;
+    border-radius: 0.5rem;
 }
 
-.responseDisplay {
-    text-align: center;
+.noteList p {
+    margin: 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+/* ---------- Login ---------- */
+
+.loginCard {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(10px);
-    color: white;
-    background-color: rgb(63, 78, 90, 0.8);
-    width: 50%;
-    height: 50%;
-    gap: 1em;
-    border-radius: 1em;
-    padding: 1.5rem;
-    z-index: 999;
+    gap: 0.5rem;
+    max-width: 22rem;
+    margin: 4rem auto;
+    padding: 2rem;
+    background: #fff;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
 }
 
-.responseDisplay h3 {
-    z-index: 999;
+.loginCard h1 {
+    margin-bottom: 0.75rem;
 }
 
-
-@media (max-width: 1400px) {
-    .bookingsDisplay {
-
-        max-width: 90%;
-    }
-
-    .minorform {
-        flex-direction: column;
-        padding: 0.2rem;
-        border: solid rgba(52, 52, 52, 0.728) 1px;
-        border-radius: 0.5rem;
-        align-items: center;
-    }
-
+.loginCard input {
+    width: 100%;
 }
 
+.loginCard .btn {
+    margin-top: 0.75rem;
+    width: 100%;
+}
+
+.loginError {
+    margin: 0.25rem 0 0;
+    color: #b3261e;
+}
+
+/* ---------- Booking form inside the dashboard ---------- */
+
+.dashboard .bookingForm {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    align-items: start;
+    width: 100%;
+    padding: 0;
+}
+
+.dashboard .bookingForm > div:first-child,
+.dashboard .bookingForm > button,
+.dashboard .bookingForm fieldset.updateSettings {
+    grid-column: 1 / -1;
+}
+
+.dashboard .bookingForm > button {
+    justify-self: center;
+    min-width: 12rem;
+    padding: 0.8em 1.5em;
+}
+
+.dashboard .bookingForm fieldset {
+    min-width: 0;
+    padding: 0.25rem 1rem 1rem;
+    border: 1px solid #e1e4e8;
+    border-radius: 0.6rem;
+}
+
+.dashboard .bookingForm legend {
+    padding: 0 0.4rem;
+    font-weight: 600;
+}
+
+.dashboard .bookingForm div {
+    width: 100%;
+    margin: 0.6rem 0 0;
+}
+
+/* Nothing is required on the dashboard, so hide the required markers */
+.dashboard .bookingForm > div:first-child,
+.dashboard .bookingForm label strong {
+    display: none;
+}
+
+.dashboard .bookingForm p {
+    width: auto;
+    margin: 0;
+}
+
+.dashboard .bookingForm input,
+.dashboard .bookingForm select,
+.dashboard .bookingForm textarea {
+    width: 100%;
+}
+
+/* ---------- Responsive ---------- */
 
 @media (max-width: 1020px) {
-
-    .padded {
-        max-width: 60%;
+    /* the mobile nav burger is 5rem tall */
+    .dashboard {
+        padding-top: 6rem;
     }
 
-    .bookingsDisplay {
+    .dashGrid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .dashSide {
+        position: static;
         display: flex;
-        flex-direction: column;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 760px) {
+    .dashboard .bookingForm {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .dashboard {
+        padding: 6rem 0.5rem 0.5rem;
     }
 
+    .dashPanel {
+        padding: 0.75rem;
+    }
+
+    .searchForm input {
+        min-width: 0;
+        flex: 1;
+    }
+
+    .dashTab {
+        padding: 0.7rem 0.45rem;
+        font-size: 0.9rem;
+    }
 }

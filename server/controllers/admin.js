@@ -33,6 +33,17 @@ const checklogin = async (req, res) => {
   }
 };
 
+// Season dates are stored as UTC midnight and exchanged as plain YYYY-MM-DD
+const parseDay = (value) => {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value
+    ? null
+    : date;
+};
+
+const formatDay = (date) => date.toISOString().slice(0, 10);
+
 const getSeasonDates = async (req, res) => {
   try {
     const dates = await admin.findOne();
@@ -44,33 +55,45 @@ const getSeasonDates = async (req, res) => {
     }
     return res.send({
       ok: true,
-      seasonStartDate: dates.seasonStartDate,
-      seasonEndDate: dates.seasonEndDate,
+      seasonStartDate: formatDay(dates.seasonStartDate),
+      seasonEndDate: formatDay(dates.seasonEndDate),
     });
   } catch (error) {
     console.error(error);
-    res.send({ ok: false, data: "check console for errors" });
+    res.status(500).send({ ok: false, data: "Could not load season dates" });
   }
 };
 
 const setSeasonDates = async (req, res) => {
-  const { seasonStartDate, seasonEndDate } = req.body;
+  const start = parseDay(req.body.seasonStartDate);
+  const end = parseDay(req.body.seasonEndDate);
+
+  if (!start || !end) {
+    return res
+      .status(400)
+      .send({ ok: false, data: "Start and end dates must be valid dates" });
+  }
+  if (start > end) {
+    return res
+      .status(400)
+      .send({ ok: false, data: "End date must be on or after the start date" });
+  }
+
   try {
     const updatedDates = await admin.findOneAndUpdate(
       {},
-      {
-        seasonStartDate: new Date(seasonStartDate),
-        seasonEndDate: new Date(seasonEndDate),
-      },
+      { seasonStartDate: start, seasonEndDate: end },
       { new: true, upsert: true }
     );
     res.send({
       ok: true,
-      data: `Season set! start date: ${updatedDates.seasonStartDate} and end date: ${updatedDates.seasonEndDate}`,
+      data: "Season dates saved",
+      seasonStartDate: formatDay(updatedDates.seasonStartDate),
+      seasonEndDate: formatDay(updatedDates.seasonEndDate),
     });
   } catch (error) {
-    res.send({ ok: false, data: "check console for errors" });
-    console.log(error);
+    console.error(error);
+    res.status(500).send({ ok: false, data: "Could not save season dates" });
   }
 };
 

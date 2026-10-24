@@ -8,6 +8,7 @@ router.post('/add', controller.addBooking);
 router.post('/monthAvailability', controller.checkMonthAvail)
 
 // Dashboard only
+router.post('/admin-add', requireAuth, controller.adminAddBooking)
 router.post('/delete', requireAuth, controller.deleteBooking)
 router.get('/:date', requireAuth, controller.checkDate)
 router.get('/search/:search', requireAuth, controller.search)

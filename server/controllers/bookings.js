@@ -58,18 +58,13 @@ const updateAvailability = async (req, res) => {
 };
 
 
-const addBooking = async (req, res) => {
-    let { date, firstName, lastName, phone, adults, children = 0, email, timeslot, message, accommodation } = req.body;
-    let childResponse = ``
-    Number(children) > 0 ? childResponse = `and ${children} children` : childResponse = ``
+// Public bookings must include everything we need to contact the customer
+const isCompleteBooking = (booking) =>
+    ['date', 'timeslot', 'firstName', 'lastName', 'phone', 'email']
+        .every((key) => typeof booking[key] === 'string' && booking[key].trim()) &&
+    Number(booking.adults) >= 1;
 
-    try {
-
-        const availability = await getAvailability(date, timeslot);
-
-        if (availability >= (Number(adults) + Number(children))) {
-
-            const mailOptionsClient = {
+const buildConfirmationEmail = ({ email, firstName, adults, childResponse, date, timeslot }) => ({
                 from: 'sarkboattrips@gmail.com',
                 to: email,
                 subject: 'Booking Confirmation Sark Boat Trips',
@@ -105,7 +100,24 @@ const addBooking = async (req, res) => {
         </div>
     </div>
 </div>`,
-            };
+            });
+
+const addBooking = async (req, res) => {
+    let { date, firstName, lastName, phone, adults, children = 0, email, timeslot, message, accommodation } = req.body;
+    let childResponse = ``
+    Number(children) > 0 ? childResponse = `and ${children} children` : childResponse = ``
+
+    if (!isCompleteBooking(req.body)) {
+        return res.status(400).send({ ok: false, data: "Please fill in all the required fields." });
+    }
+
+    try {
+
+        const availability = await getAvailability(date, timeslot);
+
+        if (availability >= (Number(adults) + Number(children))) {
+
+            const mailOptionsClient = buildConfirmationEmail({ email, firstName, adults, childResponse, date, timeslot });
 
             const mailOptionsAdmin = {
                 from: 'sarkboattrips@gmail.com',
@@ -152,6 +164,41 @@ const addBooking = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).send({ ok: false, data: "An error occurred. Please try again later." });
+    }
+};
+
+// Dashboard only (behind requireAuth): the owner may need to save a booking with missing details
+const adminAddBooking = async (req, res) => {
+    const { date, timeslot, firstName, lastName, phone, email, accommodation, message, charter } = req.body;
+    const adults = Number(req.body.adults) || 0;
+    const children = Number(req.body.children) || 0;
+
+    if (!date || !timeslot) {
+        return res.status(400).send({ ok: false, data: "A date and timeslot are required." });
+    }
+
+    try {
+        const availability = await getAvailability(date, timeslot);
+        if (availability < adults + children) {
+            return res.send({ ok: false, data: `No spaces available at ${timeslot} on ${date}!` });
+        }
+
+        // validateBeforeSave is off because the model requires the customer details
+        await new Bookings({
+            date, timeslot, firstName, lastName, phone, email, adults, children, accommodation, message, charter,
+        }).save({ validateBeforeSave: false });
+
+        const who = [firstName, lastName].filter(Boolean).join(' ') || 'the booking';
+        if (email) {
+            await sendEmail(buildConfirmationEmail({
+                email, firstName: firstName || 'guest', adults, childResponse: children > 0 ? `and ${children} children` : '', date, timeslot,
+            }));
+            return res.send({ ok: true, data: `Booking for ${who} on ${date} at ${timeslot} saved and confirmation email sent` });
+        }
+        res.send({ ok: true, data: `Booking for ${who} on ${date} at ${timeslot} saved (no email address, so no confirmation was sent)` });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send({ ok: false, data: "An error occurred saving the booking." });
     }
 };
 
@@ -218,9 +265,9 @@ const deleteBooking = async (req, res) => {
                 </div>`
         };
 
-        await sendEmail(mailOptionsClient);
+        if (bookingToDelete.email) await sendEmail(mailOptionsClient);
         await sendEmail(mailOptionsAdmin);
-        res.send({ ok: true, data: `Booking for ${bookingToDelete.lastName} on ${bookingToDelete.date} at ${bookingToDelete.timeslot} deleted successfully and email sent` });
+        res.send({ ok: true, data: `Booking for ${[bookingToDelete.firstName, bookingToDelete.lastName].filter(Boolean).join(' ') || 'this booking'} on ${bookingToDelete.date} at ${bookingToDelete.timeslot} deleted successfully${bookingToDelete.email ? ' and email sent' : ''}` });
 
     } catch (error) {
         console.error("Error deleting booking:", error);
@@ -386,9 +433,9 @@ const updateBooking = async (req, res) => {
         if (!updatedBooking) {
             return res.status(404).send({ ok: false, data: 'Booking not found!' });
         }
-        await sendEmail(mailOptionsClient);
+        if (updatedBooking.email) await sendEmail(mailOptionsClient);
         await sendEmail(mailOptionsAdmin);
-        res.send({ ok: true, data: `Booking for ${updatedBooking.firstName} ${updatedBooking.lastName} on ${updatedBooking.date} updated successfully and email sent` });
+        res.send({ ok: true, data: `Booking for ${[updatedBooking.firstName, updatedBooking.lastName].filter(Boolean).join(' ') || 'this booking'} on ${updatedBooking.date} updated successfully${updatedBooking.email ? ' and email sent' : ''}` });
     } catch (error) {
         res.status(500).send({ ok: false, data: "Error updating booking", error });
         console.log(error);
@@ -396,5 +443,5 @@ const updateBooking = async (req, res) => {
 }
 
 
-module.exports = { addBooking, deleteBooking, checkDate, checkMonthAvail, search, updateBooking, updateAvailability }
+module.exports = { addBooking, adminAddBooking, deleteBooking, checkDate, checkMonthAvail, search, updateBooking, updateAvailability }
 

@@ -6,7 +6,7 @@ import axios from 'axios';
 import '../css/myCalendar.css';
 import { URL } from '../../config.js'
 
-function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate }) {
+function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate, refreshKey }) {
     const [date, setDate] = useState(new Date());
     const [availability, setAvailability] = useState({});
 
@@ -70,7 +70,7 @@ function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate }) {
 
     useEffect(() => {
         fetchMonthAvailability(date);
-    }, [date]);
+    }, [date, refreshKey]);
 
     const handleDateChange = (date) => {
         setDate(date);

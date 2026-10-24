@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import MyCalendar from './myCalendar'
 import BookingForm from './bookingForm'
-import { getSeasonDates } from '../services.jsx/seasonDates'
+import useSeasonDates from '../hooks/useSeasonDates'
 import '../css/bookings.css'
 
 function Bookings() {
@@ -14,27 +14,25 @@ function Bookings() {
     };
 
     const [selectedDate, setSelectedDate] = useState(formatDate(new Date()))
-    const [seasonStartDate, setSeasonStartDate] = useState('')
-    const [seasonEndDate, setSeasonEndDate] = useState('')
+    const season = useSeasonDates()
 
-    useEffect(() => {
-        const fetchDates = async () => {
-            try {
-                const res = await getSeasonDates()
-                if (res) {
-                    setSeasonStartDate(res.seasonStartDate);
-                    setSeasonEndDate(res.seasonEndDate);
-                }
-            }
-            catch (error) {
-                console.error(error)
-            }
-        }
-        fetchDates()
-    }, [])
-
-    if (!seasonStartDate || !seasonEndDate) {
+    if (season.status === 'loading') {
         return <div aria-live="polite" aria-busy="true">Loading calendar…</div>;
+    }
+
+    if (season.status !== 'ready') {
+        return (
+            <section className="bookings" aria-label="Booking and Availability">
+                <div role="status">
+                    <h2 className='textArea'>Make a Reservation</h2>
+                    <p className='textArea'>
+                        {season.status === 'notSet'
+                            ? "Bookings aren't open yet. Please check back soon."
+                            : "We couldn't load the booking calendar. Please refresh the page or try again shortly."}
+                    </p>
+                </div>
+            </section>
+        )
     }
 
     return (
@@ -56,8 +54,8 @@ function Bookings() {
 
                 <MyCalendar
                     setSelectedDate={setSelectedDate}
-                    seasonStartDate={seasonStartDate}
-                    seasonEndDate={seasonEndDate}
+                    seasonStartDate={season.start}
+                    seasonEndDate={season.end}
                 />
             </div>
 

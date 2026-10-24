@@ -6,7 +6,9 @@ import { URL } from '../../config.js'
 import { authAxios } from '../services.jsx/auth.jsx'
 
 
-function BookingForm({ selectedDate }) {
+// booking / onResult / onDone are only passed by the dashboard: booking switches the form
+// to editing that booking, onResult shows messages there instead of the popup
+function BookingForm({ selectedDate, booking, onResult, onDone }) {
 
     let currentLoc = useLocation()
 
@@ -19,8 +21,12 @@ function BookingForm({ selectedDate }) {
     }
 
     const [showResponse, setResponse] = useState(null)
-    const [updating, setUpdating] = useState(false)
+    const updating = Boolean(booking)
+    // Clients must fill everything in; on the dashboard any detail may be missing
+    const fieldsRequired = !checkPageDashboard()
     const [isSubmitting, setIsSubmitting] = useState(false)
+
+    const showResult = (message, type = 'success') => onResult ? onResult(message, type) : setResponse(message)
 
 
     const addBooking = async (e) => {
@@ -41,10 +47,14 @@ function BookingForm({ selectedDate }) {
         }
 
         try {
-            let response = await axios.post(`${URL}/bookings/add`, newBooking)
-            setResponse(response.data.data)
+            let response = checkPageDashboard()
+                ? await authAxios.post(`${URL}/bookings/admin-add`, newBooking)
+                : await axios.post(`${URL}/bookings/add`, newBooking)
+            showResult(response.data.data, response.data.ok === false ? 'error' : 'success')
+            if (response.data.ok !== false) onDone?.()
         } catch (error) {
             console.log(error)
+            if (onResult) onResult(error.response?.data?.data || 'Could not add booking', 'error')
         } finally {
             setIsSubmitting(false)
             e.target.reset()
@@ -108,13 +118,14 @@ function BookingForm({ selectedDate }) {
         try {
             const response = await authAxios.post(`${URL}/bookings/update/${bookingId}`, updatedBooking)
             console.log(response.data)
-            setResponse(response.data.data)
+            showResult(response.data.data, response.data.ok === false ? 'error' : 'success')
+            if (response.data.ok !== false) onDone?.()
 
         } catch (error) {
             console.log(error)
+            showResult(error.response?.data?.data || 'Could not update booking', 'error')
         } finally {
             setIsSubmitting(false)
-            e.target.reset()
         }
 
     }
@@ -136,15 +147,6 @@ function BookingForm({ selectedDate }) {
     return (
         <>
             <section aria-label="Booking Form Section">
-                {checkPageDashboard() && (
-                    <button
-                        className='btn'
-                        onClick={() => setUpdating(!updating)}
-                    >
-                        {updating ? 'Switch to Add New' : 'Switch to Update Existing'}
-                    </button>
-                )}
-
                 <form
                     className='bookingForm'
                     onSubmit={(e) => actionOnClick(e)}
@@ -155,19 +157,19 @@ function BookingForm({ selectedDate }) {
                     </div>
 
                     {updating ? (
-                        <fieldset>
+                        <fieldset className='updateSettings'>
                             <legend>Update Settings</legend>
                             <div>
                                 <label htmlFor="_id">Booking ID <strong>*</strong></label>
-                                <input type="text" id="_id" name="_id" required placeholder="Paste ID here" />
+                                <input type="text" id="_id" name="_id" required readOnly defaultValue={booking?._id} />
                             </div>
                             <div>
                                 <label htmlFor="date">New Date</label>
-                                <input type="text" id="date" name="date" placeholder="dd-mm-yyyy" />
+                                <input type="text" id="date" name="date" placeholder="dd-mm-yyyy" defaultValue={booking?.date} />
                             </div>
                             <div>
                                 <label htmlFor="charter">Status</label>
-                                <select id="charter" name="charter">
+                                <select id="charter" name="charter" defaultValue={booking?.charter === 'true' ? 'true' : 'false'}>
                                     <option value="false">Standard Tour</option>
                                     <option value="true">Charter Trip</option>
                                 </select>
@@ -179,7 +181,9 @@ function BookingForm({ selectedDate }) {
                         <legend>Contact Information</legend>
                         <div role="status" aria-live="polite">
                             <p style={{ backgroundColor: 'lightgreen', padding: '5px' }}>
-                                {`You are booking ${checkPageCharters() ? 'a private charter' : 'a tour'} for ${selectedDate}`}
+                                {updating
+                                    ? `Editing the booking for ${booking.firstName} ${booking.lastName}`
+                                    : `You are booking ${checkPageCharters() ? 'a private charter' : 'a tour'} for ${selectedDate}`}
                             </p>
                         </div>
 
@@ -187,7 +191,7 @@ function BookingForm({ selectedDate }) {
                             <label htmlFor="timeslot">
                                 Preferred time <strong>*</strong>
                             </label>
-                            <select id="timeslot" name="timeslot" defaultValue="11am" required={!checkPageDashboard()}>
+                            <select id="timeslot" name="timeslot" defaultValue={booking?.timeslot ?? '11am'} required={fieldsRequired}>
                                 <option value="11am">11am</option>
                                 <option value="2pm">2pm</option>
                             </select>
@@ -195,27 +199,27 @@ function BookingForm({ selectedDate }) {
 
                         <div>
                             <label htmlFor="firstName">First Name <strong>*</strong></label>
-                            <input type="text" id="firstName" name="firstName" placeholder="John" required={!checkPageDashboard()} autoComplete="given-name" />
+                            <input type="text" id="firstName" name="firstName" defaultValue={booking?.firstName} placeholder="John" required={fieldsRequired} autoComplete="given-name" />
                         </div>
 
                         <div>
                             <label htmlFor="lastName">Last Name <strong>*</strong></label>
-                            <input type="text" id="lastName" name="lastName" placeholder="Smith" required={!checkPageDashboard()} autoComplete="family-name" />
+                            <input type="text" id="lastName" name="lastName" defaultValue={booking?.lastName} placeholder="Smith" required={fieldsRequired} autoComplete="family-name" />
                         </div>
 
                         <div>
                             <label htmlFor="email">Email <strong>*</strong></label>
-                            <input type="email" id="email" name="email" placeholder="yourname@email.com" required={!checkPageDashboard()} autoComplete="email" />
+                            <input type="email" id="email" name="email" defaultValue={booking?.email} placeholder="yourname@email.com" required={fieldsRequired} autoComplete="email" />
                         </div>
 
                         <div>
                             <label htmlFor="phone">Phone number <strong>*</strong></label>
-                            <input type="tel" id="phone" name="phone" placeholder="(Include country code)" required={!checkPageDashboard()} autoComplete="tel" />
+                            <input type="tel" id="phone" name="phone" defaultValue={booking?.phone} placeholder="(Include country code)" required={fieldsRequired} autoComplete="tel" />
                         </div>
 
                         <div>
                             <label htmlFor="accommodation">Accommodation</label>
-                            <input type="text" id="accommodation" name="accommodation" placeholder="Where are you staying on Sark?" />
+                            <input type="text" id="accommodation" name="accommodation" defaultValue={booking?.accommodation} placeholder="Where are you staying on Sark?" />
                         </div>
                     </fieldset>
 
@@ -223,22 +227,22 @@ function BookingForm({ selectedDate }) {
                         <legend>Party Details</legend>
                         <div>
                             <label htmlFor="adults">Number of adults <strong>*</strong></label>
-                            <input type="number" min="1" max="12" id="adults" name="adults" placeholder="max 12" required={!checkPageDashboard()} />
+                            <input type="number" min="1" max="12" id="adults" name="adults" defaultValue={booking?.adults || ''} placeholder="max 12" required={fieldsRequired} />
                         </div>
 
                         <div>
                             <label htmlFor="children">Number of children (14yrs and under)</label>
-                            <input type="number" min="0" max="12" id="children" name="children" placeholder="including infants" />
+                            <input type="number" min="0" max="12" id="children" name="children" defaultValue={booking?.children} placeholder="including infants" />
                         </div>
 
                         <div>
                             <label htmlFor="message">Any further info / Special requirements</label>
-                            <textarea id='message' name='message' cols="40" rows="4" placeholder={'e.g. mobility needs'} />
+                            <textarea id='message' name='message' cols="40" rows="4" placeholder={'e.g. mobility needs'} defaultValue={booking?.message} />
                         </div>
                     </fieldset>
 
                     <button className='btn' type="submit" disabled={isSubmitting}>
-                        {isSubmitting ? <span className="submitter" aria-label="Submitting..."></span> : 'Confirm Booking'}
+                        {isSubmitting ? <span className="submitter" aria-label="Submitting..."></span> : updating ? 'Save changes' : 'Confirm Booking'}
                     </button>
                 </form>
 

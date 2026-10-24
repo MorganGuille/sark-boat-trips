@@ -3,7 +3,8 @@ const express = require('express'),
     requireAuth = require('../middleware/requireAuth.js'),
     controller = require('../controllers/notes.js');
 
-router.post('/', requireAuth, controller.addOrUpdateNote)
+router.post('/', requireAuth, controller.addNote)
 router.get('/:date', requireAuth, controller.getNotesByDate)
+router.delete('/:id', requireAuth, controller.deleteNote)
 
 module.exports = router;
