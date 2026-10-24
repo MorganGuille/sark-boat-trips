@@ -30,3 +30,9 @@ The project is structured to clearly separate concerns:
 `/routes: Defines the Express API endpoints.`
 
 `/controllers: contains the logic`
+
+## Running the checks
+
+`npm run check` runs every automatic check: lint, the server tests and the browser tests. The tests use a throwaway database on your own computer, fake email and a fake Stripe, so they never touch your real data, send real emails or take real payments. The first run downloads a test database program, and the browser tests need `npx playwright install chromium` once.
+
+You can also run them one at a time: `npm run lint`, `npm test` (server tests, about 10 seconds) and `npm run test:e2e` (a real browser using the site, about 40 seconds). GitHub runs the same checks every time you push (see `.github/workflows/ci.yml`), so a change that breaks booking, login or the website shows a red cross before it is deployed.
