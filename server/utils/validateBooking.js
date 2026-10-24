@@ -90,6 +90,7 @@ const partyProblem = (body, { adultsRequired }) => {
 };
 
 const textProblem = (body) => {
+    if (Object.keys(MAX_LENGTH).some((key) => body[key] != null && typeof body[key] !== 'string')) return 'Please check your details and try again.';
     if (!blank(body.email) && (typeof body.email !== 'string' || !EMAIL.test(body.email.trim()))) return 'Please enter a valid email address.';
     const tooLong = Object.entries(MAX_LENGTH).some(([key, max]) => body[key] != null && String(body[key]).length > max);
     if (tooLong) return 'One of your answers is too long. Please shorten it and try again.';

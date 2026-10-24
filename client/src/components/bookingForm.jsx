@@ -118,7 +118,8 @@ function BookingForm({ selectedDate, booking, onResult, onDone }) {
             date: e.target.date.value,
             accommodation: e.target.accommodation.value,
             message: e.target.message.value,
-            charter: e.target.charter.value
+            charter: e.target.charter.value,
+            notifyCustomer: e.target.notifyCustomer.checked
         }
 
         try {
@@ -246,6 +247,15 @@ function BookingForm({ selectedDate, booking, onResult, onDone }) {
                             <textarea id='message' name='message' cols="40" rows="4" placeholder={'e.g. mobility needs'} defaultValue={booking?.message} />
                         </div>
                     </fieldset>
+
+                    {updating && (
+                        <div className='notifyRow'>
+                            <label>
+                                <input type="checkbox" name="notifyCustomer" defaultChecked />
+                                Email the customer about this change{booking.email ? '' : ' (there is no email address on file)'}
+                            </label>
+                        </div>
+                    )}
 
                     {!checkPageDashboard() && (
                         // Hidden from people (off-screen, skipped by Tab and screen readers); bots tend to fill it in

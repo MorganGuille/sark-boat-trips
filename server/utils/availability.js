@@ -4,10 +4,11 @@ const Availability = require('../models/availability');
 const DEFAULT_CAPACITY = 12;
 
 // What is booked on one trip (a date and a timeslot). Cancelled bookings never count.
-const getSlotState = async (date, timeslot) => {
+// excludeId leaves one booking out, for checking whether an edit to that booking would fit.
+const getSlotState = async (date, timeslot, excludeId) => {
     const [settings, bookings] = await Promise.all([
         Availability.findOne({ date, timeslot }),
-        Bookings.find({ date, timeslot, status: { $ne: 'cancelled' } }),
+        Bookings.find({ date, timeslot, status: { $ne: 'cancelled' }, ...(excludeId && { _id: { $ne: excludeId } }) }),
     ]);
 
     const capacity = settings && Number.isFinite(settings.capacity) ? settings.capacity : DEFAULT_CAPACITY;
@@ -22,14 +23,14 @@ const getSlotState = async (date, timeslot) => {
 };
 
 // Seats left on a trip. A private charter takes the whole trip, whatever its party size.
-const getAvailability = async (date, timeslot) => {
-    const { capacity, bookedSeats, hasCharter } = await getSlotState(date, timeslot);
+const getAvailability = async (date, timeslot, excludeId) => {
+    const { capacity, bookedSeats, hasCharter } = await getSlotState(date, timeslot, excludeId);
     return hasCharter ? 0 : capacity - bookedSeats;
 };
 
 // A charter needs the whole trip: it must be open (capacity above 0) and have no other bookings
-const isSlotEmpty = async (date, timeslot) => {
-    const { capacity, bookingCount } = await getSlotState(date, timeslot);
+const isSlotEmpty = async (date, timeslot, excludeId) => {
+    const { capacity, bookingCount } = await getSlotState(date, timeslot, excludeId);
     return capacity > 0 && bookingCount === 0;
 };
 

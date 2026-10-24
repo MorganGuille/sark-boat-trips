@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Bookings = require("../models/bookings");
 const Availability = require('../models/availability');
 const nodemailer = require('nodemailer');
@@ -57,6 +58,8 @@ const updateAvailability = async (req, res) => {
     }
 };
 
+
+const isBlank = (value) => value == null || String(value).trim() === '';
 
 const bookingName = (booking) => [booking.firstName, booking.lastName].filter(Boolean).join(' ') || 'this booking';
 
@@ -407,67 +410,9 @@ const search = async (req, res) => {
 };
 
 
-const updateBooking = async (req, res) => {
-    const problem = validateAdminBooking(req.body);
-    if (problem) {
-        return res.status(400).send({ ok: false, data: problem });
-    }
-
-    const updateObject = {};
-
-    if (req.body.date) {
-        updateObject.date = req.body.date;
-    }
-    if (req.body.timeslot) {
-        updateObject.timeslot = req.body.timeslot;
-    }
-    if (req.body.firstName) {
-        updateObject.firstName = req.body.firstName;
-    }
-    if (req.body.lastName) {
-        updateObject.lastName = req.body.lastName;
-    }
-    if (req.body.phone) {
-        updateObject.phone = req.body.phone;
-    }
-    if (req.body.adults) {
-        updateObject.adults = req.body.adults;
-    }
-    if (req.body.children) {
-        updateObject.children = req.body.children;
-    }
-    if (req.body.email) {
-        updateObject.email = req.body.email;
-    }
-    if (req.body.accommodation) {
-        updateObject.accommodation = req.body.accommodation;
-    }
-    if (req.body.message) {
-        updateObject.message = req.body.message;
-    }
-    if (req.body.charter) {
-        updateObject.charter = req.body.charter;
-    }
-
-    const bookingId = req.params.id;
-
-    try {
-
-
-        const oldBooking = await Bookings.findOne({ _id: bookingId });
-        if (oldBooking && oldBooking.status === 'cancelled') {
-            return res.status(409).send({ ok: false, data: 'This booking is cancelled. Restore it before editing.' });
-        }
-
-        const updatedBooking = await Bookings.findOneAndUpdate(
-            { _id: bookingId },
-            { $set: updateObject },
-            { new: true, runValidators: true }
-        );
-
-        const mailOptionsClient = {
+const updatedBookingClientEmail = (booking) => ({
             from: 'sarkboattrips@gmail.com',
-            to: updatedBooking.email,
+            to: booking.email,
             subject: 'Booking UPDATED - Sark Boat Trips',
             html: `<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
                         <div
@@ -475,10 +420,10 @@ const updateBooking = async (req, res) => {
                             <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTbfVS_8hzPlk9unxom9wpjtPJyZ_7XgpjsuA&s"
                                 alt="Sark Boat Trips" width="42" height="42"
                                 style="background-color: white; padding: 0.2rem; border-radius: 50px;">
-                            <h3>Dear ${updatedBooking.firstName},</h3>
+                            <h3>Dear ${booking.firstName || 'guest'},</h3>
                             <p>Your booking has been <strong style="color: aquamarine;">UPDATED</strong>.</p>
-                            <p>You are booked for ${updatedBooking.adults} adults and ${updatedBooking.children} children on
-                                ${updatedBooking.date} at ${updatedBooking.timeslot}</p>
+                            <p>You are booked for ${Number(booking.adults) || 0} adults and ${Number(booking.children) || 0} children on
+                                ${booking.date} at ${booking.timeslot}</p>
                             <p>If this is a mistake please contact us</p>
                             <p>Thank you so much,</p>
                             <h3>Sark Boat Trips</h3>
@@ -495,9 +440,9 @@ const updateBooking = async (req, res) => {
                             </div>
                         </div>
                     </div>`,
-        };
+        });
 
-        const mailOptionsAdmin = {
+const updatedBookingAdminEmail = (booking) => ({
             from: 'sarkboattrips@gmail.com',
             to: 'sarkboattrips@gmail.com',
             subject: 'Booking UPDATED',
@@ -505,33 +450,88 @@ const updateBooking = async (req, res) => {
                         <div
                             style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto 4rem auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
                             <h3>Booking <strong style="color: aquamarine;">UPDATED</strong></h3>
-                            <p>Name : ${updatedBooking.firstName} ${updatedBooking.lastName} </p>
-                            <p>Date : ${updatedBooking.date} at ${updatedBooking.timeslot}</p>
-                            <p>Email : ${updatedBooking.email} </p>
-                            <p>Phone : ${updatedBooking.phone} </p>
+                            <p>Name : ${[booking.firstName, booking.lastName].filter(Boolean).join(' ') || '(no name)'} </p>
+                            <p>Date : ${booking.date} at ${booking.timeslot}</p>
+                            <p>Email : ${booking.email || '(none)'} </p>
+                            <p>Phone : ${booking.phone || '(none)'} </p>
                             <hr>
                             <br>
                             <a style="background-color: rgb(5, 171, 116); color: white; text-decoration: none; padding: 0.5rem;"
                                 href="https://www.sarkboattrips.com/dashboard" target='_blank'>Go to dashboard</a>
                         </div>
                     </div>`,
-        };
+        });
 
+// Text details the dashboard can edit. Sent empty, one is cleared; left out, it stays as it is.
+const EDITABLE_TEXT = ['firstName', 'lastName', 'phone', 'email', 'accommodation', 'message'];
 
-        if (!updatedBooking) {
-            return res.status(404).send({ ok: false, data: 'Booking not found!' });
-        }
-        // The booking is already updated, so email problems are reported but don't fail the request
-        const customerEmailed = updatedBooking.email ? await trySend(mailOptionsClient) : null;
-        await trySend(mailOptionsAdmin);
-        const emailNote = customerEmailed === null ? '' : customerEmailed ? ' and email sent' : ', but the email to the customer could not be sent';
-        res.send({ ok: true, data: `Booking for ${[updatedBooking.firstName, updatedBooking.lastName].filter(Boolean).join(' ') || 'this booking'} on ${updatedBooking.date} updated successfully${emailNote}` });
-    } catch (error) {
-        res.status(500).send({ ok: false, data: "Error updating booking", error });
-        console.log(error);
+const seatsIn = (booking) => (Number(booking.adults) || 0) + (Number(booking.children) || 0);
+
+const updateBooking = async (req, res) => {
+    const problem = validateAdminBooking(req.body);
+    if (problem) {
+        return res.status(400).send({ ok: false, data: problem });
     }
-}
 
+    const { id } = req.params;
+    const booking = mongoose.isValidObjectId(id) ? await Bookings.findById(id) : null;
+    if (!booking) {
+        return res.status(404).send({ ok: false, data: 'Booking not found!' });
+    }
+    if (booking.status === 'cancelled') {
+        return res.status(409).send({ ok: false, data: 'This booking is cancelled. Restore it before editing.' });
+    }
+
+    const before = { date: booking.date, timeslot: booking.timeslot, seats: seatsIn(booking), charter: booking.charter };
+
+    // The date, timeslot and booking type can be changed but never blanked
+    for (const key of ['date', 'timeslot', 'charter']) {
+        if (!isBlank(req.body[key])) booking[key] = req.body[key];
+    }
+    for (const key of EDITABLE_TEXT) {
+        if (req.body[key] !== undefined) booking[key] = isBlank(req.body[key]) ? undefined : req.body[key].trim();
+    }
+    // Party size drives the seat counts, so a blank adults box leaves the number alone rather than
+    // silently freeing the seats. A blank children box means no children.
+    if (!isBlank(req.body.adults)) booking.adults = Number(req.body.adults);
+    if (req.body.children !== undefined) booking.children = isBlank(req.body.children) ? 0 : Number(req.body.children);
+
+    if (!booking.isModified()) {
+        return res.send({ ok: true, data: 'No changes to save.' });
+    }
+
+    // Moving a booking, adding people, or making it a charter must still fit. (Taking people away
+    // or editing contact details never needs room, so a trip that is already over-full can still be edited.)
+    const needsRoom = booking.date !== before.date || booking.timeslot !== before.timeslot ||
+        seatsIn(booking) > before.seats || (booking.charter === 'true' && before.charter !== 'true');
+    if (needsRoom) {
+        const trip = `the ${booking.timeslot} trip on ${booking.date}`;
+        if (booking.charter === 'true') {
+            if (!(await isSlotEmpty(booking.date, booking.timeslot, booking._id))) {
+                return res.send({ ok: false, data: `Can't make that change: ${trip} already has other bookings (or is closed), and a charter needs the whole trip.` });
+            }
+        } else {
+            const left = await getAvailability(booking.date, booking.timeslot, booking._id);
+            if (left < seatsIn(booking)) {
+                return res.send({ ok: false, data: `Can't make that change: ${trip} has only ${Math.max(left, 0)} space${left === 1 ? '' : 's'} left. Raise the trip's capacity first if you want to fit more people in.` });
+            }
+        }
+    }
+
+    // validateBeforeSave is off because bookings made on the dashboard may be missing details
+    await booking.save({ validateBeforeSave: false });
+
+    // The change is saved, so email problems are reported but never fail the request
+    const notify = req.body.notifyCustomer !== false;
+    const customerEmailed = booking.email && notify ? await trySend(updatedBookingClientEmail(booking)) : null;
+    await trySend(updatedBookingAdminEmail(booking));
+
+    let emailNote = '';
+    if (booking.email && !notify) emailNote = ' (customer not emailed, as you asked)';
+    else if (customerEmailed === true) emailNote = ' and email sent';
+    else if (customerEmailed === false) emailNote = ', but the email to the customer could not be sent';
+    res.send({ ok: true, data: `Booking for ${bookingName(booking)} on ${booking.date} updated successfully${emailNote}` });
+};
 
 module.exports = { addBooking, adminAddBooking, cancelBooking, restoreBooking, permanentlyDeleteBooking, checkDate, checkMonthAvail, search, updateBooking, updateAvailability }
 
