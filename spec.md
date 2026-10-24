@@ -189,10 +189,17 @@ Written after reading the whole codebase and testing the booking and dashboard f
 - **Fix:** One `escapeHtml` helper used by every template. This is easiest as part of P2-10 (a single mailer module).
 
 ### P1-6 `[Build]` Switching between local and production is a hand-edited URL, and the Stripe return URL is hard-coded to production
+- **Status: DONE** (25 Oct 2026, not yet deployed). **Before deploying:** set `PUBLIC_URL=https://www.sarkboattrips.com` and `PRICE_ID` (the live price, `price_1QzL9TBMZ6qJyKg9hrBauqD6`) in Heroku. The full list is in the go-live checklist in `CLAUDE.md`.
+  - **Browser to server:** `client/config.js` reads `VITE_API_URL`. `npm run dev` gets the local server from the committed `client/.env.development`; a production build leaves it empty, so the browser calls the site that served it and it works on any host. Verified: the production bundle has no `127.0.0.1`, `herokuapp` or `:4040`, and the development bundle has the local address.
+  - **Stripe return address and email links:** one setting, `PUBLIC_URL`. Customers return to it after paying or cancelling, and the owner emails link to its `/dashboard`. A sandbox charter test now returns to the sandbox.
+  - **Price:** read from `PRICE_ID` instead of being typed into the code.
+  - **Test and live keys can't be mixed up.** Production uses `STRIPEKEY` (live). Everywhere else uses `STRIPETESTKEY`, and if only a live key is available, charter payments switch off with a clear message, so a laptop can never charge a real card. A missing or invalid `PUBLIC_URL` or `PRICE_ID` also switches payments off (customers get "Charter payments aren't available right now. Please contact us."), and the rest of the site keeps working. The startup log says which, and why.
+  - The number of proxies in front of the app is a setting (`TRUST_PROXY`, default 1), and the build has a host-neutral `npm run build` script. `server/.env.example` lists every setting (this also covers part of P3-8).
+  - Verified with 14 unit checks of the rules and server runs set up as the sandbox, a live-key-only laptop, and production, using fake keys and addresses.
 - **Problem:**
   - [client/config.js](client/config.js) is switched by commenting lines in and out, and the wrong one is easy to commit and deploy.
   - [charters.js](server/controllers/charters.js) has `YOUR_DOMAIN` hard-coded to the Heroku URL. A charter test from the sandbox sends the customer back to the production site, whose `/success` verifies against the production database.
-- **Fix:**
+- **Fix** (as built, see the status above):
   - Use `import.meta.env.VITE_API_URL`, with `.env.development` (local) and none in production (use same-origin relative URLs, since the server serves the client, which also removes the need for CORS).
   - Read the domain and Stripe price id from environment variables (the unused `PRICE_ID` in `.env` was probably meant for this).
 - **Done when:** nothing needs hand-editing to deploy, and a sandbox charter test returns to the sandbox.
