@@ -1,18 +1,35 @@
 const admin = require("../models/admin");
+const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
+const jwt = require("jsonwebtoken");
+
+// Hash both sides first so timingSafeEqual gets equal-length buffers
+const safeEqual = (a, b) => {
+  const hash = (v) => crypto.createHash("sha256").update(String(v)).digest();
+  return crypto.timingSafeEqual(hash(a), hash(b));
+};
 
 const checklogin = async (req, res) => {
-  let { userName, password } = req.body;
+  const { userName, password } = req.body;
   try {
-    if (
-      userName === process.env.admin_username &&
-      password === process.env.admin_password
-    ) {
-      res.send({ ok: true, data: true });
+    // Always run both checks so a wrong username takes as long as a wrong password
+    const userOk = safeEqual(userName ?? "", process.env.admin_username);
+    const passOk = await bcrypt.compare(
+      String(password ?? ""),
+      process.env.admin_password_hash,
+    );
+
+    if (userOk && passOk) {
+      const token = jwt.sign({ role: "admin" }, process.env.JWT_SECRET, {
+        expiresIn: "8h",
+      });
+      res.send({ ok: true, data: true, token });
     } else {
-      res.send({ ok: false, data: false });
+      res.status(401).send({ ok: false, data: false });
     }
-  } catch {
-    res.send({ ok: false, data: `Error` });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ ok: false, data: "Error" });
   }
 };
 

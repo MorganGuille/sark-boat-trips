@@ -3,6 +3,7 @@ import { useLocation } from 'react-router'
 import '../css/bookingForm.css'
 import axios from 'axios'
 import { URL } from '../../config.js'
+import { authAxios } from '../services.jsx/auth.jsx'
 
 
 function BookingForm({ selectedDate }) {
@@ -105,7 +106,7 @@ function BookingForm({ selectedDate }) {
         }
 
         try {
-            const response = await axios.post(`${URL}/bookings/update/${bookingId}`, updatedBooking)
+            const response = await authAxios.post(`${URL}/bookings/update/${bookingId}`, updatedBooking)
             console.log(response.data)
             setResponse(response.data.data)
 

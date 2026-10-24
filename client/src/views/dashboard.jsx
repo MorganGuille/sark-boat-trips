@@ -4,12 +4,14 @@ import BookingForm from '../components/bookingForm'
 import { getSeasonDates } from '../services.jsx/seasonDates.jsx'
 import axios from 'axios'
 import { URL } from '../../config.js'
+import { authAxios, setToken, clearToken, hasValidToken, LOGOUT_EVENT } from '../services.jsx/auth.jsx'
 
 import '../css/dashboard.css'
 
 function Dashboard() {
 
-    const [loggedin, setLoggedIn] = useState(false)
+    const [loggedin, setLoggedIn] = useState(hasValidToken)
+    const [loginError, setLoginError] = useState('')
     const [selectedDate, setSelectedDate] = useState()
     const [bookings, setBookings] = useState([])
     const [search, setSearch] = useState("")
@@ -18,6 +20,12 @@ function Dashboard() {
     const [showResponse, setResponse] = useState(null)
     const [seasonStartDate, setSeasonStartDate] = useState('')
     const [seasonEndDate, setSeasonEndDate] = useState('')
+
+    useEffect(() => {
+        const onLogout = () => setLoggedIn(false)
+        window.addEventListener(LOGOUT_EVENT, onLogout)
+        return () => window.removeEventListener(LOGOUT_EVENT, onLogout)
+    }, [])
 
     useEffect(() => {
         const fetchDates = async () => {
@@ -42,7 +50,7 @@ function Dashboard() {
     const setSeasonDates = async (e) => {
         e.preventDefault();
         try {
-            const res = await axios.post(`${URL}/admin/setSeasonDates`, { seasonStartDate, seasonEndDate })
+            const res = await authAxios.post(`${URL}/admin/setSeasonDates`, { seasonStartDate, seasonEndDate })
             setResponse(res.data.data)
 
         }
@@ -60,18 +68,27 @@ function Dashboard() {
             userName: e.target.username.value,
             password: e.target.password.value
         }
-        let response = await axios.post(`${URL}/admin/login`, user)
-        setLoggedIn(response.data.data)
+        try {
+            const response = await axios.post(`${URL}/admin/login`, user)
+            setToken(response.data.token)
+            setLoginError('')
+            setLoggedIn(true)
+        } catch (error) {
+            setLoginError(error.response?.status === 429
+                ? 'Too many attempts, try again in 15 minutes'
+                : 'Incorrect username or password')
+        }
     }
 
     const Logout = async () => {
+        clearToken()
         setLoggedIn(false)
     }
 
     const getBookingsByDate = async () => {
 
         try {
-            const res = await axios.get(`${URL}/bookings/${selectedDate}`);
+            const res = await authAxios.get(`${URL}/bookings/${selectedDate}`);
             setBookings(res.data.data)
 
         } catch (error) {
@@ -83,7 +100,7 @@ function Dashboard() {
         e.preventDefault()
         setSearch(e.target.lastName.value)
         try {
-            const res = await axios.get(`${URL}/bookings/search/${search}`);
+            const res = await authAxios.get(`${URL}/bookings/search/${search}`);
             setBookings(res.data.data)
 
         } catch (error) {
@@ -97,7 +114,7 @@ function Dashboard() {
             _id: e.target._id.value
         }
         try {
-            const res = await axios.post(`${URL}/bookings/delete`, booking)
+            const res = await authAxios.post(`${URL}/bookings/delete`, booking)
             setResponse(res.data.data)
         }
         catch (error) {
@@ -115,7 +132,7 @@ function Dashboard() {
             capacity: e.target.capacity.value,
         }
         try {
-            const res = await axios.post(`${URL}/bookings/updateavailability`, update)
+            const res = await authAxios.post(`${URL}/bookings/updateavailability`, update)
             setResponse(res.data.data)
         } catch (error) {
             console.error(error)
@@ -134,7 +151,7 @@ function Dashboard() {
         }
 
         try {
-            const res = await axios.post(`${URL}/notes`, noteData)
+            const res = await authAxios.post(`${URL}/notes`, noteData)
             setResponse(res.data.message || "Note saved successfully!")
             setNoteContent('')
             fetchNotesForSelectedDate();
@@ -147,7 +164,7 @@ function Dashboard() {
         if (!selectedDate) return
 
         try {
-            const res = await axios.get(`${URL}/notes/${selectedDate}`)
+            const res = await authAxios.get(`${URL}/notes/${selectedDate}`)
             setDateNotes(res.data.data)
         } catch (error) {
             console.error("Error fetching notes", error)
@@ -170,7 +187,7 @@ function Dashboard() {
                         <button className='btn' onClick={Logout} type="reset">Log Out</button>
                     </span>
                 </form> : null}
-                {loggedin ? <p className='logged'>logged in</p> : <p className='notLogged'>Please log in</p>}
+                {loggedin ? <p className='logged'>logged in</p> : <p className='notLogged'>{loginError || 'Please log in'}</p>}
             </div>
 
             {loggedin ? <div  >

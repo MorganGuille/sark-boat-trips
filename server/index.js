@@ -9,9 +9,18 @@ const path = require("path");
 require("dotenv").config();
 
 let dbPassword = process.env.atlasDB_password;
+let dbname = process.env.atlasDB_name;
 
-// Trust Heroku proxy
-app.enable("trust proxy");
+// Fail fast if the admin auth config is missing
+for (const key of ["JWT_SECRET", "admin_username", "admin_password_hash"]) {
+  if (!process.env[key]) {
+    console.error(`Missing ${key} in environment`);
+    process.exit(1);
+  }
+}
+
+// Trust Heroku's single proxy hop (keeps req.ip honest for rate limiting)
+app.set("trust proxy", 1);
 
 // HSTS security header
 app.use(
@@ -22,9 +31,9 @@ app.use(
   }),
 );
 
-// Force HTTPS
+// Force HTTPS (production only, so local http://localhost works)
 app.use((req, res, next) => {
-  if (req.secure) return next();
+  if (req.secure || process.env.NODE_ENV !== "production") return next();
   res.redirect(301, `https://${req.headers.host}${req.url}`);
 });
 
@@ -40,12 +49,13 @@ app.get("/robots.txt", (req, res) => {
 });
 
 // Connect to MongoDB
+
 async function connecting() {
   try {
     await mongoose.connect(
-      `mongodb+srv://morganguille:${dbPassword}@bookingsdb.7bty4.mongodb.net/?retryWrites=true&w=majority&appName=BookingsDB`,
+      `mongodb+srv://morganguille:${dbPassword}@bookingsdb.7bty4.mongodb.net/${dbname}?retryWrites=true&w=majority&appName=BookingsDB`,
     );
-    console.log("Connected to the DB");
+    console.log(`Connected to ${dbname}`);
   } catch (error) {
     console.log("ERROR: Could not connect to DB");
   }
