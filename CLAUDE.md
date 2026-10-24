@@ -35,6 +35,7 @@ The backlog is in `spec.md`. Update it when an item is done or a new problem tur
 
 - Login `POST /admin/login` (rate limited to 5 per 15 min per IP) returns an 8-hour JWT. The client keeps it in `localStorage` under `adminToken` and sends `Authorization: Bearer ...`.
 - **Public routes:** `POST /bookings/add`, `POST /bookings/monthAvailability`, `GET /admin/getSeasonDates`, `/charters/*`. **Everything else must use `requireAuth`**, including any new dashboard route.
+- **Public routes are rate limited** (`middleware/rateLimiters.js`: per IP, plus per email for bookings; in memory, so they reset on restart) and the booking and charter-checkout routes have a **honeypot** (`middleware/honeypot.js`, hidden form field `website_url`). Any new public route that sends email or calls Stripe needs a limiter, and any new public booking form must include the honeypot field. Customer input goes through `utils/validateBooking.js`. The Stripe webhook is deliberately not limited.
 - **Wrap every route handler in `asyncHandler`** (`middleware/asyncHandler.js`) when adding routes. Express 4 doesn't catch async errors, and an uncaught one used to crash the server. Errors then reach `middleware/errorHandler.js`, the last middleware in `index.js`, which returns a generic JSON error. Controllers can still catch errors themselves to give a specific message.
 - On the client, use `authAxios` (from `services.jsx/auth.jsx`) for protected calls and plain `axios` for public ones. A 401 clears the token and logs the dashboard out.
 
@@ -51,6 +52,7 @@ The backlog is in `spec.md`. Update it when an item is done or a new problem tur
 - Headless Chromium via Playwright is set up in the scratchpad (`pw/`). If it is missing: `npm i playwright && npx playwright install chromium` in the scratchpad, never in the repo.
 - The owner usually has their own server on **4040** and Vite on **5173** running. Don't kill or reuse them. Use test ports **4141** (API) and **5199** (Vite). The client's API URL points at 4040, so redirect it in Playwright: `page.route('http://127.0.0.1:4040/**', r => r.continue({ url: r.request().url().replace(':4040', ':4141') }))`.
 - To test Stripe flows without Stripe: use the real `stripe` library (so signatures are really checked) but replace `checkout.sessions.retrieve` from a preload; sign test webhooks with `stripe.webhooks.generateTestHeaderString({ payload, secret })` and set `STRIPE_WEBHOOK_SECRET` on the test API. Use far-future dates (e.g. `01-01-2031`) and `ZZTEST` names, and delete the bookings and any `availabilities` rows created.
+- Rate limits key on `req.ip`, and the app trusts one proxy hop, so a test can pose as different visitors by sending `X-Forwarded-For: 10.x.x.x`. Counters are per server process, so restart the test API between suites.
 - Start the test API with a temporary password hash (`admin_password_hash=$(node -e 'console.log(require("bcryptjs").hashSync("pw",4))')`) and a preload that replaces `nodemailer.createTransport` with a fake that logs recipients (`NODE_OPTIONS="-r mock-mail.js"`). Check the log to see who would have been emailed.
 - The login limiter (5 per 15 min) will lock a test API after a few runs, so restart it between runs. Stop servers by the PID that owns the port (`ss -ltnp`), not by a saved PID file, and only ones you started.
 - The sandbox database is real shared data. Tag test records `ZZTEST` and delete them afterwards, then check none are left. Never write to the production database.
@@ -61,6 +63,7 @@ The backlog is in `spec.md`. Update it when an item is done or a new problem tur
 - For anything with a real design choice or behaviour change (new workflow, data changes), give a short recommendation and the options, and ask. Once they say go, implement and verify in the browser.
 - They want simple solutions that suit one person running a small business, and plain-language explanations. Be upfront about what was and wasn't tested, and about side effects of a change.
 - They prefer fields to be optional on the dashboard and strict for customers.
+- They plan to move off the free `@gmail.com` sending address soon (see spec P2-10). Don't add more hard-coded copies of it; use the config once P2-11 exists.
 
 ## Before moving the sandbox to production
 

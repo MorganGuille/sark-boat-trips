@@ -111,6 +111,14 @@ Written after reading the whole codebase and testing the booking and dashboard f
 - **Done when:** booking a charter fills the slot, cancelling it frees the slot, and restoring it fills the slot again.
 
 ### P0-5 `[Server]` Public endpoints can be abused to send email through your Gmail
+- **Status: DONE** (24 Oct 2026, not yet deployed).
+  - **Limits per IP address:** 10 booking attempts and 10 charter checkouts per 15 minutes, 60 availability requests per minute, 30 payment checks per 15 minutes. Stripe's webhook is never limited (its signature protects it).
+  - **Limit per email address:** 3 booking requests per hour for the same address from anywhere, so bots can't use many IPs to email one victim.
+  - **Hidden honeypot field** (`website_url`) on the public and charter forms. A request with it filled in gets a normal-looking reply and nothing is saved or emailed. It is off-screen, skipped by Tab and hidden from screen readers.
+  - Email format and length limits on every customer answer (shared with the charter checkout), and the availability endpoint accepts at most 31 well-formed dates.
+  - Customers who hit a limit see a clear message, and what they typed is kept.
+  - Verified with 27 server checks plus a browser test of the form, and the earlier suites still pass.
+  - Not done: a CAPTCHA (Cloudflare Turnstile). Add it if bots get past this. The counters live in memory, so they reset when the app restarts, which is fine for one dyno. Behind a shared IP (a guest house on Sark, say) the per-IP limit is generous enough that normal use won't hit it.
 - **Problem:** `/bookings/add` and `/charters/create-checkout-session` have no rate limiting, CAPTCHA or bot check. Anyone can script them to send confirmation emails to arbitrary addresses (spam or harassment from your address, then Gmail suspends the account and real confirmations stop). It also lets bots fill your slots. The monthly availability endpoint accepts an unbounded list.
 - **Fix:**
   - Add `express-rate-limit` per IP: for example 5 bookings per 15 minutes, with looser limits for availability.
@@ -128,10 +136,12 @@ Written after reading the whole codebase and testing the booking and dashboard f
 - **Fix:** Create the booking first, then send emails. If an email fails, keep the booking, tell the customer it is booked and that the email failed, and email or flag the owner. Use the same order for the charter flow.
 
 ### P1-2 `[Customer]` The booking form shows nothing when the server rejects a booking
+- **Status: DONE** (across P0-1 and P0-5). The public booking form and the charter form now show the server's message for every failure (validation, rate limit, no spaces, server error), with a friendly fallback if there is no reply, and keep what the customer typed. The form only clears after a successful booking.
 - **Problem:** In [bookingForm.jsx](client/src/components/bookingForm.jsx) the public submit handlers only `console.log` on error. A 400 (incomplete), a 429 (once rate-limited) or a 500 leaves the customer with a form that silently does nothing. `ok: false` responses with a 200 status (no spaces left) are shown, but errors thrown by axios are not.
 - **Fix:** Show the server's message for every failure, in the existing popup or inline, for both the normal and charter forms. Keep what the customer typed. Add a generic "something went wrong, please call or email us" fallback.
 
 ### P1-3 `[Server]` No server-side validation of dates, party size, timeslot or email format
+- **Status: PARTLY DONE.** Email format and maximum lengths are now checked (`server/utils/validateBooking.js`, used by the public booking and charter checkout). Still to do: dates (valid, not in the past, within the season), timeslot from a list, party-size bounds, and the Guernsey-timezone cutoff.
 - **Problem:** The booking calendar limits dates in the browser only. A direct API call can book a past date, a date outside the season, a nonsense date string, 500 adults, or a timeslot that doesn't exist. Email format isn't checked. (The public route now requires non-empty fields, but nothing more.)
 - **Fix:** One shared validation module used by add, admin-add and update:
   - date format, not in the past, within the season (public only)
@@ -234,6 +244,7 @@ Meeting point, what to bring and a weather note. Run it with Heroku Scheduler. I
 - **Fix:** Prerender each public route to its own file and have the server serve the right one. Add `sitemap.xml`, add `Disallow: /dashboard` to `robots.txt`, and a `noindex` meta tag on the dashboard, success and canceled pages.
 
 #### P2-10 `[Server]` Move off Gmail SMTP
+**The owner plans to leave the free `@gmail.com` address soon** (it gets blocked and lands in spam). `sarkboattrips@gmail.com` is hard-coded about 30 times: 24 in the booking and charter controllers (as sender and as the owner's own address), plus the success, canceled, footer and privacy pages, and the SMTP login in `.env`. Do P2-11 first (one place for the sender address, owner address and contact details), then switch. With a custom domain, also set up SPF, DKIM and DMARC records so the emails aren't treated as spam.
 Gmail SMTP has daily sending limits, weaker deliverability (your own email asks customers to check spam), and it ties delivery to one personal account. Use a transactional service (Resend, Postmark or SES) behind one `mailer.js` module that also holds the three email layouts now copied across the code, the HTML escaping (P1-5), and failure alerts to you.
 
 #### P2-11 `[Server]` Business settings hard-coded in many files
