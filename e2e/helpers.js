@@ -36,7 +36,8 @@ const pickDate = async (page, daysFromToday) => {
     const tile = page.locator(`abbr[aria-label="${label}"]`);
     for (let i = 0; i < 4 && (await tile.count()) === 0; i++) await page.locator('.react-calendar__navigation__next-button').click();
     await tile.click();
-    return `${String(target.getDate()).padStart(2, '0')}-${String(target.getMonth() + 1).padStart(2, '0')}-${target.getFullYear()}`;
+    // the day as it is stored (YYYY-MM-DD)
+    return `${target.getFullYear()}-${String(target.getMonth() + 1).padStart(2, '0')}-${String(target.getDate()).padStart(2, '0')}`;
 };
 
 const fillBooking = async (page, { firstName = 'Alice', lastName = 'Smith', email = `alice${Date.now()}@example.test`, phone = '07123 456789', adults = '2' } = {}) => {

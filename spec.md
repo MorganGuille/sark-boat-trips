@@ -30,7 +30,7 @@ Written after reading the whole codebase and testing the booking and dashboard f
 | P1-7 | Server | Open CORS and almost no security headers | S–M |
 | P1-8 | Build | No tests and no CI | M |
 | P1-9 | Server | No error reporting, backup check, or separation of sandbox and production | S |
-| P1-10 | Server | Dates stored as `dd-mm-yyyy` strings | M–L |
+| P1-10 | Server | Dates stored as `dd-mm-yyyy` strings (**DONE**) | M–L |
 | P2-1 | Owner | Printable day sheet and CSV export | S–M |
 | P2-2 | Owner | Trip tools: change a trip's time for one day, close a trip, notify everyone on it. **Do P2-11 and P2-10 first** | M–L |
 | P2-3 | Owner | Month overview and better search | M |
@@ -100,7 +100,7 @@ Written after reading the whole codebase and testing the booking and dashboard f
   - The seat-counting logic now lives once in `server/utils/availability.js` (it was copied in two controllers). A trip with an active charter booking shows 0 spaces, so cancelling the charter frees the trip and restoring it blocks the trip again. Nothing writes to the capacity setting any more.
   - Charters need a trip that is open and has no other bookings, instead of the hard-coded "exactly 12 free". A trip limited to 8 seats can now be chartered, and a closed trip (0 seats) can't.
   - Restoring a cancelled charter is refused while the trip has other bookings. Marking an existing booking as a charter (Edit, "Status") now blocks the trip, and marking it back frees it.
-  - `server/scripts/cleanup-charter-capacity.js` removes the old capacity rows that charters left behind (dry run by default, `--apply` to delete). It only deletes rows that match a charter booking on the same trip with the party size as capacity, and lists any other custom capacity for review. Dry run on the sandbox found nothing to remove.
+  - (The cleanup script `server/scripts/cleanup-charter-capacity.js` was deleted in P1-10: go-live uses a new empty database, so there is no old capacity data to repair.) It removed the old capacity rows that charters left behind (dry run by default, `--apply` to delete). It only deletes rows that match a charter booking on the same trip with the party size as capacity, and lists any other custom capacity for review. Dry run on the sandbox found nothing to remove.
   - Verified with 31 checks, and the earlier Stripe webhook and browser cancel/restore suites were re-run and still pass.
 - **Problem:** A paid charter blocks the slot by overwriting the `Availability` capacity to the party size (`capacity: totalpax` in `verifyPayment`) and relying on `availability === 12` elsewhere. Cancel or delete the booking and the capacity override stays, so the slot never frees and that trip shows only the party's number of seats. This predates the cancel feature but the cancel feature makes it easy to hit. It also means charters stop working if you ever set a default capacity other than 12.
 - **Fix:**
@@ -244,6 +244,7 @@ Written after reading the whole codebase and testing the booking and dashboard f
   - Give the sandbox its own database user restricted to the sandbox database.
 
 ### P1-10 `[Server]` Dates are stored as `dd-mm-yyyy` strings
+- **Status: DONE** (25 Oct 2026, not yet deployed). Dates are now `YYYY-MM-DD` everywhere (bookings, availability, notes, the API, Stripe metadata) and shown as `dd-mm-yyyy` to people (emails, messages, screens) through one helper on each side. The owner chose a **clean break instead of a migration**: go live on a new, empty database and keep the old `Test` one as an archive, so there is no migration script and no mixed formats (steps in the go-live checklist in `CLAUDE.md`). The old `dd-mm-yyyy` form is refused by every route. The edit form's date box is now a date picker. The one-off charter cleanup script and its test were deleted: they only repaired old data. While there: sorting the dashboard no longer crashes on a booking with no last name.
 - **Problem:** Strings in this format can't be sorted or range-queried correctly, so month views, reports, reminders and "upcoming bookings" are awkward or wrong. Every comparison is a string comparison. The same format is parsed in many places.
 - **Fix:** Store `YYYY-MM-DD` (or a real Date at UTC midnight) for bookings, availability and notes. Write a one-off migration script with a dry-run mode and a backup, and keep dd-mm-yyyy for display only (one shared helper). Do this before the owner features in P2.
 - **Done when:** the app works end to end on migrated sandbox data and a rollback plan exists, and `e2e/calendar-devices.spec.js` (out-of-season days blocked on Chrome, Android and WebKit, in several time zones) still passes. Don't parse date text in the browser: Safari reads some formats differently, and the time zone shifts UTC dates for visitors abroad.

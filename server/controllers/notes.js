@@ -1,12 +1,13 @@
 const mongoose = require('mongoose')
 const Notes = require('../models/notes')
+const { isDay } = require('../utils/dates')
 
 const addNote = async (req, res) => {
 
     const { date, content } = req.body
 
-    if (!date || !content || !content.trim()) {
-        return res.status(400).json({ success: false, message: 'Date and Content are required' })
+    if (!isDay(date) || typeof content !== 'string' || !content.trim()) {
+        return res.status(400).json({ success: false, message: 'A valid date and some content are required' })
     }
 
     try {
@@ -22,6 +23,10 @@ const addNote = async (req, res) => {
 
 const getNotesByDate = async (req, res) => {
     const date = req.params.date
+
+    if (!isDay(date)) {
+        return res.status(400).json({ success: false, message: 'Invalid date' })
+    }
 
     try {
         const notes = await Notes.find({ date: date }).sort({ _id: 1 })

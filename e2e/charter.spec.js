@@ -27,7 +27,7 @@ test('with Stripe working the customer is sent to Stripe to pay', async ({ page,
 
 test('coming back from Stripe after paying shows the confirmation, again after a refresh, with only one booking', async ({ page, request }) => {
     const later = new Date(); later.setDate(later.getDate() + 20);
-    const date = `${String(later.getDate()).padStart(2, '0')}-${String(later.getMonth() + 1).padStart(2, '0')}-${later.getFullYear()}`;
+    const date = `${later.getFullYear()}-${String(later.getMonth() + 1).padStart(2, '0')}-${String(later.getDate()).padStart(2, '0')}`;
     await request.post('/__test/stripe-session', { data: { id: 'cs_test_e2e', object: 'checkout.session', payment_status: 'paid', metadata: { timeslot: '11am', firstName: 'Carol', lastName: 'Charter', email: 'carol@example.test', phone: '1', adults: '2', children: '0', date, accommodation: '', message: '', charter: 'true' } } });
     await page.goto('/success?session_id=cs_test_e2e');
     await expect(page.locator('h1')).toHaveText('Success!');

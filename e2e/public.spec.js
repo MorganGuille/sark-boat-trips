@@ -18,6 +18,10 @@ test('a customer can make a booking, and both the customer and the owner are ema
     const email = await h.fillBooking(page, { firstName: 'Alice', email: 'alice@example.test', adults: '2' });
     await page.click('button:has-text("Confirm Booking")');
     await expect(page.locator('.responseDisplay h3')).toContainText('has been reserved');
+    // stored as YYYY-MM-DD, but a customer reads it day-month-year
+    const british = date.split('-').reverse().join('-');
+    await expect(page.locator('.responseDisplay')).toContainText(`on ${british} at 11am`);
+    expect(date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
 
     const saved = await h.savedBookings(request);
     expect(saved).toHaveLength(1);
@@ -50,7 +54,7 @@ test('a bot that fills in the hidden field is not seen by people, and gets nothi
     const box = await page.locator('#website_url').boundingBox();
     expect(box.x).toBeLessThan(-1000); // off the screen
     await expect(page.locator('#website_url')).toHaveAttribute('tabindex', '-1');
-    const response = await request.post('/bookings/add', { data: { date: '01-01-2099', timeslot: '11am', firstName: 'Bot', lastName: 'Bot', email: 'bot@example.test', phone: '1', adults: '2', website_url: 'http://spam.example' } });
+    const response = await request.post('/bookings/add', { data: { date: '2099-01-01', timeslot: '11am', firstName: 'Bot', lastName: 'Bot', email: 'bot@example.test', phone: '1', adults: '2', website_url: 'http://spam.example' } });
     expect((await response.json()).ok).toBe(true);
     expect(await h.savedBookings(request)).toHaveLength(0);
 });

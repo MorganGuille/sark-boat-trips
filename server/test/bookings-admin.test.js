@@ -53,7 +53,7 @@ describe('adding a booking on the dashboard', () => {
     });
     it('what is entered must still make sense', async () => {
         const base = { date: t.day(10), timeslot: '11am', firstName: 'X' };
-        for (const bad of [{ date: '31-02-2033' }, { timeslot: '3pm' }, { adults: '13' }, { adults: '0' }, { children: '-1' }, { email: 'nope' }, { charter: 'maybe' }, { date: undefined }]) {
+        for (const bad of [{ date: '2033-02-31' }, { date: '15-06-2033' }, { timeslot: '3pm' }, { adults: '13' }, { adults: '0' }, { children: '-1' }, { email: 'nope' }, { charter: 'maybe' }, { date: undefined }]) {
             assert.equal((await post('/bookings/admin-add', { ...base, ...bad })).status, 400, JSON.stringify(bad));
         }
         assert.equal((await all()).length, 0);
@@ -90,7 +90,7 @@ describe('editing a booking', () => {
     });
     it('what is entered must still make sense (400, nothing changed)', async () => {
         const id = await withEmail();
-        for (const body of [{ date: '31-02-2033' }, { timeslot: 'noon' }, { adults: '99' }, { email: 'nope' }, { date: [t.day(11)] }, { firstName: { $ne: null } }]) {
+        for (const body of [{ date: '2033-02-31' }, { date: '15-06-2033' }, { timeslot: 'noon' }, { adults: '99' }, { email: 'nope' }, { date: [t.day(11)] }, { firstName: { $ne: null } }]) {
             assert.equal((await edit(id, body)).status, 400, JSON.stringify(body));
         }
         assert.equal((await t.findBooking(id)).phone, '07000 000000');
@@ -116,7 +116,7 @@ describe('editing a booking', () => {
             assert.equal(res.body.ok, true);
             assert.equal((await t.findBooking(id)).date, t.day(12));
             const email = mocks.sent('bob@example.test').find((m) => /UPDATED/.test(m.subject));
-            assert.ok(email.html.includes(t.day(12)) && email.html.includes('11am'));
+            assert.ok(email.html.includes(t.shown(t.day(12))) && email.html.includes('11am'));
         });
         it('taking people away, or editing contact details, never needs room (an over-full trip can still be edited)', async () => {
             await t.insertBooking({ date: t.day(10), adults: 10 });
@@ -229,7 +229,7 @@ describe('cancelling, restoring and deleting', () => {
         assert.equal((await t.seatsLeft(app, t.day(10)))['11am'], 12);
         assert.equal((await get(`/bookings/${t.day(10)}`)).body.data.length, 0);
         assert.ok(mocks.sent('bob@example.test').some((m) => m.subject === 'Booking CANCELLED - Sark Boat Trips'));
-        assert.ok(mocks.sent(t.OWNER).some((m) => m.subject === `Booking CANCELLED ${t.day(10)}`));
+        assert.ok(mocks.sent(t.OWNER).some((m) => m.subject === `Booking CANCELLED ${t.shown(t.day(10))}`));
     });
     it('a booking with no email address is cancelled without a customer email', async () => {
         const id = await withEmail({ email: '' });

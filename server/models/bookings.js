@@ -1,9 +1,11 @@
 const mongoose = require("mongoose");
 
 const bookingsSchema = new mongoose.Schema({
+    // A day as 'YYYY-MM-DD' (see utils/dates.js)
     date: {
         type: String,
         required: true,
+        match: /^\d{4}-\d{2}-\d{2}$/,
     },
     timeslot: {
         type: String,

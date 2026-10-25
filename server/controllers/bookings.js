@@ -5,6 +5,7 @@ const nodemailer = require('nodemailer');
 const { getAvailability, isSlotEmpty } = require('../utils/availability');
 const { safeHtml } = require('../utils/safeHtml');
 const { settings } = require('../utils/settings');
+const { isDay, showDay } = require('../utils/dates');
 const { validatePublicBooking, validateAdminBooking, validateAvailabilitySetting } = require('../utils/validateBooking');
 
 
@@ -78,7 +79,7 @@ const buildConfirmationEmail = ({ email, firstName, adults, childResponse, date,
                         alt="Sark Boat Trips" width="42" height="42"
                         style="background-color: white; padding: 0.2rem; border-radius: 50px;">
                 <h3>Dear ${firstName},</h3>
-                <p>Your booking for ${adults} adults ${childResponse} on ${date} at ${timeslot} has been confirmed.</p>
+                <p>Your booking for ${adults} adults ${childResponse} on ${showDay(date)} at ${timeslot} has been confirmed.</p>
                 <p>Please be at the <strong>Creux Harbour</strong> shortly before ${timeslot}, bring weather appropriate
                 clothing and any snacks
                 and drinks you'd like.</p>
@@ -127,15 +128,15 @@ const addBooking = async (req, res) => {
             const mailOptionsAdmin = {
                 from: 'sarkboattrips@gmail.com',
                 to: 'sarkboattrips@gmail.com',
-                subject: `New Booking ${date}`,
+                subject: `New Booking ${showDay(date)}`,
                 html: safeHtml`<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
                             <div
                                 style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto 4rem auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
-                                <h3>New Booking ${date}</h3>
+                                <h3>New Booking ${showDay(date)}</h3>
                                 <p>A new booking has been made by:</p>
                                 <p><strong>${firstName} ${lastName}</strong></p>
                                 <p>for ${adults} adults ${childResponse}</p>
-                                <p>on ${date} at ${timeslot}.</p>
+                                <p>on ${showDay(date)} at ${timeslot}.</p>
                                 <hr>
                                 <p>Message:</p>
                                 <p>${message}</p>
@@ -159,7 +160,7 @@ const addBooking = async (req, res) => {
             await trySend(mailOptionsAdmin);
 
             const party = `${adults} adults${childResponse ? ` ${childResponse}` : ''}`;
-            const reserved = `Thanks ${firstName}, your booking for ${party} on ${date} at ${timeslot} has been reserved.`;
+            const reserved = `Thanks ${firstName}, your booking for ${party} on ${showDay(date)} at ${timeslot} has been reserved.`;
             res.send({
                 ok: true,
                 data: confirmationSent
@@ -167,7 +168,7 @@ const addBooking = async (req, res) => {
                     : `${reserved} However, we couldn't send your confirmation email, so please make a note of these details and contact us if you have any questions.`,
             });
         } else {
-            res.send({ ok: false, data: `No spaces available at ${timeslot} on ${date}!` });
+            res.send({ ok: false, data: `No spaces available at ${timeslot} on ${showDay(date)}!` });
         }
     } catch (error) {
         console.error(error);
@@ -189,7 +190,7 @@ const adminAddBooking = async (req, res) => {
     try {
         const availability = await getAvailability(date, timeslot);
         if (availability < adults + children) {
-            return res.send({ ok: false, data: `No spaces available at ${timeslot} on ${date}!` });
+            return res.send({ ok: false, data: `No spaces available at ${timeslot} on ${showDay(date)}!` });
         }
 
         // validateBeforeSave is off because the model requires the customer details
@@ -202,9 +203,9 @@ const adminAddBooking = async (req, res) => {
             const sent = await trySend(buildConfirmationEmail({
                 email, firstName: firstName || 'guest', adults, childResponse: children > 0 ? `and ${children} children` : '', date, timeslot,
             }));
-            return res.send({ ok: true, data: `Booking for ${who} on ${date} at ${timeslot} saved${sent ? ' and confirmation email sent' : ', but the confirmation email could not be sent'}` });
+            return res.send({ ok: true, data: `Booking for ${who} on ${showDay(date)} at ${timeslot} saved${sent ? ' and confirmation email sent' : ', but the confirmation email could not be sent'}` });
         }
-        res.send({ ok: true, data: `Booking for ${who} on ${date} at ${timeslot} saved (no email address, so no confirmation was sent)` });
+        res.send({ ok: true, data: `Booking for ${who} on ${showDay(date)} at ${timeslot} saved (no email address, so no confirmation was sent)` });
     } catch (error) {
         console.error(error);
         res.status(500).send({ ok: false, data: "An error occurred saving the booking." });
@@ -236,7 +237,7 @@ const cancelBooking = async (req, res) => {
                                 alt="Sark Boat Trips" width="42" height="42"
                                 style="background-color: white; padding: 0.2rem; border-radius: 50px;">
                             <h3>Dear ${cancelledBooking.firstName},</h3>
-                            <p>Your booking on ${cancelledBooking.date} at ${cancelledBooking.timeslot} has been <strong
+                            <p>Your booking on ${showDay(cancelledBooking.date)} at ${cancelledBooking.timeslot} has been <strong
                                     style="color: lightcoral;">CANCELLED</strong>.
                             </p>
                             <p>If this is a mistake please contact us</p>
@@ -260,13 +261,13 @@ const cancelBooking = async (req, res) => {
         const mailOptionsAdmin = {
             from: 'sarkboattrips@gmail.com',
             to: 'sarkboattrips@gmail.com',
-            subject: `Booking CANCELLED ${cancelledBooking.date}`,
+            subject: `Booking CANCELLED ${showDay(cancelledBooking.date)}`,
             html: safeHtml`<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
                     <div
                         style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto 4rem auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
                         <h3>Booking <strong style="color: lightcoral;">CANCELLED</strong></h3>
                         <p>Name : ${cancelledBooking.firstName} ${cancelledBooking.lastName} </p>
-                        <p>Date : ${cancelledBooking.date} at ${cancelledBooking.timeslot}</p>
+                        <p>Date : ${showDay(cancelledBooking.date)} at ${cancelledBooking.timeslot}</p>
                         <p>Email : ${cancelledBooking.email} </p>
                         <p>Phone : ${cancelledBooking.phone} </p>
                         <hr>
@@ -283,9 +284,9 @@ const cancelBooking = async (req, res) => {
             await sendEmail(mailOptionsAdmin);
         } catch (emailError) {
             // The booking is already cancelled, so report that and flag the email problem
-            return res.send({ ok: true, data: `Booking for ${who} on ${cancelledBooking.date} at ${cancelledBooking.timeslot} cancelled, but the email could not be sent` });
+            return res.send({ ok: true, data: `Booking for ${who} on ${showDay(cancelledBooking.date)} at ${cancelledBooking.timeslot} cancelled, but the email could not be sent` });
         }
-        res.send({ ok: true, data: `Booking for ${who} on ${cancelledBooking.date} at ${cancelledBooking.timeslot} cancelled${cancelledBooking.email ? ' and email sent' : ''}` });
+        res.send({ ok: true, data: `Booking for ${who} on ${showDay(cancelledBooking.date)} at ${cancelledBooking.timeslot} cancelled${cancelledBooking.email ? ' and email sent' : ''}` });
 
     } catch (error) {
         console.error("Error cancelling booking:", error);
@@ -306,12 +307,12 @@ const restoreBooking = async (req, res) => {
         const children = Number(booking.children) || 0;
 
         if (booking.charter === 'true' && !(await isSlotEmpty(booking.date, booking.timeslot))) {
-            return res.send({ ok: false, data: `Can't restore this charter: the ${booking.timeslot} trip on ${booking.date} already has other bookings (or is closed).` });
+            return res.send({ ok: false, data: `Can't restore this charter: the ${booking.timeslot} trip on ${showDay(booking.date)} already has other bookings (or is closed).` });
         }
 
         const availability = await getAvailability(booking.date, booking.timeslot);
         if (availability < adults + children) {
-            return res.send({ ok: false, data: `Can't restore: only ${availability} spaces left at ${booking.timeslot} on ${booking.date}.` });
+            return res.send({ ok: false, data: `Can't restore: only ${availability} spaces left at ${booking.timeslot} on ${showDay(booking.date)}.` });
         }
 
         booking.status = 'active';
@@ -321,16 +322,16 @@ const restoreBooking = async (req, res) => {
 
         const who = bookingName(booking);
         if (!booking.email) {
-            return res.send({ ok: true, data: `Booking for ${who} on ${booking.date} at ${booking.timeslot} restored (no email address, so no confirmation was sent)` });
+            return res.send({ ok: true, data: `Booking for ${who} on ${showDay(booking.date)} at ${booking.timeslot} restored (no email address, so no confirmation was sent)` });
         }
         try {
             await sendEmail(buildConfirmationEmail({
                 email: booking.email, firstName: booking.firstName || 'guest', adults, childResponse: children > 0 ? `and ${children} children` : '', date: booking.date, timeslot: booking.timeslot,
             }));
         } catch (emailError) {
-            return res.send({ ok: true, data: `Booking for ${who} on ${booking.date} at ${booking.timeslot} restored, but the confirmation email could not be sent` });
+            return res.send({ ok: true, data: `Booking for ${who} on ${showDay(booking.date)} at ${booking.timeslot} restored, but the confirmation email could not be sent` });
         }
-        res.send({ ok: true, data: `Booking for ${who} on ${booking.date} at ${booking.timeslot} restored and confirmation email sent` });
+        res.send({ ok: true, data: `Booking for ${who} on ${showDay(booking.date)} at ${booking.timeslot} restored and confirmation email sent` });
     } catch (error) {
         console.error("Error restoring booking:", error);
         res.status(500).send({ ok: false, data: "An error occurred. Please try again later." });
@@ -346,7 +347,7 @@ const permanentlyDeleteBooking = async (req, res) => {
         if (!deleted) {
             return res.status(404).send({ ok: false, data: "Only cancelled bookings can be permanently deleted." });
         }
-        res.send({ ok: true, data: `Booking for ${bookingName(deleted)} on ${deleted.date} at ${deleted.timeslot} permanently deleted` });
+        res.send({ ok: true, data: `Booking for ${bookingName(deleted)} on ${showDay(deleted.date)} at ${deleted.timeslot} permanently deleted` });
     } catch (error) {
         console.error("Error permanently deleting booking:", error);
         res.status(500).send({ ok: false, data: "An error occurred. Please try again later." });
@@ -355,6 +356,9 @@ const permanentlyDeleteBooking = async (req, res) => {
 
 const checkDate = async (req, res) => {
     let date = req.params.date
+    if (!isDay(date)) {
+        return res.status(400).send({ ok: false, data: "Invalid date." })
+    }
     try {
 
         let bookings = await Bookings.find({ date: date, ...statusFilter(req) })
@@ -371,7 +375,7 @@ const checkMonthAvail = async (req, res) => {
 
     // The calendar asks for one month (at most 31 days) at a time
     const valid = Array.isArray(dates) && dates.length > 0 && dates.length <= 31 &&
-        dates.every((date) => typeof date === 'string' && /^\d{2}-\d{2}-\d{4}$/.test(date));
+        dates.every(isDay);
     if (!valid) {
         return res.status(400).send({ ok: false, data: "Invalid dates." });
     }
@@ -386,7 +390,7 @@ const checkMonthAvail = async (req, res) => {
                     }
                     return availability
                 } catch (error) {
-                    console.error(`Error fetching availability for ${date}:`, error);
+                    console.error(`Error fetching availability for ${showDay(date)}:`, error);
                     return null;
                 }
             })
@@ -425,7 +429,7 @@ const updatedBookingClientEmail = (booking) => ({
                             <h3>Dear ${booking.firstName || 'guest'},</h3>
                             <p>Your booking has been <strong style="color: aquamarine;">UPDATED</strong>.</p>
                             <p>You are booked for ${Number(booking.adults) || 0} adults and ${Number(booking.children) || 0} children on
-                                ${booking.date} at ${booking.timeslot}</p>
+                                ${showDay(booking.date)} at ${booking.timeslot}</p>
                             <p>If this is a mistake please contact us</p>
                             <p>Thank you so much,</p>
                             <h3>Sark Boat Trips</h3>
@@ -453,7 +457,7 @@ const updatedBookingAdminEmail = (booking) => ({
                             style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto 4rem auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
                             <h3>Booking <strong style="color: aquamarine;">UPDATED</strong></h3>
                             <p>Name : ${[booking.firstName, booking.lastName].filter(Boolean).join(' ') || '(no name)'} </p>
-                            <p>Date : ${booking.date} at ${booking.timeslot}</p>
+                            <p>Date : ${showDay(booking.date)} at ${booking.timeslot}</p>
                             <p>Email : ${booking.email || '(none)'} </p>
                             <p>Phone : ${booking.phone || '(none)'} </p>
                             <hr>
@@ -507,7 +511,7 @@ const updateBooking = async (req, res) => {
     const needsRoom = booking.date !== before.date || booking.timeslot !== before.timeslot ||
         seatsIn(booking) > before.seats || (booking.charter === 'true' && before.charter !== 'true');
     if (needsRoom) {
-        const trip = `the ${booking.timeslot} trip on ${booking.date}`;
+        const trip = `the ${booking.timeslot} trip on ${showDay(booking.date)}`;
         if (booking.charter === 'true') {
             if (!(await isSlotEmpty(booking.date, booking.timeslot, booking._id))) {
                 return res.send({ ok: false, data: `Can't make that change: ${trip} already has other bookings (or is closed), and a charter needs the whole trip.` });
@@ -532,7 +536,7 @@ const updateBooking = async (req, res) => {
     if (booking.email && !notify) emailNote = ' (customer not emailed, as you asked)';
     else if (customerEmailed === true) emailNote = ' and email sent';
     else if (customerEmailed === false) emailNote = ', but the email to the customer could not be sent';
-    res.send({ ok: true, data: `Booking for ${bookingName(booking)} on ${booking.date} updated successfully${emailNote}` });
+    res.send({ ok: true, data: `Booking for ${bookingName(booking)} on ${showDay(booking.date)} updated successfully${emailNote}` });
 };
 
 module.exports = { addBooking, adminAddBooking, cancelBooking, restoreBooking, permanentlyDeleteBooking, checkDate, checkMonthAvail, search, updateBooking, updateAvailability }

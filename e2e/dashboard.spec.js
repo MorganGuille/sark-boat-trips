@@ -45,6 +45,26 @@ test('adding a booking: it shows up, uses seats, and the customer is emailed', a
     expect((await h.mails(request)).some((m) => m.to === 'walkup@example.test' && m.result === 'sent')).toBe(true);
 });
 
+test('dates: stored as YYYY-MM-DD, shown day-month-year, and the edit form uses a date picker', async ({ page, request }) => {
+    await h.logIn(page);
+    const day = (offset) => { const d = new Date(); d.setDate(d.getDate() + offset); return { iso: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`, british: `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}` }; };
+    const today = day(0);
+    const later = day(3);
+
+    await addBooking(page);
+    await notice(page, `on ${today.british} at 11am saved`);
+    expect((await h.savedBookings(request))[0].date).toBe(today.iso);
+
+    await page.click('role=tab[name="Bookings"]');
+    await page.locator('tr:has-text("Walkup") button:has-text("Edit")').click();
+    await expect(page.locator('#date')).toHaveAttribute('type', 'date');
+    await expect(page.locator('#date')).toHaveValue(today.iso);
+    await page.fill('#date', later.iso);
+    await page.click('button:has-text("Save changes")');
+    await notice(page, `on ${later.british} updated successfully`);
+    expect((await h.savedBookings(request))[0].date).toBe(later.iso);
+});
+
 test('a booking can be saved with details missing', async ({ page }) => {
     await h.logIn(page);
     await page.click('role=tab[name="New booking"]');

@@ -2,18 +2,12 @@ import { useState } from 'react'
 import MyCalendar from './myCalendar'
 import BookingForm from './bookingForm'
 import useSeasonDates from '../hooks/useSeasonDates'
+import { toDay } from '../utils/dates.js'
 import '../css/bookings.css'
 
 function Bookings() {
 
-    const formatDate = (date) => {
-        const year = date.getFullYear();
-        const month = (`0${date.getMonth() + 1}`).slice(-2);
-        const day = (`0${date.getDate()}`).slice(-2);
-        return `${day}-${month}-${year}`;
-    };
-
-    const [selectedDate, setSelectedDate] = useState(formatDate(new Date()))
+    const [selectedDate, setSelectedDate] = useState(toDay(new Date()))
     const season = useSeasonDates()
 
     if (season.status === 'loading') {

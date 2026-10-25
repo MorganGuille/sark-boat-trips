@@ -29,7 +29,11 @@ describe('a customer makes a booking', () => {
 
         assert.equal(mocks.sent().length, 2);
         assert.ok(mocks.sent(body.email).some((m) => m.subject === 'Booking Confirmation Sark Boat Trips'));
-        assert.ok(mocks.sent(t.OWNER).some((m) => m.subject === `New Booking ${body.date}`));
+        assert.ok(mocks.sent(t.OWNER).some((m) => m.subject === `New Booking ${t.shown(body.date)}`));
+        // the customer reads the date day-month-year, never as it is stored
+        const confirmation = mocks.sent(body.email).find((m) => m.subject === 'Booking Confirmation Sark Boat Trips');
+        assert.ok(confirmation.html.includes(`on ${t.shown(body.date)} at 11am`));
+        assert.ok(!confirmation.html.includes(body.date), 'the stored YYYY-MM-DD form is not shown to the customer');
     });
 
     it('a family with children reads correctly', async () => {
@@ -69,7 +73,8 @@ describe('a booking that is refused is never saved and never emailed', () => {
         ['an unknown trip time', { timeslot: '3pm' }, /valid trip time/],
         ['a trip time that is a built-in word', { timeslot: 'toString' }, /valid trip time/],
         ['a long built-in word as the trip time', { timeslot: 'constructor' }, /./],
-        ['an impossible date', { date: '31-02-2033' }, /valid date/],
+        ['an impossible date', { date: '2033-02-31' }, /valid date/],
+        ['a date written the old way round (dd-mm-yyyy)', { date: '15-06-2033' }, /valid date/],
         ['a date sent as a list', { date: [t.day(10)] }, /./],
         ['yesterday', { date: t.day(-1) }, /already passed/],
         ['a date before the season starts', { date: t.day(-40) }, /already passed|only taken between/],
@@ -151,7 +156,7 @@ describe('seats', () => {
         assert.deepEqual(await t.seatsLeft(app, t.day(11)), { '11am': 12, '2pm': 12 }, 'other days are untouched');
     });
     it('capacity settings must make sense', async () => {
-        for (const body of [{ date: '31-02-2033', timeslot: '11am', capacity: '5' }, { date: t.day(10), timeslot: 'x', capacity: '5' }, ...['-1', 'abc', '', '1000', '2.5'].map((capacity) => ({ date: t.day(10), timeslot: '11am', capacity }))]) {
+        for (const body of [{ date: '2033-02-31', timeslot: '11am', capacity: '5' }, { date: t.day(10), timeslot: 'x', capacity: '5' }, ...['-1', 'abc', '', '1000', '2.5'].map((capacity) => ({ date: t.day(10), timeslot: '11am', capacity }))]) {
             assert.equal((await t.call(app, 'post', '/bookings/updateavailability', { token, body })).status, 400, JSON.stringify(body));
         }
     });
@@ -159,6 +164,6 @@ describe('seats', () => {
         const month = [...Array(31)].map((_, i) => t.day(i));
         const ask = (dates) => t.call(app, 'post', '/bookings/monthAvailability', { body: { dates } });
         assert.equal((await ask(month)).status, 200);
-        for (const bad of [[...month, t.day(40)], [], 'x', { $ne: null }, ['not-a-date'], [5]]) assert.equal((await ask(bad)).status, 400, JSON.stringify(bad));
+        for (const bad of [[...month, t.day(40)], [], 'x', { $ne: null }, ['not-a-date'], [5], ['15-06-2033'], [`${t.day(1)}T10:00`]]) assert.equal((await ask(bad)).status, 400, JSON.stringify(bad));
     });
 });

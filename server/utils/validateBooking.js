@@ -1,4 +1,5 @@
 const Admin = require('../models/admin');
+const { dayNumber } = require('./dates');
 
 // Trip start times on a 24 hour clock. The timeslot names are what bookings store.
 const TIMESLOTS = { '11am': 11, '2pm': 14 };
@@ -18,17 +19,6 @@ const blank = (value) => value == null || String(value).trim() === '';
 // Only real strings and numbers count: String(['15-06-2033']) looks like a valid date, but a list isn't one
 const isWhole = (value) => (typeof value === 'string' || typeof value === 'number') && /^\d+$/.test(String(value).trim());
 const isTimeslot = (value) => typeof value === 'string' && Object.hasOwn(TIMESLOTS, value);
-
-// 'dd-mm-yyyy' becomes the number yyyymmdd (easy to compare), or null if it isn't a real date
-const dayNumber = (value) => {
-    if (typeof value !== 'string') return null;
-    const match = /^(\d{2})-(\d{2})-(\d{4})$/.exec(value);
-    if (!match) return null;
-    const [day, month, year] = [Number(match[1]), Number(match[2]), Number(match[3])];
-    const real = new Date(Date.UTC(year, month - 1, day));
-    if (real.getUTCFullYear() !== year || real.getUTCMonth() !== month - 1 || real.getUTCDate() !== day) return null;
-    return year * 10000 + month * 100 + day;
-};
 
 const prettyDay = (number) =>
     new Date(Date.UTC(Math.floor(number / 10000), (Math.floor(number / 100) % 100) - 1, number % 100))
@@ -116,7 +106,7 @@ const validatePublicBooking = async (body, now = new Date()) => {
 // whatever is given must make sense. With requireTrip the date and timeslot must be present
 // (adding a booking); without it only the fields that are given are checked (editing one).
 const validateAdminBooking = (body, { requireTrip = false } = {}) => {
-    if ((requireTrip || !blank(body.date)) && dayNumber(body.date) === null) return 'Please enter a valid date (dd-mm-yyyy).';
+    if ((requireTrip || !blank(body.date)) && dayNumber(body.date) === null) return 'Please enter a valid date.';
     if ((requireTrip || !blank(body.timeslot)) && !isTimeslot(body.timeslot)) return 'Please choose a valid trip time.';
     if (!blank(body.charter) && !['true', 'false'].includes(body.charter)) return 'Invalid booking type.';
     return textProblem(body) || partyProblem(body, { adultsRequired: false });

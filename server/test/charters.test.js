@@ -95,7 +95,7 @@ describe('Stripe says a charter was paid (the webhook)', () => {
         const [b] = await bookingsFor('cs_test_paid');
         assert.deepEqual([b.charter, b.status, b.adults, b.firstName, b.lastName], ['true', 'active', 2, 'Carol', 'Charter']);
         assert.ok(mocks.sent(session.metadata.email).some((m) => m.subject === 'PRIVATE CHARTER Confirmation Sark Boat Trips'));
-        assert.ok(mocks.sent(t.OWNER).some((m) => m.subject === `New CHARTER on : ${session.metadata.date}`));
+        assert.ok(mocks.sent(t.OWNER).some((m) => m.subject === `New CHARTER on : ${t.shown(session.metadata.date)}`));
         assert.equal(mocks.sent().length, 2);
     });
     it('it blocks the trip simply by existing, without writing a capacity setting', async () => {

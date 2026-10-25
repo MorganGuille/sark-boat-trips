@@ -4,6 +4,7 @@ import '../css/bookingForm.css'
 import axios from 'axios'
 import { URL } from '../../config.js'
 import { authAxios } from '../services.jsx/auth.jsx'
+import { showDay } from '../utils/dates.js'
 
 
 // booking / onResult / onDone are only passed by the dashboard: booking switches the form
@@ -172,7 +173,7 @@ function BookingForm({ selectedDate, booking, onResult, onDone }) {
                             </div>
                             <div>
                                 <label htmlFor="date">New Date</label>
-                                <input type="text" id="date" name="date" placeholder="dd-mm-yyyy" defaultValue={booking?.date} />
+                                <input type="date" id="date" name="date" defaultValue={booking?.date} />
                             </div>
                             <div>
                                 <label htmlFor="charter">Status</label>
@@ -190,7 +191,7 @@ function BookingForm({ selectedDate, booking, onResult, onDone }) {
                             <p style={{ backgroundColor: 'lightgreen', padding: '5px' }}>
                                 {updating
                                     ? `Editing the booking for ${booking.firstName} ${booking.lastName}`
-                                    : `You are booking ${checkPageCharters() ? 'a private charter' : 'a tour'} for ${selectedDate}`}
+                                    : `You are booking ${checkPageCharters() ? 'a private charter' : 'a tour'} for ${showDay(selectedDate)}`}
                             </p>
                         </div>
 

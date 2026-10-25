@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import axios from 'axios'
 import { URL } from '../../config.js'
+import { showDay } from '../utils/dates.js'
 
 function Success() {
     const [response, setResponseData] = useState(null)
@@ -46,7 +47,7 @@ function Success() {
                                 <strong>{response.name}</strong>, thank you so much for booking your charter tour with us!
                             </p>
                             <p>
-                                Your deposit has been confirmed and your charter is reserved for <strong>{response.date}</strong>.
+                                Your deposit has been confirmed and your charter is reserved for <strong>{showDay(response.date)}</strong>.
                             </p>
 
                             <section aria-label="Next steps" style={{ marginTop: '20px' }}>

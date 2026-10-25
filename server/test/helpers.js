@@ -112,12 +112,10 @@ const resetDb = async () => {
 };
 
 // Dates. The booking site only accepts dates that are in the future and inside the season, so the
-// tests work relative to today: day(10) is ten days from now, as a dd-mm-yyyy booking date.
-const pad = (n) => String(n).padStart(2, '0');
-const day = (offset) => {
-    const d = new Date(Date.now() + offset * 86400000);
-    return `${pad(d.getUTCDate())}-${pad(d.getUTCMonth() + 1)}-${d.getUTCFullYear()}`;
-};
+// tests work relative to today: day(10) is ten days from now, as a YYYY-MM-DD booking date.
+const day = (offset) => new Date(Date.now() + offset * 86400000).toISOString().slice(0, 10);
+// the same date the way emails and messages write it for people (dd-mm-yyyy)
+const shown = (isoDay) => require('../utils/dates').showDay(isoDay);
 const seedSeason = async () => {
     const midnight = (offset) => { const d = new Date(Date.now() + offset * 86400000); return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())); };
     await require('../models/admin').deleteMany({});
@@ -171,4 +169,4 @@ const paidSession = (id, overrides = {}) => ({
     metadata: { timeslot: '11am', firstName: 'Carol', lastName: 'Charter', email: `carol${++seq}@example.test`, phone: '1', adults: '2', children: '0', date: day(12), accommodation: '', message: '', charter: 'true', ...overrides },
 });
 
-module.exports = { dbUri, OWNER, PASSWORD, USERNAME, WEBHOOK_SECRET, setEnv, installMocks, startDb, stopDb, resetDb, seedSeason, day, call, login, booking, insertBooking, findBooking, seatsLeft, webhook, paidSession };
+module.exports = { dbUri, OWNER, PASSWORD, USERNAME, WEBHOOK_SECRET, setEnv, installMocks, startDb, stopDb, resetDb, seedSeason, day, shown, call, login, booking, insertBooking, findBooking, seatsLeft, webhook, paidSession };

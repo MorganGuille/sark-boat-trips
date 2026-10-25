@@ -1,3 +1,5 @@
+import { showDay } from '../../utils/dates.js'
+
 function BookingsTable({ bookings, showDate, onEdit, onCancel, onRestore, onDeletePermanently }) {
 
     const guests = (booking) => {
@@ -27,7 +29,7 @@ function BookingsTable({ bookings, showDate, onEdit, onCancel, onRestore, onDele
                         const isCancelled = booking.status === 'cancelled'
                         return (
                         <tr key={booking._id} className={isCancelled ? 'cancelledRow' : undefined}>
-                            {showDate ? <td>{booking.date}</td> : null}
+                            {showDate ? <td>{showDay(booking.date)}</td> : null}
                             <td>{booking.timeslot}</td>
                             <td>
                                 {[booking.firstName, booking.lastName].filter(Boolean).join(' ') || '(no name)'}

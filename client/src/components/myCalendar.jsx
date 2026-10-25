@@ -5,7 +5,7 @@ import axios from 'axios';
 
 import '../css/myCalendar.css';
 import { URL } from '../../config.js'
-import { parseIsoDay } from '../utils/dates.js'
+import { parseDay, toDay } from '../utils/dates.js'
 
 function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate, refreshKey }) {
     const [date, setDate] = useState(new Date());
@@ -13,23 +13,16 @@ function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate, refreshKe
 
     let currentLoc = useLocation()
 
-    const formatDate = (date) => {
-        const year = date.getFullYear();
-        const month = (`0${date.getMonth() + 1}`).slice(-2);
-        const day = (`0${date.getDate()}`).slice(-2);
-        return `${day}-${month}-${year}`;
-    };
-
     const dbseasonStartDate = useMemo(() => {
         if (currentLoc.pathname === '/dashboard') return null;
         if (!seasonStartDate) return null;
-        return parseIsoDay(seasonStartDate);
+        return parseDay(seasonStartDate);
     }, [currentLoc.pathname, seasonStartDate]);
 
     const dbseasonEndDate = useMemo(() => {
         if (currentLoc.pathname === '/dashboard') return null;
         if (!seasonEndDate) return null;
-        return parseIsoDay(seasonEndDate);
+        return parseDay(seasonEndDate);
     }, [currentLoc.pathname, seasonEndDate]);
 
     const fetchMonthAvailability = async (date) => {
@@ -41,7 +34,7 @@ function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate, refreshKe
         const dates = [];
         for (let day = firstDayOfMonth.getDate(); day <= lastDayOfMonth.getDate(); day++) {
             const currentDate = new Date(year, month, day);
-            dates.push(formatDate(currentDate))
+            dates.push(toDay(currentDate))
         }
         try {
             const res = await axios.post(`${URL}/bookings/monthAvailability`, { dates });
@@ -75,12 +68,12 @@ function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate, refreshKe
 
     const handleDateChange = (date) => {
         setDate(date);
-        setSelectedDate(formatDate(date))
+        setSelectedDate(toDay(date))
     };
 
     const setTileClassName = ({ date, view }) => {
         if (view === 'month') {
-            const formattedDate = formatDate(date);
+            const formattedDate = toDay(date);
             const tileAvailability = availability[formattedDate];
             if (!tileAvailability) return null;
 
@@ -96,7 +89,7 @@ function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate, refreshKe
 
     const setTileContent = ({ date, view }) => {
         if (view === 'month') {
-            const formattedDate = formatDate(date);
+            const formattedDate = toDay(date);
             const tileAvailability = availability[formattedDate];
             if (tileAvailability) {
                 return (
@@ -109,8 +102,8 @@ function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate, refreshKe
         return null;
     };
 
-    const color11am = () => availability[formatDate(date)]?.['11am'] > 6 ? 'green' : 'darkred';
-    const color2pm = () => availability[formatDate(date)]?.['2pm'] > 6 ? 'green' : 'darkred';
+    const color11am = () => availability[toDay(date)]?.['11am'] > 6 ? 'green' : 'darkred';
+    const color2pm = () => availability[toDay(date)]?.['2pm'] > 6 ? 'green' : 'darkred';
 
     return (
         <section className="calendar-container" aria-label="Trip Availability Calendar">
@@ -142,17 +135,17 @@ function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate, refreshKe
                 <div>
                     <span>11:00 AM: </span>
                     <span style={{ color: color11am() }}>
-                        {!availability[formatDate(date)] && availability[formatDate(date)] !== 0
+                        {!availability[toDay(date)] && availability[toDay(date)] !== 0
                             ? <span className='loader' aria-label="Loading spaces"></span>
-                            : `${availability[formatDate(date)]?.['11am']} spaces available`}
+                            : `${availability[toDay(date)]?.['11am']} spaces available`}
                     </span>
                 </div>
                 <div>
                     <span>2:00 PM: </span>
                     <span style={{ color: color2pm() }}>
-                        {!availability[formatDate(date)] && availability[formatDate(date)] !== 0
+                        {!availability[toDay(date)] && availability[toDay(date)] !== 0
                             ? <span className='loader' aria-label="Loading spaces"></span>
-                            : `${availability[formatDate(date)]?.['2pm']} spaces available`}
+                            : `${availability[toDay(date)]?.['2pm']} spaces available`}
                     </span>
                 </div>
             </div>

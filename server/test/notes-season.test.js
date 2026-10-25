@@ -35,6 +35,14 @@ describe('notes', () => {
         assert.equal((await t.call(app, 'delete', '/notes/64b000000000000000000000', { token })).status, 404);
         assert.equal((await t.call(app, 'delete', '/notes/not-an-id', { token })).status, 400);
     });
+    it('a note or a day view with a date that is not a real YYYY-MM-DD day is refused', async () => {
+        for (const date of ['15-06-2033', '2033-02-31', 'today', '2033-6-5']) {
+            assert.equal((await note(date, 'x')).status, 400, date);
+            assert.equal((await t.call(app, 'get', `/notes/${date}`, { token })).status, 400, date);
+        }
+        assert.equal((await t.call(app, 'get', '/bookings/15-06-2033', { token })).status, 400);
+        assert.equal(await db.collection('notes').countDocuments(), 0);
+    });
     it('an empty or whitespace-only note, or one with no date, is refused', async () => {
         for (const body of [{ date: t.day(10), content: '' }, { date: t.day(10), content: '   ' }, { content: 'no date' }, { date: t.day(10) }]) {
             assert.equal((await t.call(app, 'post', '/notes', { token, body })).status, 400, JSON.stringify(body));

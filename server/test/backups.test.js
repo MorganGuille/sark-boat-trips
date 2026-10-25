@@ -30,10 +30,10 @@ describe('backup and restore', () => {
     before(async () => {
         await t.resetDb();
         await db.collection('bookings').insertMany([
-            { firstName: 'Ann', lastName: 'One', date: '01-07-2030', timeslot: '11am', adults: 2, children: 1, cancelledAt: new Date('2030-06-01T10:00:00Z') },
-            { firstName: 'Bo', lastName: 'Two', date: '02-07-2030', timeslot: '2pm', adults: 4, children: 0 },
+            { firstName: 'Ann', lastName: 'One', date: '2030-07-01', timeslot: '11am', adults: 2, children: 1, cancelledAt: new Date('2030-06-01T10:00:00Z') },
+            { firstName: 'Bo', lastName: 'Two', date: '2030-07-02', timeslot: '2pm', adults: 4, children: 0 },
         ]);
-        await db.collection('notes').insertOne({ date: '01-07-2030', text: 'Fuel' });
+        await db.collection('notes').insertOne({ date: '2030-07-01', text: 'Fuel' });
     });
 
     it('writes one file per collection and says what it saved', () => {

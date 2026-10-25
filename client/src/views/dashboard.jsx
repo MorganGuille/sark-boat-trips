@@ -10,7 +10,7 @@ import NotesPanel from '../components/dashboard/notesPanel'
 import useSeasonDates from '../hooks/useSeasonDates'
 import { URL } from '../../config.js'
 import { authAxios, setToken, clearToken, hasValidToken, LOGOUT_EVENT } from '../services.jsx/auth.jsx'
-import { formatDate, parseDate, prettyDate } from '../utils/dates.js'
+import { toDay, showDay, prettyDate } from '../utils/dates.js'
 
 import '../css/dashboard.css'
 
@@ -25,10 +25,10 @@ const TIMESLOTS = ['11am', '2pm']
 
 const sortBookings = (bookings) =>
     [...bookings].sort((a, b) =>
-        parseDate(a.date) - parseDate(b.date) ||
+        (a.date || '').localeCompare(b.date || '') || // YYYY-MM-DD text is already in date order
         TIMESLOTS.indexOf(a.timeslot) - TIMESLOTS.indexOf(b.timeslot) ||
         (a.status === 'cancelled') - (b.status === 'cancelled') ||
-        a.lastName.localeCompare(b.lastName))
+        (a.lastName || '').localeCompare(b.lastName || ''))
 
 // The search endpoint treats the term as a regex, so match what was typed literally
 const escapeRegex = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -37,7 +37,7 @@ function Dashboard() {
 
     const [loggedin, setLoggedIn] = useState(hasValidToken)
     const [loginError, setLoginError] = useState('')
-    const [selectedDate, setSelectedDate] = useState(() => formatDate(new Date()))
+    const [selectedDate, setSelectedDate] = useState(() => toDay(new Date()))
     const [tab, setTab] = useState('bookings')
     const [view, setView] = useState({ type: 'date' })
     const [searchTerm, setSearchTerm] = useState('')
@@ -155,7 +155,7 @@ function Dashboard() {
 
     const describe = (booking) => {
         const who = [booking.firstName, booking.lastName].filter(Boolean).join(' ') || 'this booking'
-        return `${who} on ${booking.date} at ${booking.timeslot}`
+        return `${who} on ${showDay(booking.date)} at ${booking.timeslot}`
     }
 
     const cancelBooking = (booking) => {

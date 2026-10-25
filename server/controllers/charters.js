@@ -3,6 +3,7 @@ const nodemailer = require('nodemailer');
 const { isSlotEmpty } = require('../utils/availability');
 const { safeHtml } = require('../utils/safeHtml');
 const { validatePublicBooking } = require('../utils/validateBooking');
+const { showDay } = require('../utils/dates');
 const { settings } = require('../utils/settings');
 
 // With no usable key the placeholder is only there so webhooks can still be verified (that needs
@@ -56,7 +57,7 @@ const createCheckOutSession = async (req, res) => {
 
         // A charter needs the whole trip to itself
         if (!(await isSlotEmpty(newBooking.date, newBooking.timeslot))) {
-            return res.send({ ok: false, data: `No spaces available at ${newBooking.timeslot} on ${newBooking.date}!` });
+            return res.send({ ok: false, data: `No spaces available at ${newBooking.timeslot} on ${showDay(newBooking.date)}!` });
         }
 
         const session = await stripe.checkout.sessions.create({
@@ -102,7 +103,7 @@ const charterConfirmationEmail = (charterData) => ({
                                     alt="Sark Boat Trips" width="42" height="42"
                                     style="background-color: white; padding: 0.2rem; border-radius: 50px;">
                                 <h3>Dear ${charterData.firstName},</h3>
-                                <p>Your <strong style="color: aquamarine;">private charter</strong> on ${charterData.date} at
+                                <p>Your <strong style="color: aquamarine;">private charter</strong> on ${showDay(charterData.date)} at
                                     ${charterData.timeslot} has been confirmed and we've received your deposit</p>
                                 <p>We love to run unique charters, so if you haven't already, please get in touch so we can plan your trip!</p>
                                 <p><a style="color: white; text-decoration: none;" href="mailto:sarkboattrips@gmail.com">&#9993
@@ -132,13 +133,13 @@ const charterConfirmationEmail = (charterData) => ({
 const charterAdminEmail = (charterData) => ({
                 from: 'sarkboattrips@gmail.com',
                 to: 'sarkboattrips@gmail.com',
-                subject: `New CHARTER on : ${charterData.date}`,
+                subject: `New CHARTER on : ${showDay(charterData.date)}`,
                 html: safeHtml`<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
                             <div
                                 style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto 4rem auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
-                                <h3>New PRIVATE CHARTER ${charterData.date}</h3>
+                                <h3>New PRIVATE CHARTER ${showDay(charterData.date)}</h3>
                                 <p>Name: ${charterData.firstName} ${charterData.lastName}</p>
-                                <p>Date: ${charterData.timeslot} ${charterData.date}.</p>
+                                <p>Date: ${charterData.timeslot} ${showDay(charterData.date)}.</p>
                                 <hr>
                                 <p>Message:</p>
                                 <p>${charterData.message}</p>
@@ -158,8 +159,8 @@ const charterAdminEmail = (charterData) => ({
 const charterConflictEmail = (charterData, sessionId) => ({
     from: 'sarkboattrips@gmail.com',
     to: 'sarkboattrips@gmail.com',
-    subject: `ACTION NEEDED: paid charter on ${charterData.date} clashes with existing bookings`,
-    text: `A customer paid for a private charter, but the ${charterData.timeslot} trip on ${charterData.date} already had bookings when the payment arrived.
+    subject: `ACTION NEEDED: paid charter on ${showDay(charterData.date)} clashes with existing bookings`,
+    text: `A customer paid for a private charter, but the ${charterData.timeslot} trip on ${showDay(charterData.date)} already had bookings when the payment arrived.
 
 The charter has been saved as a booking and the customer has been sent their confirmation, so you need to either move or cancel the other bookings, or refund this payment in Stripe.
 
