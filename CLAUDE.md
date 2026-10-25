@@ -7,6 +7,7 @@ The backlog is in `spec.md`. Update it when an item is done or a new problem tur
 ## Run, lint, build
 
 - Dependencies: server deps are in the **root** `package.json` (no `server/package.json`); client deps in `client/package.json`.
+- **Local site:** two terminals, both from the project root: `npm run dev:server` (the API on 4040, restarts itself when a server file changes, uses Node's built-in `--watch` so `nodemon` isn't needed) and `npm run dev:client` (the website on 5173). Open `http://127.0.0.1:5173`.
 - **Server:** `cd server && node index.js` (default port 4040). dotenv reads `.env` from the *current directory*, so it must be started from `server/`. Heroku runs `node server/index.js` with config vars instead. No auto-reload: restart after server changes.
 - **Client:** `cd client && npm run dev` (Vite, port 5173).
 - **API URL:** nothing is hand-edited. `client/config.js` reads `VITE_API_URL`: `npm run dev` gets the local server from the committed `client/.env.development`, and a production build leaves it empty, so the browser calls the same site that served the page (the Express server serves both). Restart `npm run dev` after changing that file.
