@@ -8,6 +8,12 @@ const reset = (request) => request.post('/__test/reset');
 const mails = async (request) => (await request.get('/__test/mails')).json();
 const savedBookings = async (request) => (await request.get('/__test/bookings')).json();
 
+// The server's rate limits are per visitor (it reads the X-Forwarded-For header, as it does behind
+// Heroku). Tests that load the calendar many times pose as a fresh visitor, so they don't use up the
+// allowance that every other test shares.
+let visitors = 0;
+const asNewVisitor = (page) => page.context().setExtraHTTPHeaders({ 'X-Forwarded-For': `10.9.${Math.floor(++visitors / 250)}.${(visitors % 250) + 1}` });
+
 // Watches a page for the things that mean something is broken: the browser blocking something the
 // security policy forbids, or the page throwing an error
 // React's "hydration failed" message (the page was built for the home page but shown on another one)
@@ -55,4 +61,4 @@ const logIn = async (page) => {
     await expect(page.locator('.dashHeader')).toBeVisible();
 };
 
-module.exports = { USERNAME, PASSWORD, reset, mails, savedBookings, watch, pickDate, fillBooking, logIn };
+module.exports = { asNewVisitor, USERNAME, PASSWORD, reset, mails, savedBookings, watch, pickDate, fillBooking, logIn };

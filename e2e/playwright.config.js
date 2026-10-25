@@ -13,7 +13,15 @@ module.exports = defineConfig({
     reporter: process.env.CI ? [['list'], ['html', { open: 'never', outputFolder: path.join(__dirname, '..', 'playwright-report') }]] : 'list',
     outputDir: path.join(__dirname, '..', 'test-results'),
     use: { baseURL: `http://127.0.0.1:${PORT}`, trace: 'retain-on-failure' },
-    projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+    projects: [
+        { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+        // The calendar's season blocking has broken on Apple devices before (Safari reads dates
+        // differently). These run only that one spec: WebKit is the engine inside every iPhone, iPad
+        // and Mac Safari, and the Pixel is Android's Chrome.
+        { name: 'android-phone', testMatch: 'calendar-devices.spec.js', use: { ...devices['Pixel 7'] } },
+        { name: 'iphone', testMatch: 'calendar-devices.spec.js', use: { ...devices['iPhone 14'] } },
+        { name: 'mac-safari', testMatch: 'calendar-devices.spec.js', use: { ...devices['Desktop Safari'] } },
+    ],
     webServer: {
         command: 'node e2e/server.js',
         cwd: path.join(__dirname, '..'),

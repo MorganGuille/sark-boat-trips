@@ -246,7 +246,7 @@ Written after reading the whole codebase and testing the booking and dashboard f
 ### P1-10 `[Server]` Dates are stored as `dd-mm-yyyy` strings
 - **Problem:** Strings in this format can't be sorted or range-queried correctly, so month views, reports, reminders and "upcoming bookings" are awkward or wrong. Every comparison is a string comparison. The same format is parsed in many places.
 - **Fix:** Store `YYYY-MM-DD` (or a real Date at UTC midnight) for bookings, availability and notes. Write a one-off migration script with a dry-run mode and a backup, and keep dd-mm-yyyy for display only (one shared helper). Do this before the owner features in P2.
-- **Done when:** the app works end to end on migrated sandbox data and a rollback plan exists.
+- **Done when:** the app works end to end on migrated sandbox data and a rollback plan exists, and `e2e/calendar-devices.spec.js` (out-of-season days blocked on Chrome, Android and WebKit, in several time zones) still passes. Don't parse date text in the browser: Safari reads some formats differently, and the time zone shifts UTC dates for visitors abroad.
 
 ---
 

@@ -171,4 +171,4 @@ const paidSession = (id, overrides = {}) => ({
     metadata: { timeslot: '11am', firstName: 'Carol', lastName: 'Charter', email: `carol${++seq}@example.test`, phone: '1', adults: '2', children: '0', date: day(12), accommodation: '', message: '', charter: 'true', ...overrides },
 });
 
-module.exports = { dbUri, OWNER, PASSWORD, USERNAME, WEBHOOK_SECRET, setEnv, installMocks, startDb, stopDb, resetDb, day, call, login, booking, insertBooking, findBooking, seatsLeft, webhook, paidSession };
+module.exports = { dbUri, OWNER, PASSWORD, USERNAME, WEBHOOK_SECRET, setEnv, installMocks, startDb, stopDb, resetDb, seedSeason, day, call, login, booking, insertBooking, findBooking, seatsLeft, webhook, paidSession };

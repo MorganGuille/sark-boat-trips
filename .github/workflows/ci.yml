@@ -46,7 +46,7 @@ jobs:
         run: cd client && npm run build
 
       - name: Install the browser used by the end-to-end tests
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium webkit
 
       - name: End-to-end tests (a real browser against the real site)
         run: npm run test:e2e

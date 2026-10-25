@@ -5,6 +5,7 @@ import axios from 'axios';
 
 import '../css/myCalendar.css';
 import { URL } from '../../config.js'
+import { parseIsoDay } from '../utils/dates.js'
 
 function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate, refreshKey }) {
     const [date, setDate] = useState(new Date());
@@ -22,13 +23,13 @@ function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate, refreshKe
     const dbseasonStartDate = useMemo(() => {
         if (currentLoc.pathname === '/dashboard') return null;
         if (!seasonStartDate) return null;
-        return new Date(seasonStartDate);
+        return parseIsoDay(seasonStartDate);
     }, [currentLoc.pathname, seasonStartDate]);
 
     const dbseasonEndDate = useMemo(() => {
         if (currentLoc.pathname === '/dashboard') return null;
         if (!seasonEndDate) return null;
-        return new Date(seasonEndDate);
+        return parseIsoDay(seasonEndDate);
     }, [currentLoc.pathname, seasonEndDate]);
 
     const fetchMonthAvailability = async (date) => {

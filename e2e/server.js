@@ -16,7 +16,15 @@ process.env.CLIENT_DIST = process.env.CLIENT_DIST || require('./build-client')()
     const wrapper = express();
     const test = express.Router();
     test.use(express.json());
-    test.post('/reset', async (req, res) => { await t.resetDb(); mocks.reset(); for (const k of Object.keys(mocks.stripe.sessions)) delete mocks.stripe.sessions[k]; res.json({ ok: true }); });
+    test.post('/reset', async (req, res) => { await t.resetDb(); await t.seedSeason(); // the normal season, in case a test changed it
+        mocks.reset(); for (const k of Object.keys(mocks.stripe.sessions)) delete mocks.stripe.sessions[k]; res.json({ ok: true }); });
+    // sets the season to exact days ('YYYY-MM-DD'), stored as UTC midnight like the real dashboard does
+    test.post('/season', async (req, res) => {
+        const at = (day) => new Date(`${day}T00:00:00.000Z`);
+        await db.collection('admins').deleteMany({});
+        await db.collection('admins').insertOne({ seasonStartDate: at(req.body.start), seasonEndDate: at(req.body.end) });
+        res.json({ ok: true });
+    });
     test.get('/mails', (req, res) => res.json(mocks.mails));
     test.get('/bookings', async (req, res) => res.json(await db.collection('bookings').find({}).toArray()));
     test.post('/stripe-fail', (req, res) => { mocks.stripe.fail = Boolean(req.body.fail); res.json({ ok: true }); });
