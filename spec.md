@@ -12,6 +12,10 @@ Written after reading the whole codebase and testing the booking and dashboard f
 
 **Areas**: `[Server]`, `[Client]`, `[Owner]` (the dashboard), `[Customer]` (the public site), `[Build]`.
 
+## Progress (26 Oct 2026)
+
+**Done in the sandbox, not yet deployed:** P0-1 to P0-5, P1-1 to P1-10 (error reporting in P1-9 was skipped by the owner), P2-1 (prices and the monthly CSV report) and P3-2 (lint). **Next:** P2-4 (card saved at booking, charged at the trip time: see `paymentsspec.md`), then the email foundation (P2-11, P2-10). Go-live steps are in `CLAUDE.md`. Anything marked DONE only counts once it is deployed.
+
 ## Summary
 
 | ID | Area | Item | Effort |
@@ -29,12 +33,12 @@ Written after reading the whole codebase and testing the booking and dashboard f
 | P1-6 | Build | Switching local/production is a hand-edited URL, and the Stripe return URL is hard-coded to production | S |
 | P1-7 | Server | Open CORS and almost no security headers | S–M |
 | P1-8 | Build | No tests and no CI | M |
-| P1-9 | Server | No error reporting, backup check, or separation of sandbox and production | S |
+| P1-9 | Server | No error reporting, backup check, or separation of sandbox and production (**DONE**, except error reporting) | S |
 | P1-10 | Server | Dates stored as `dd-mm-yyyy` strings (**DONE**) | M–L |
-| P2-1 | Owner | Printable day sheet and CSV export | S–M |
+| P2-1 | Owner | Monthly passenger and income CSV, and price settings (**DONE**; the day sheet was dropped) | S–M |
 | P2-2 | Owner | Trip tools: change a trip's time for one day, close a trip, notify everyone on it. **Do P2-11 and P2-10 first** | M–L |
 | P2-3 | Owner | Month overview and better search | M |
-| P2-4 | Owner | Per-booking notes and payment status | M |
+| P2-4 | Owner | Card saved at booking, charged at the trip time; payment status (see `paymentsspec.md`) | L |
 | P2-5 | Owner | Deliberate overbooking override | S |
 | P2-6 | Customer | Manage-my-booking link (self-service change and cancel) | M |
 | P2-7 | Customer | Reminder email the day before | S–M |
@@ -258,8 +262,10 @@ Written after reading the whole codebase and testing the booking and dashboard f
 
 ### Owner side
 
-#### P2-1 `[Owner]` Printable day sheet and CSV export
-For each trip: names, party sizes, phone numbers, accommodation and notes, on one printable page, plus CSV export for a date range. This is the single most useful daily tool for running the boat.
+#### P2-1 `[Owner]` Monthly passenger and income CSV, and price settings
+- **Status: DONE** (26 Oct 2026, not yet deployed). The owner dropped the printable day sheet (the dashboard on a phone does that job) and asked instead for a month's passenger totals and income, based on their own season spreadsheet. Built: adult, child and charter prices set in the dashboard's top row (infants free), shown on the public booking page instead of being typed into it; each booking saves the prices it was made at; a **Report** tab shows a month's adults, children, passengers, charters and income, and downloads them as a CSV (one row per day, then a total; dates day-month-year; cancelled bookings left out; charter passengers are counted in adults and children, and each charter earns the flat charter price).
+- **Found on the way:** a customer could create a charter booking without paying by sending `charter: 'true'` to the public booking route (it copied every field the browser sent). The route now takes a fixed list of fields and a test guards it.
+- **Not included:** the owner's costs (fuel, repairs), which stay in their spreadsheet; trip types such as half trips and fishing; the age wording "3-14 yrs" is still fixed text on the booking page.
 
 #### P2-2 `[Owner]` Trip tools: change a trip's time for one day, close a trip, notify everyone on it
 **Needs P2-11 and P2-10 first** (see the reminder at the top of this section).
@@ -286,8 +292,8 @@ For each trip: names, party sizes, phone numbers, accommodation and notes, on on
 #### P2-3 `[Owner]` Month overview and better search
 Bookings and guests per day and slot on the calendar, an "upcoming bookings" list, and search by email, phone and date range (today only last name works).
 
-#### P2-4 `[Owner]` Per-booking notes and payment status
-A note on each booking (not just per day), a paid/unpaid or deposit flag, a no-show mark, and for charters the Stripe payment with a link to refund it.
+#### P2-4 `[Owner]` Card saved at booking, charged at the trip time
+Decided with the owner on 26 Oct 2026 and written up in **`paymentsspec.md`**: every online booking saves a card on Stripe's hosted page (nothing charged), the card is charged automatically at the trip's start time, the owner cancels in the dashboard first for weather so nothing is ever refunded, a failed charge just shows the booking as Unpaid, and the £80 charter deposit goes away. Open: how the timer runs (recommended: a timer inside the app). Builds on P2-1's prices. Still wanted alongside it: a note on each booking, and a "cancel everything on this trip" button (P2-2) so a weather call is one tap.
 
 #### P2-5 `[Owner]` Deliberate overbooking override
 The dashboard add form currently refuses a booking if the trip is full. Add an explicit "add anyway" confirmation for when you know you can take extra people.
@@ -336,10 +342,10 @@ Booking checks availability and then creates the record, which isn't atomic. Two
 - **P3-2 `[Build]` Lint baseline: DONE** (25 Oct 2026, as part of P1-8). Lint now shows 0 errors (it was 116 problems). Most were in generated build output (`dist-server`) that was being linted by mistake, plus 68 PropTypes complaints for a rule this project doesn't use (now off). The rest were unused `React` imports, a few unescaped apostrophes in page text, and one unused import; the deprecated `.eslintignore` was removed. 7 warnings remain on purpose (a calendar effect, a navbar effect, and four "only export components" hints). `npm run lint` is part of CI.
 - **P3-3 `[Server]` Models.** No indexes exist. Add one on `{date, timeslot, status}` for bookings and `{date, timeslot}` for availability. Default `adults` and `children` to 0 so a missing number can never turn the seat total into `NaN`.
 - **P3-4 `[Server]` Responses and errors.** Many endpoints return 200 with `ok: false`, and the response shape varies (`data`, `message`, `error`). Pick one shape, use real status codes, and add the global error handler from P0-1. Consider an `/api` prefix on the routes so API paths can't be confused with client routes.
-- **P3-5 `[Client]` Components and CSS.** Split `BookingForm` (it handles public bookings, charters and the dashboard) into form pieces that share fields. Remove the duplicated `formatDate` in `bookings.jsx` and `myCalendar.jsx`. Namespace the global CSS rules (`form div`, `form button` in `bookingForm.css`, `input` in `dashboard.css`) so styles can't leak between pages.
+- **P3-5 `[Client]` Components and CSS.** Split `BookingForm` (it handles public bookings, charters and the dashboard) into form pieces that share fields. (The duplicated date helpers in `bookings.jsx` and `myCalendar.jsx` were removed in P1-10.) Namespace the global CSS rules (`form div`, `form button` in `bookingForm.css`, `input` in `dashboard.css`) so styles can't leak between pages.
 - **P3-6 `[Owner]` Dashboard niceties.** An undo toast after Cancel, in-page confirm dialogs instead of `window.confirm`, remembering the selected tab, a "log out everywhere" option and optional two-factor sign-in.
 - **P3-7 `[Customer]` Accessibility pass.** Run axe in the Playwright suite, then check calendar tile contrast, focus order and screen-reader announcements.
-- **P3-8 `[Docs]` README and `.env.example`.** The README has no setup or environment instructions. Add them, and a `.env.example` listing the real variables. The current `.env` also has an unused PostgreSQL block (`DB_*`) to remove.
+- **P3-8 `[Docs]` README and `.env.example`.** **Done** (26 Oct 2026): the README now has setup and environment instructions, and `server/.env.example` lists every setting. Still open: the owner's own `.env` has an unused PostgreSQL block (`DB_*`) that can be deleted.
 
 ---
 
@@ -348,15 +354,18 @@ Booking checks availability and then creates the record, which isn't atomic. Two
 1. **Safety (P0 plus P1-6):** P0-1, P0-5, P1-6, then P0-2, P0-3, P0-4 as one Stripe pass.
 2. **Correctness:** P1-3, P1-1, P1-2, P1-4, P1-5, with P1-8 (tests and CI) built alongside so each fix has a test.
 3. **Foundations:** P1-10 (date format), P1-9, P1-7, P3-1, P3-2.
-4. **Owner value that needs no bulk email:** P2-1, P2-3, P2-4.
+4. **Owner value that needs no bulk email:** P2-1 (done), then P2-4 (payments, `paymentsspec.md`) and P2-3.
 5. **Email foundation:** P2-11 (one place for the sender address, contact details and trip times), then P2-10 (a proper email service and your own domain instead of the free Gmail address).
 6. **Trip tools:** P2-2 (change a trip's time, close a trip, notify everyone on it). Only after step 5, because it sends many emails at once.
 7. **Customer growth and SEO:** P2-9, P2-6, P2-7, P2-8.
 
 ## Decisions needed from you
 
-- **Stripe webhook (P0-2):** is it OK to configure one in the Stripe dashboard? Do you want a refund flow for cancelled charters in P2-4?
+- ~~**Refund flow (P2-4)**~~ Decided: no refund flow. The card is charged at the trip time, and a weather cancellation is made in the dashboard before then, so nothing was charged (see `paymentsspec.md`).
+- **How the automatic charge runs (P2-4):** a timer inside the app (recommended), Heroku Scheduler, or an outside pinger. See `paymentsspec.md`.
+- **Stripe webhook (P0-2):** is it OK to configure one in the Stripe dashboard? (Needed at go-live; see `CLAUDE.md`.)
 - **Email provider (P2-10):** are you happy to move from Gmail to Resend, Postmark or SES, and to change the "from" address if needed?
 - **Self-service cancellation (P2-6):** how close to the trip should customers be allowed to cancel themselves, if at all?
 - ~~**Cutoff (P1-3)**~~ Decided: customers can book until 1 hour before the trip; charters follow the same rule.
-- **Settings in the dashboard (P2-11):** which settings do you want to change yourself (prices, capacity, timeslots)?
+- ~~**Prices in the dashboard**~~ Decided and built (P2-1): adult, child and charter prices, locked until Edit is pressed.
+- **Other settings in the dashboard (P2-11):** which would you also like to change yourself (capacity, timeslots)?
