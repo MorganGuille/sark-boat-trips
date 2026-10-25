@@ -13,6 +13,8 @@
     "lint": "cd client && npm run lint",
     "test": "node server/test/prepare.js && node --test --test-concurrency=4 \"server/test/**/*.test.js\"",
     "test:e2e": "playwright test --config e2e/playwright.config.js",
+    "backup": "cd server && node scripts/backup.js",
+    "restore": "cd server && node scripts/restore.js",
     "check": "npm run lint && npm test && npm run test:e2e"
   },
   "engines": {

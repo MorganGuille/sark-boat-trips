@@ -4,6 +4,9 @@ server/node_modules/
 
 **/*Zone.Identifier
 
+# Database backups (customer details: never commit)
+backups/
+
 # Playwright output
 playwright-report/
 test-results/
