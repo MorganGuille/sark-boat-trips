@@ -7,9 +7,11 @@ const mongoose = require("mongoose");
 const app = require("./app");
 const { settings } = require("./utils/settings");
 const { corsSummary } = require("./middleware/security");
+const { readDatabase } = require("./utils/database");
 
 const PORT = process.env.PORT || 4040;
 const dbname = process.env.atlasDB_name;
+const database = readDatabase(process.env);
 
 // Fail fast if the admin auth config is missing
 for (const key of ["JWT_SECRET", "admin_username", "admin_password_hash"]) {
@@ -19,14 +21,17 @@ for (const key of ["JWT_SECRET", "admin_username", "admin_password_hash"]) {
   }
 }
 
+// A laptop must never be pointed at the real bookings (see utils/database.js)
+if (database.problem) {
+  console.error(`Database: ${database.problem}`);
+  process.exit(1);
+}
+
 // Connect to MongoDB. MONGODB_URI overrides the Atlas address (for another database or host).
 async function connecting() {
   try {
-    await mongoose.connect(
-      process.env.MONGODB_URI ||
-        `mongodb+srv://morganguille:${process.env.atlasDB_password}@bookingsdb.7bty4.mongodb.net/${dbname}?retryWrites=true&w=majority&appName=BookingsDB`,
-    );
-    console.log(`Connected to ${dbname || "the database"}`);
+    await mongoose.connect(database.uri);
+    console.log(`Connected to ${dbname || "the database"}${database.user ? ` as ${database.user}` : ""}`);
   } catch (error) {
     console.log("ERROR: Could not connect to DB");
   }

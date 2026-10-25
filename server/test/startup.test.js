@@ -15,11 +15,11 @@ const BASE = {
 };
 
 // Runs index.js with these lines in a .env file, until it is listening (then stops it) or exits
-const run = (dotenv) => new Promise((resolve) => {
+const run = (dotenv, { useAtlas = false } = {}) => new Promise((resolve) => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'boat-startup-'));
     fs.writeFileSync(path.join(dir, '.env'), Object.entries(dotenv).filter(([, v]) => v !== undefined).map(([k, v]) => `${k}=${v}`).join('\n'));
     // only PATH is passed in, so nothing from this machine's own settings can leak into the check
-    const child = spawn(process.execPath, [INDEX], { cwd: dir, env: { PATH: process.env.PATH, PORT: '0', MONGODB_URI: 'mongodb://127.0.0.1:1/none?serverSelectionTimeoutMS=300' } });
+    const child = spawn(process.execPath, [INDEX], { cwd: dir, env: { PATH: process.env.PATH, PORT: '0', ...(useAtlas ? {} : { MONGODB_URI: 'mongodb://127.0.0.1:1/none?serverSelectionTimeoutMS=300' }) } });
     let out = '';
     child.stdout.on('data', (d) => (out += d));
     child.stderr.on('data', (d) => (out += d));
@@ -49,5 +49,11 @@ describe('starting the real server', () => {
             assert.equal(code, 1, missing);
             assert.match(out, new RegExp(`Missing ${missing} in environment`));
         }
+    });
+    it('refuses to connect a laptop to a database that is not a sandbox one, before connecting to anything', async () => {
+        const { out, code } = await run({ ...BASE, STRIPETESTKEY: 'sk_test_FAKE', atlasDB_name: 'Test', atlasDB_user: 'u', atlasDB_user_password: 'p' }, { useAtlas: true });
+        assert.equal(code, 1);
+        assert.match(out, /refusing to connect to "Test" outside production/);
+        assert.doesNotMatch(out, /listening on port|Connected to/);
     });
 });

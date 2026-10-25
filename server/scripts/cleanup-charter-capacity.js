@@ -13,6 +13,7 @@
 // to review but left alone, because it may be a setting you chose yourself.
 require("dotenv").config();
 const mongoose = require("mongoose");
+const { readDatabase } = require("../utils/database");
 
 const apply = process.argv.includes("--apply");
 const dbname = process.env.atlasDB_name;
@@ -26,10 +27,9 @@ const byDate = (a, b) => toDate(a.date) - toDate(b.date);
 const line = (row) => `  ${row.date} ${row.timeslot}  capacity ${row.capacity}${toDate(row.date) >= today ? "" : "  (past)"}`;
 
 (async () => {
-  await mongoose.connect(
-    process.env.MONGODB_URI ||
-      `mongodb+srv://morganguille:${process.env.atlasDB_password}@bookingsdb.7bty4.mongodb.net/${dbname}?retryWrites=true&w=majority&appName=BookingsDB`,
-  );
+  const database = readDatabase(process.env);
+  if (database.problem) throw new Error(database.problem);
+  await mongoose.connect(database.uri);
   const db = mongoose.connection.db;
   console.log(`Database: ${dbname || mongoose.connection.name} (${apply ? "APPLYING changes" : "report only, nothing will be changed"})\n`);
 
