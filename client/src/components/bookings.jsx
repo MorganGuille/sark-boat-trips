@@ -2,6 +2,8 @@ import { useState } from 'react'
 import MyCalendar from './myCalendar'
 import BookingForm from './bookingForm'
 import useSeasonDates from '../hooks/useSeasonDates'
+import usePrices from '../hooks/usePrices'
+import { formatPounds } from '../utils/money.js'
 import { toDay } from '../utils/dates.js'
 import '../css/bookings.css'
 
@@ -9,6 +11,7 @@ function Bookings() {
 
     const [selectedDate, setSelectedDate] = useState(toDay(new Date()))
     const season = useSeasonDates()
+    const { prices } = usePrices()
 
     if (season.status === 'loading') {
         return <div aria-live="polite" aria-busy="true">Loading calendar…</div>;
@@ -36,15 +39,17 @@ function Bookings() {
                 <p className='textArea'>Please use the calendar to select a date and then fill out the form to make a booking</p>
 
 
-                <div className='textArea' aria-label="Pricing information">
-                    <p>Prices for 2026 are :</p>
-                    <p>
-                        <strong>Adults</strong>: £40<br />
-                        <strong>Children</strong> (3-14 yrs): £25<br />
-                        <strong>Infants</strong>: free
-                    </p>
-                    <p><strong>Private Charter</strong>: £400</p>
-                </div>
+                {prices ? (
+                    <div className='textArea' aria-label="Pricing information">
+                        <p>Prices are :</p>
+                        <p>
+                            <strong>Adults</strong>: {formatPounds(prices.adult)}<br />
+                            <strong>Children</strong> (3-14 yrs): {formatPounds(prices.child)}<br />
+                            <strong>Infants</strong>: free
+                        </p>
+                        <p><strong>Private Charter</strong>: {formatPounds(prices.charter)}</p>
+                    </div>
+                ) : null}
 
                 <MyCalendar
                     setSelectedDate={setSelectedDate}

@@ -119,7 +119,8 @@ const shown = (isoDay) => require('../utils/dates').showDay(isoDay);
 const seedSeason = async () => {
     const midnight = (offset) => { const d = new Date(Date.now() + offset * 86400000); return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())); };
     await require('../models/admin').deleteMany({});
-    await require('../models/admin').create({ seasonStartDate: midnight(-30), seasonEndDate: midnight(200) });
+    // the normal prices: adult £40, child £25, charter £400 (in pence)
+    await require('../models/admin').create({ seasonStartDate: midnight(-30), seasonEndDate: midnight(200), adultPrice: 4000, childPrice: 2500, charterPrice: 40000 });
 };
 
 // HTTP helpers. Each call can pose as a different visitor (the app trusts one proxy, so the

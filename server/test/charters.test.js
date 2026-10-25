@@ -97,6 +97,7 @@ describe('Stripe says a charter was paid (the webhook)', () => {
         assert.ok(mocks.sent(session.metadata.email).some((m) => m.subject === 'PRIVATE CHARTER Confirmation Sark Boat Trips'));
         assert.ok(mocks.sent(t.OWNER).some((m) => m.subject === `New CHARTER on : ${t.shown(session.metadata.date)}`));
         assert.equal(mocks.sent().length, 2);
+        assert.deepEqual(b.prices, { adult: 4000, child: 2500, charter: 40000 }, 'the prices in force when it was paid for are saved on it');
     });
     it('it blocks the trip simply by existing, without writing a capacity setting', async () => {
         const session = t.paidSession('cs_test_blocks', { date: t.day(14) });

@@ -170,6 +170,69 @@ input {
     font-weight: 600;
 }
 
+/* ---------- Prices (header) and monthly report ---------- */
+
+.priceBox {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+}
+
+.dashboard .priceBox input {
+    width: 5.5rem;
+}
+
+.dashboard .fieldRow.reportPick {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.reportStats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr));
+    gap: 0.6rem;
+    width: 100%;
+    margin: 0;
+}
+
+.reportStats div {
+    padding: 0.6rem 0.8rem;
+    background: #f4f6f8;
+    border-radius: 0.5rem;
+}
+
+.reportStats dt {
+    font-size: 0.8rem;
+    color: #5b6773;
+}
+
+.reportStats dd {
+    margin: 0.15rem 0 0;
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+
+/* a label and its £ box stay together when the header row wraps on a phone */
+.priceField {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+/* Locked (not editing): the values read as plain text, so nothing can be changed by a stray click */
+.seasonInline input:disabled {
+    background: transparent;
+    border-color: transparent;
+    color: inherit;
+    opacity: 1;
+    cursor: default;
+}
+
+.seasonInline input[type='date']:disabled::-webkit-calendar-picker-indicator {
+    display: none;
+}
+
 .seasonSaved {
     color: #0a7a55;
     font-size: 0.9rem;

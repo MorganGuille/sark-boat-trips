@@ -2,6 +2,7 @@ const admin = require("../models/admin");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
+const { toPence, readPrices } = require("../utils/prices");
 
 // Hash both sides first so timingSafeEqual gets equal-length buffers
 const safeEqual = (a, b) => {
@@ -49,7 +50,8 @@ const formatDay = (date) => date.toISOString().slice(0, 10);
 const getSeasonDates = async (req, res) => {
   try {
     const dates = await admin.findOne();
-    if (!dates) {
+    // The settings document can exist with only prices in it
+    if (!dates || !dates.seasonStartDate || !dates.seasonEndDate) {
       return res.status(404).send({
         ok: false,
         data: "Season dates not set",
@@ -99,4 +101,42 @@ const setSeasonDates = async (req, res) => {
   }
 };
 
-module.exports = { checklogin, setSeasonDates, getSeasonDates };
+const toPounds = (pence) => pence / 100;
+
+// Public: the booking page shows the prices. prices is null until the owner has set them.
+const getPrices = async (req, res) => {
+    try {
+        const prices = await readPrices();
+        res.send({
+            ok: true,
+            prices: prices && { adult: toPounds(prices.adult), child: toPounds(prices.child), charter: toPounds(prices.charter) },
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send({ ok: false, data: "Could not load prices" });
+    }
+};
+
+const setPrices = async (req, res) => {
+    const adult = toPence(req.body.adultPrice);
+    const child = toPence(req.body.childPrice);
+    const charter = toPence(req.body.charterPrice);
+
+    if ([adult, child, charter].includes(null)) {
+        return res.status(400).send({ ok: false, data: "Each price must be an amount in pounds, like 40 or 12.50 (up to 10,000)" });
+    }
+
+    try {
+        await admin.findOneAndUpdate(
+            {},
+            { $set: { adultPrice: adult, childPrice: child, charterPrice: charter } },
+            { upsert: true }
+        );
+        res.send({ ok: true, data: "Prices saved", prices: { adult: toPounds(adult), child: toPounds(child), charter: toPounds(charter) } });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send({ ok: false, data: "Could not save prices" });
+    }
+};
+
+module.exports = { checklogin, setSeasonDates, getSeasonDates, getPrices, setPrices };

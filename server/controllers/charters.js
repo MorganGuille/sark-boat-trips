@@ -4,6 +4,7 @@ const { isSlotEmpty } = require('../utils/availability');
 const { safeHtml } = require('../utils/safeHtml');
 const { validatePublicBooking } = require('../utils/validateBooking');
 const { showDay } = require('../utils/dates');
+const { readPrices } = require('../utils/prices');
 const { settings } = require('../utils/settings');
 
 // With no usable key the placeholder is only there so webhooks can still be verified (that needs
@@ -185,7 +186,7 @@ const fulfillCheckoutSession = async (session) => {
 
     let booking;
     try {
-        booking = await Bookings.create({ ...charterData, stripeSessionId: session.id });
+        booking = await Bookings.create({ ...charterData, stripeSessionId: session.id, prices: (await readPrices()) || undefined });
     } catch (error) {
         if (error.code === 11000) {
             // A parallel call created it between our check and our insert

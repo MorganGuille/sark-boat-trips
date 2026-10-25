@@ -3,11 +3,14 @@ import axios from 'axios'
 import MyCalendar from '../components/myCalendar'
 import BookingForm from '../components/bookingForm'
 import SeasonDatesForm from '../components/seasonDatesForm'
+import PricesForm from '../components/pricesForm'
+import ReportPanel from '../components/dashboard/reportPanel'
 import LoginForm from '../components/dashboard/loginForm'
 import BookingsTable from '../components/dashboard/bookingsTable'
 import AvailabilityForm from '../components/dashboard/availabilityForm'
 import NotesPanel from '../components/dashboard/notesPanel'
 import useSeasonDates from '../hooks/useSeasonDates'
+import usePrices from '../hooks/usePrices'
 import { URL } from '../../config.js'
 import { authAxios, setToken, clearToken, hasValidToken, LOGOUT_EVENT } from '../services.jsx/auth.jsx'
 import { toDay, showDay, prettyDate } from '../utils/dates.js'
@@ -19,6 +22,7 @@ const TABS = [
     { id: 'new', label: 'New booking' },
     { id: 'availability', label: 'Availability' },
     { id: 'notes', label: 'Notes' },
+    { id: 'report', label: 'Report' },
 ]
 
 const TIMESLOTS = ['11am', '2pm']
@@ -50,6 +54,8 @@ function Dashboard() {
     const [refreshKey, setRefreshKey] = useState(0)
     const [notesKey, setNotesKey] = useState(0)
     const season = useSeasonDates()
+    const { prices, updatePrices } = usePrices()
+    const [editingSettings, setEditingSettings] = useState(false) // season dates and prices are locked until Edit is pressed
 
     useEffect(() => {
         const onLogout = () => setLoggedIn(false)
@@ -224,7 +230,13 @@ function Dashboard() {
         <div className='dashboard'>
             <header className='dashHeader dashCard'>
                 <h1>Dashboard</h1>
-                <SeasonDatesForm savedStart={season.start} savedEnd={season.end} onSaved={season.updateDates} />
+                <SeasonDatesForm savedStart={season.start} savedEnd={season.end} onSaved={season.updateDates} editing={editingSettings} />
+                <PricesForm saved={prices} onSaved={updatePrices} editing={editingSettings} />
+                <button type='button' className='btn btnSmall btnGhost' aria-pressed={editingSettings}
+                    aria-label={editingSettings ? 'Done editing season dates and prices' : 'Edit season dates and prices'}
+                    onClick={() => setEditingSettings(!editingSettings)}>
+                    {editingSettings ? 'Done' : 'Edit'}
+                </button>
                 <button className='btn btnSmall btnGhost' onClick={logout}>Log out</button>
             </header>
 
@@ -319,6 +331,10 @@ function Dashboard() {
 
                         {tab === 'availability' ? (
                             <AvailabilityForm selectedDate={selectedDate} onResult={showNotice} onDone={refreshBookings} />
+                        ) : null}
+
+                        {tab === 'report' ? (
+                            <ReportPanel selectedDate={selectedDate} />
                         ) : null}
 
                         {tab === 'notes' ? (

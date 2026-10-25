@@ -4,7 +4,7 @@
 const { test, expect } = require('@playwright/test');
 const h = require('./helpers');
 
-test.beforeEach(async ({ request }) => { await h.reset(request); });
+test.beforeEach(async ({ request, page }) => { await h.asNewVisitor(page); await h.reset(request); });
 
 test('the home page loads without React having to rebuild it', async ({ page }) => {
     const problems = h.watch(page);

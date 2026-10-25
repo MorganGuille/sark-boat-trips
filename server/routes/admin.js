@@ -15,6 +15,8 @@ const loginLimiter = rateLimit({
 
 router.post("/login", loginLimiter, asyncHandler(controller.checklogin));
 router.get("/getSeasonDates", asyncHandler(controller.getSeasonDates));
+router.get("/getPrices", asyncHandler(controller.getPrices));
+router.post("/setPrices", requireAuth, asyncHandler(controller.setPrices));
 router.post("/setSeasonDates", requireAuth, asyncHandler(controller.setSeasonDates));
 
 module.exports = router;

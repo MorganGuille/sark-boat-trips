@@ -6,6 +6,8 @@ const { getAvailability, isSlotEmpty } = require('../utils/availability');
 const { safeHtml } = require('../utils/safeHtml');
 const { settings } = require('../utils/settings');
 const { isDay, showDay } = require('../utils/dates');
+const { readPrices } = require('../utils/prices');
+const { isMonth, monthRange, buildReport, toCsv } = require('../utils/report');
 const { validatePublicBooking, validateAdminBooking, validateAvailabilitySetting } = require('../utils/validateBooking');
 
 
@@ -152,8 +154,12 @@ const addBooking = async (req, res) => {
                         </div>`,
             };
             // Save first: the booking must exist even if an email can't be sent
-            const { status, cancelledAt, ...bookingData } = req.body;
-            await Bookings.create(bookingData);
+            // Only these details come from the customer. Status, booking type (charter), payment
+            // fields and prices are never theirs to choose: the prices are the ones in force right now.
+            await Bookings.create({
+                date, timeslot, firstName, lastName, phone, email, adults, children, accommodation, message,
+                prices: (await readPrices()) || undefined,
+            });
 
             const confirmationSent = await trySend(mailOptionsClient);
             if (!confirmationSent) mailOptionsAdmin.subject += ' (CUSTOMER EMAIL FAILED, please contact them)';
@@ -196,6 +202,7 @@ const adminAddBooking = async (req, res) => {
         // validateBeforeSave is off because the model requires the customer details
         await new Bookings({
             date, timeslot, firstName, lastName, phone, email, adults, children, accommodation, message, charter,
+            prices: (await readPrices()) || undefined,
         }).save({ validateBeforeSave: false });
 
         const who = [firstName, lastName].filter(Boolean).join(' ') || 'the booking';
@@ -539,5 +546,24 @@ const updateBooking = async (req, res) => {
     res.send({ ok: true, data: `Booking for ${bookingName(booking)} on ${showDay(booking.date)} updated successfully${emailNote}` });
 };
 
-module.exports = { addBooking, adminAddBooking, cancelBooking, restoreBooking, permanentlyDeleteBooking, checkDate, checkMonthAvail, search, updateBooking, updateAvailability }
+// Passenger and income totals for one month (?format=csv for a download). Dashboard only.
+const monthlyReport = async (req, res) => {
+    const { month } = req.params;
+    if (!isMonth(month)) {
+        return res.status(400).send({ ok: false, data: "Please choose a month." });
+    }
+    const { first, last } = monthRange(month);
+    const bookings = await Bookings.find({ date: { $gte: first, $lte: last }, status: { $ne: 'cancelled' } });
+    const report = buildReport(bookings, await readPrices());
+    if (!report) {
+        return res.status(409).send({ ok: false, data: "Set your adult, child and charter prices first, so the income can be worked out." });
+    }
+    if (req.query.format === 'csv') {
+        res.set({ 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': `attachment; filename="sark-boat-trips-${month}.csv"` });
+        return res.send(toCsv(report));
+    }
+    res.send({ ok: true, month, days: report.days, total: report.total });
+};
+
+module.exports = { monthlyReport, addBooking, adminAddBooking, cancelBooking, restoreBooking, permanentlyDeleteBooking, checkDate, checkMonthAvail, search, updateBooking, updateAvailability }
 

@@ -2,13 +2,18 @@
 const { test, expect } = require('@playwright/test');
 const h = require('./helpers');
 
-test.beforeEach(async ({ request }) => { await h.reset(request); });
+test.beforeEach(async ({ request, page }) => { await h.asNewVisitor(page); await h.reset(request); });
 
 test('the page loads with the calendar and seat counts, and nothing is blocked or broken', async ({ page }) => {
     const problems = h.watch(page);
     await page.goto('/bookings');
     await expect(page.locator('.react-calendar')).toBeVisible();
     await expect(page.locator('.calendarDisplay')).toContainText('12 spaces available');
+    // the prices come from the owner's settings, not from the page
+    const prices = page.locator('[aria-label="Pricing information"]');
+    await expect(prices).toContainText('Adults: £40');
+    await expect(prices).toContainText('Children (3-14 yrs): £25');
+    await expect(prices).toContainText('Private Charter: £400');
     expect(problems).toEqual([]);
 });
 

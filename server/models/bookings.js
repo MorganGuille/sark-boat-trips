@@ -53,6 +53,12 @@ const bookingsSchema = new mongoose.Schema({
     cancelledAt: {
         type: Date,
     },
+    // The prices (in pence) in force when the booking was made, so later price changes don't alter it
+    prices: {
+        adult: { type: Number, min: 0 },
+        child: { type: Number, min: 0 },
+        charter: { type: Number, min: 0 },
+    },
     // Set on paid charters. The unique index means one Stripe payment can only ever create one booking
     stripeSessionId: {
         type: String,

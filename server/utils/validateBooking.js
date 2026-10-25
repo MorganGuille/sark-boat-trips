@@ -60,7 +60,7 @@ const seasonProblem = (date, season) => {
 
 const loadSeason = async () => {
     const doc = await Admin.findOne();
-    if (!doc) return null;
+    if (!doc || !doc.seasonStartDate || !doc.seasonEndDate) return null;
     const toNumber = (date) => Number(date.toISOString().slice(0, 10).replace(/-/g, ''));
     return { start: toNumber(doc.seasonStartDate), end: toNumber(doc.seasonEndDate) };
 };

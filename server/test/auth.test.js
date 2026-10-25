@@ -56,6 +56,9 @@ const PROTECTED = [
     ['get', `/notes/${t.day(5)}`],
     ['delete', '/notes/64b000000000000000000000'],
     ['post', '/admin/setSeasonDates', { seasonStartDate: '2030-01-01', seasonEndDate: '2030-02-01' }],
+    ['post', '/admin/setPrices', { adultPrice: '40', childPrice: '25', charterPrice: '400' }],
+    ['get', '/bookings/report/2030-06'],
+    ['get', '/bookings/report/2030-06?format=csv'],
 ];
 
 describe('routes that need a login', () => {
@@ -90,6 +93,7 @@ describe('routes that need a login', () => {
 describe('routes anyone can use', () => {
     it('season dates, availability and booking reach their own checks, not a login wall', async () => {
         assert.equal((await t.call(app, 'get', '/admin/getSeasonDates')).status, 200);
+        assert.equal((await t.call(app, 'get', '/admin/getPrices')).status, 200);
         assert.equal((await t.call(app, 'post', '/bookings/monthAvailability', { body: { dates: [t.day(5)] } })).status, 200);
         assert.equal((await t.call(app, 'post', '/bookings/add', { body: {} })).status, 400);
         assert.equal((await t.call(app, 'get', '/charters/verify-payment')).status, 400);

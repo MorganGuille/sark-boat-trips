@@ -7,7 +7,8 @@ const formatDay = (day) =>
         day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC'
     })
 
-function SeasonDatesForm({ savedStart, savedEnd, onSaved }) {
+// editing: the dates can only be changed once the owner has pressed Edit in the top bar
+function SeasonDatesForm({ savedStart, savedEnd, onSaved, editing }) {
 
     const [start, setStart] = useState(savedStart)
     const [end, setEnd] = useState(savedEnd)
@@ -17,7 +18,7 @@ function SeasonDatesForm({ savedStart, savedEnd, onSaved }) {
     useEffect(() => {
         setStart(savedStart)
         setEnd(savedEnd)
-    }, [savedStart, savedEnd])
+    }, [savedStart, savedEnd, editing]) // leaving edit mode drops anything typed but not saved
 
     const changed = start !== savedStart || end !== savedEnd
     const valid = Boolean(start && end && start <= end)
@@ -43,14 +44,16 @@ function SeasonDatesForm({ savedStart, savedEnd, onSaved }) {
             <span className='seasonLabel'>Season</span>
             <label className='sr-only' htmlFor='seasonStart'>Season start date</label>
             <input id='seasonStart' type='date' value={start} max={end || undefined}
-                onChange={(e) => { setStart(e.target.value); setMessage(null) }} required />
+                onChange={(e) => { setStart(e.target.value); setMessage(null) }} required disabled={!editing} />
             <span aria-hidden='true'>→</span>
             <label className='sr-only' htmlFor='seasonEnd'>Season end date</label>
             <input id='seasonEnd' type='date' value={end} min={start || undefined}
-                onChange={(e) => { setEnd(e.target.value); setMessage(null) }} required />
-            <button type='submit' className='btn btnSmall' disabled={!changed || !valid || saving}>
-                {saving ? 'Saving…' : 'Save'}
-            </button>
+                onChange={(e) => { setEnd(e.target.value); setMessage(null) }} required disabled={!editing} />
+            {editing ? (
+                <button type='submit' className='btn btnSmall' disabled={!changed || !valid || saving}>
+                    {saving ? 'Saving…' : 'Save'}
+                </button>
+            ) : null}
             {message ? <span role='status' className={message.type === 'success' ? 'seasonSaved' : 'seasonError'}>{message.text}</span> : null}
         </form>
     )

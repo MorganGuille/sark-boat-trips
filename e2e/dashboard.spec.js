@@ -3,6 +3,7 @@ const { test, expect } = require('@playwright/test');
 const h = require('./helpers');
 
 test.beforeEach(async ({ request, page }) => {
+    await h.asNewVisitor(page); // the calendar is loaded a lot, and its requests are rate limited per visitor
     await h.reset(request);
     page.on('dialog', (dialog) => dialog.accept()); // "are you sure?" boxes
 });
@@ -15,6 +16,9 @@ const addBooking = async (page, fields = {}) => {
     await page.fill('#adults', fields.adults ?? '2');
     await page.click('button:has-text("Confirm Booking")');
 };
+// The season dates and prices are locked until the Edit button in the top bar is pressed
+const editSettings = (page) => page.getByRole('button', { name: /Edit season dates and prices/ }).click();
+const saveButton = (page, field) => page.locator(`form:has(${field}) button[type=submit]`);
 const notice = (page, text) => expect(page.locator('.notice')).toContainText(text);
 const dismiss = async (page) => { const close = page.locator('.notice button'); if (await close.count()) await close.click(); };
 
@@ -63,6 +67,79 @@ test('dates: stored as YYYY-MM-DD, shown day-month-year, and the edit form uses 
     await page.click('button:has-text("Save changes")');
     await notice(page, `on ${later.british} updated successfully`);
     expect((await h.savedBookings(request))[0].date).toBe(later.iso);
+});
+
+test('season dates and prices are locked until Edit is pressed, and Done locks them again', async ({ page }) => {
+    await h.logIn(page);
+    await expect(page.locator('#seasonStart')).not.toHaveValue('');
+    const fields = ['#seasonStart', '#seasonEnd', '#priceAdult', '#priceChild', '#priceCharter'];
+
+    // locked: the values show, but nothing can be typed and there is no Save button
+    for (const field of fields) await expect(page.locator(field)).toBeDisabled();
+    await expect(page.locator('#priceAdult')).toHaveValue('40');
+    await expect(page.locator('form:has(#seasonStart) button[type=submit], form:has(#priceAdult) button[type=submit]')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /Edit season dates and prices/ })).toHaveText('Edit');
+
+    await editSettings(page);
+    for (const field of fields) await expect(page.locator(field)).toBeEnabled();
+    await expect(page.locator('form:has(#seasonStart) button[type=submit], form:has(#priceAdult) button[type=submit]')).toHaveCount(2);
+
+    // Done drops what was typed but not saved, and locks everything again
+    await page.fill('#priceAdult', '99');
+    await page.getByRole('button', { name: /Done editing season dates and prices/ }).click();
+    for (const field of fields) await expect(page.locator(field)).toBeDisabled();
+    await expect(page.locator('#priceAdult')).toHaveValue('40');
+});
+
+test('prices: set in the top row, shown to customers on the booking page', async ({ page, request, browser }) => {
+    await h.logIn(page);
+    await expect(page.locator('#priceAdult')).toHaveValue('40');
+    await expect(page.locator('#priceChild')).toHaveValue('25');
+    await expect(page.locator('#priceCharter')).toHaveValue('400');
+    await editSettings(page);
+    await expect(saveButton(page, '#priceAdult')).toBeDisabled(); // nothing changed yet
+
+    await page.fill('#priceAdult', '45');
+    await page.fill('#priceChild', '27.5');
+    await page.fill('#priceCharter', '450');
+    await saveButton(page, '#priceAdult').click();
+    await expect(page.locator('.seasonSaved')).toContainText('adult £45, child £27.50, charter £450');
+
+    const customer = await browser.newPage();
+    await customer.goto('/bookings');
+    const prices = customer.locator('[aria-label="Pricing information"]');
+    await expect(prices).toContainText('Adults: £45');
+    await expect(prices).toContainText('Children (3-14 yrs): £27.50');
+    await expect(prices).toContainText('Private Charter: £450');
+    await customer.close();
+
+    // the browser itself refuses a negative price, so it is never sent
+    await page.fill('#priceAdult', '-5');
+    expect(await page.locator('#priceAdult').evaluate((input) => input.validity.valid)).toBe(false);
+});
+
+test('report: the month\'s totals show on screen and download as a CSV file', async ({ page }) => {
+    await h.logIn(page);
+    await addBooking(page, { firstName: 'One', adults: '2' });
+    await dismiss(page);
+    await addBooking(page, { firstName: 'Two', adults: '3' });
+    await page.click('role=tab[name="Report"]');
+    const total = page.locator('.reportStats');
+    await expect(total.locator('div', { hasText: 'Adults' })).toContainText('5');
+    await expect(total.locator('div', { hasText: 'Income' })).toContainText('£200'); // 5 adults at £40
+
+    const [download] = await Promise.all([page.waitForEvent('download'), page.click('button:has-text("Download CSV")')]);
+    expect(download.suggestedFilename()).toMatch(/^sark-boat-trips-\d{4}-\d{2}\.csv$/);
+    const chunks = [];
+    for await (const chunk of await download.createReadStream()) chunks.push(chunk);
+    const lines = Buffer.concat(chunks).toString('utf8').trim().split(/\r?\n/);
+    const d = new Date();
+    const today = `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+    expect(lines).toEqual([
+        'Date,Adults,Children,Passengers,Charters,Income (GBP)',
+        `${today},5,0,5,0,200.00`,
+        'Total,5,0,5,0,200.00',
+    ]);
 });
 
 test('a booking can be saved with details missing', async ({ page }) => {
@@ -157,14 +234,15 @@ test('notes: as many as you like, each can be deleted, and the tab shows how man
 test('season dates: an end before the start cannot be saved, a valid change is saved and confirmed', async ({ page }) => {
     await h.logIn(page);
     await expect(page.locator('#seasonStart')).not.toHaveValue(''); // wait for the saved dates to load
+    await editSettings(page);
     const start = await page.inputValue('#seasonStart');
     await page.fill('#seasonEnd', '2000-01-01');
-    await expect(page.locator('.seasonInline button[type=submit]')).toBeDisabled();
+    await expect(page.locator('form:has(#seasonStart) button[type=submit]')).toBeDisabled();
     const later = new Date(Date.now() + 250 * 86400000).toISOString().slice(0, 10);
     await page.fill('#seasonEnd', later);
-    await expect(page.locator('.seasonInline button[type=submit]')).toBeEnabled();
-    await page.click('.seasonInline button[type=submit]');
-    await expect(page.locator('.seasonInline [role=status]')).toContainText('Saved');
+    await expect(page.locator('form:has(#seasonStart) button[type=submit]')).toBeEnabled();
+    await page.click('form:has(#seasonStart) button[type=submit]');
+    await expect(page.locator('form:has(#seasonStart) [role=status]')).toContainText('Saved');
     await page.reload();
     await expect(page.locator('#seasonStart')).toHaveValue(start);
     await expect(page.locator('#seasonEnd')).toHaveValue(later);
@@ -176,8 +254,9 @@ test('on a phone the dashboard does not scroll sideways, even with a bookings ta
     await addBooking(page);
     await page.click('role=tab[name="Bookings"]');
     await expect(page.locator('.bookingsTable')).toBeVisible();
-    for (const tab of ['Bookings', 'New booking', 'Availability', 'Notes']) {
+        for (const tab of ['Bookings', 'New booking', 'Availability', 'Notes', 'Report']) {
         await page.click(`role=tab[name^="${tab}"]`);
+        if (tab === 'Report') await expect(page.locator('.reportStats')).toBeVisible(); // wait for the totals
         const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
         expect(overflow, `the ${tab} tab is wider than the screen`).toBeLessThanOrEqual(4);
     }

@@ -18,6 +18,7 @@ router.post('/cancel', requireAuth, asyncHandler(controller.cancelBooking))
 router.post('/restore', requireAuth, asyncHandler(controller.restoreBooking))
 router.post('/permanently-delete', requireAuth, asyncHandler(controller.permanentlyDeleteBooking))
 router.get('/:date', requireAuth, asyncHandler(controller.checkDate))
+router.get('/report/:month', requireAuth, asyncHandler(controller.monthlyReport))
 router.get('/search/:search', requireAuth, asyncHandler(controller.search))
 router.post('/update/:id', requireAuth, asyncHandler(controller.updateBooking));
 router.post('/updateavailability', requireAuth, asyncHandler(controller.updateAvailability))
