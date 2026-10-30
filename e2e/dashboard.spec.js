@@ -178,7 +178,7 @@ test('cancel a whole trip: one button cancels every booking on it, emails them, 
     await expect(page.locator('.calendarDisplay')).toContainText('11:00 AM: 0 spaces available');
     const saved = await h.savedBookings(request);
     expect(saved.map((b) => b.status)).toEqual(['cancelled', 'cancelled']);
-    const sent = (await h.mails(request)).filter((m) => m.result === 'sent' && /CANCELLED/.test(m.subject)).map((m) => m.to).sort();
+    const sent = (await h.mails(request)).filter((m) => m.result === 'sent' && /cancelled/i.test(m.subject)).map((m) => m.to).sort();
     expect(sent).toEqual(['ann@example.test', 'bob@example.test', 'owner@sarkboattrips.test']);
 });
 

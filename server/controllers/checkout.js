@@ -8,11 +8,9 @@ const { showDay } = require('../utils/dates');
 const { readPrices, bookingValue } = require('../utils/prices');
 const { settings } = require('../utils/settings');
 const { trySend } = require('../utils/mailer');
-const { seatsFor, partyText } = require('../utils/party');
+const { seatsFor } = require('../utils/party');
 const { cancelRule } = require('../utils/policy');
-const { safeHtml } = require('../utils/safeHtml');
-const { buildConfirmationEmail, newBookingAdminEmail, cardPaymentLine } = require('./bookings');
-const { charterConfirmationEmail, charterAdminEmail } = require('./charters');
+const emails = require('../emails');
 
 const stripe = require('../utils/stripe');
 
@@ -115,34 +113,6 @@ const startCheckout = (kind) => async (req, res) => {
     }
 };
 
-const tripFullCustomerEmail = (booking) => ({
-    from: settings.mail.sender,
-    to: booking.email,
-    subject: 'Sorry, your trip filled up - Sark Boat Trips',
-    html: safeHtml`<div style="font-family: sans-serif; max-width: 30rem;">
-        <h3>Dear ${booking.firstName},</h3>
-        <p>While you were entering your card, the last places on the ${booking.timeslot} ${what(booking)} on ${showDay(booking.date)} were taken, so we couldn't book you.</p>
-        <p><strong>Nothing has been charged.</strong></p>
-        <p>Please choose another trip on our website, or get in touch and we'll do our best to fit you in.</p>
-        <p>Sark Boat Trips<br>+44 7911 764 246<br>${settings.mail.from}</p>
-    </div>`,
-});
-
-// Plain text on purpose: this one is for the owner and needs no layout
-const tripFullOwnerEmail = (booking) => ({
-    from: settings.mail.sender,
-    to: settings.mail.owner,
-    subject: `Booking NOT made: the ${booking.timeslot} ${what(booking)} on ${showDay(booking.date)} filled up`,
-    text: `A customer saved their card, but by then the ${booking.timeslot} ${what(booking)} on ${showDay(booking.date)} had no room left, so the booking was not made and nothing was charged. They have been emailed.
-
-It is on the dashboard as a cancelled booking (Show cancelled). If room frees up you can restore it, and their card will then be charged at the trip time.
-
-Name: ${booking.firstName} ${booking.lastName}
-Party: ${partyText(booking)}
-Email: ${booking.email}
-Phone: ${booking.phone}`,
-});
-
 // Everything that follows a saved card. The Stripe webhook, a Stripe retry and the customer's
 // /success page can all arrive for the same session, in any order, so this is safe to call
 // repeatedly: the booking is keyed on the Stripe session id, and only the call that actually
@@ -182,16 +152,12 @@ const fulfillCheckoutSession = async (session) => {
 
     // The booking is saved, so a failed email must not undo it
     if (room) {
-        const line = cardPaymentLine(bookingValue(booking, prices), details.timeslot, details.charter === 'true');
-        const party = partyText(details);
-        const [toCustomer, toOwner] = details.charter === 'true'
-            ? [charterConfirmationEmail(details, line), charterAdminEmail(details)]
-            : [buildConfirmationEmail({ ...details, party, paymentLine: line }), newBookingAdminEmail({ ...details, party })];
-        if (!(await trySend(toCustomer))) toOwner.subject += ' (CUSTOMER EMAIL FAILED, please contact them)';
-        await trySend(toOwner);
+        const amount = bookingValue(booking, prices);
+        const customerEmailFailed = !(await trySend(emails.confirmationEmail(booking, amount)));
+        await trySend(emails.newBookingOwnerEmail(booking, { amount, customerEmailFailed }));
     } else {
-        await trySend(tripFullCustomerEmail(details));
-        await trySend(tripFullOwnerEmail(details));
+        const customerEmailFailed = !(await trySend(emails.tripFullEmail(booking)));
+        await trySend(emails.tripFullOwnerEmail(booking, { customerEmailFailed }));
     }
 
     return { booking, created: true };

@@ -31,15 +31,16 @@ describe('a customer makes a booking', () => {
         assert.equal(b.cardLabel, 'Visa •••• 4242 (expires 08/30)');
 
         assert.equal(mocks.sent().length, 2);
-        assert.ok(mocks.sent(body.email).some((m) => m.subject === 'Booking Confirmation Sark Boat Trips'));
-        assert.ok(mocks.sent(t.OWNER).some((m) => m.subject === `New Booking ${t.shown(body.date)}`));
-        // the customer reads the date day-month-year, never as it is stored
-        const confirmation = mocks.sent(body.email).find((m) => m.subject === 'Booking Confirmation Sark Boat Trips');
-        assert.ok(confirmation.html.includes(`on ${t.shown(body.date)} at 11am`));
+        const confirmation = mocks.sent(body.email).find((m) => m.subject === `Your boat trip on ${t.short(body.date)} at 11am is confirmed`);
+        assert.ok(confirmation);
+        assert.ok(mocks.sent(t.OWNER).some((m) => m.subject === `New booking: Alice Smith, 2 people, 11am ${t.short(body.date)}`));
+        // the customer reads the date written out, never as it is stored
+        assert.match(confirmation.text, new RegExp(`Date: ${t.long(body.date)}\nTime: 11am\n`));
         assert.ok(!confirmation.html.includes(body.date), 'the stored YYYY-MM-DD form is not shown to the customer');
         // and it says the card is saved, what it will be charged and when, not "pay on the day"
-        assert.match(confirmation.html, /Your card has been saved and nothing has been taken yet\. £80 will be charged at 11am on the day of your trip\. You can cancel free of charge up to 24 hours before your trip starts\./);
-        assert.doesNotMatch(confirmation.html, /Payment is at the end of the trip/);
+        assert.match(confirmation.text, /Payment: £80, charged to your saved card at 11am on the day\n/);
+        assert.match(confirmation.text, /Nothing has been taken from your card yet\. You can cancel free of charge up to 24 hours before your trip starts\. If we have to cancel because of the weather, you won't be charged\./);
+        assert.doesNotMatch(confirmation.text, /At the end of the trip/);
     });
 
     it('nothing is saved or emailed until the card is saved', async () => {
@@ -53,8 +54,8 @@ describe('a customer makes a booking', () => {
         const body = t.booking({ adults: '2', children: '3' });
         await add(body);
         const confirmation = mocks.sent(body.email)[0];
-        assert.match(confirmation.html, /2 adults and 3 children/);
-        assert.match(confirmation.html, /£155 will be charged/); // 2 x £40 + 3 x £25
+        assert.match(confirmation.text, /Party: 2 adults and 3 children\n/);
+        assert.match(confirmation.text, /Payment: £155, charged/); // 2 x £40 + 3 x £25
     });
 
     it('cannot choose its own status: a booking sent as "cancelled" is saved as active', async () => {

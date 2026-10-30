@@ -62,7 +62,7 @@ describe('every email', () => {
 
         const sent = mocks.sent();
         const subjects = sent.map((m) => `${m.to}: ${m.subject}`);
-        for (const expected of [/^trip@.*Booking Confirmation/, /^charter@.*CHARTER Confirmation/, /^trip@.*CANCELLED/, /^owner@.*New Booking/, /^owner@.*New CHARTER/, /^owner@.*Booking CANCELLED/, /^owner@.*Card payment failed/]) {
+        for (const expected of [/^trip@.*boat trip .* is confirmed/, /^charter@.*private charter .* is confirmed/, /^trip@.*has been cancelled/, /^owner@.*New booking:/, /^owner@.*New charter:/, /^owner@.*Cancelled:/, /^owner@.*Card payment failed/]) {
             assert.ok(subjects.some((s) => expected.test(s)), `expected an email matching ${expected}, got ${subjects.join(' | ')}`);
         }
         for (const mail of sent) {

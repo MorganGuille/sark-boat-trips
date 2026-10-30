@@ -119,10 +119,11 @@ describe('Stripe says a card was saved (the webhook)', () => {
         assert.deepEqual([b.charter, b.status, b.adults, b.firstName, b.lastName], ['true', 'active', 2, 'Carol', 'Charter']);
         assert.deepEqual([b.paymentStatus, b.stripeCustomerId, b.stripePaymentMethodId], ['card_saved', 'cus_test_saved', 'pm_for_seti_cs_test_saved']);
         assert.deepEqual(b.prices, { adult: 4000, child: 2500, charter: 40000 }, 'the prices in force are saved on it');
-        const confirmation = mocks.sent(session.metadata.email).find((m) => m.subject === 'PRIVATE CHARTER Confirmation Sark Boat Trips');
-        assert.match(confirmation.html, /£400 will be charged at 11am on the day of your charter\. You can cancel free of charge up to 48 hours before your charter starts\./);
-        assert.doesNotMatch(confirmation.html, /deposit/i);
-        assert.ok(mocks.sent(t.OWNER).some((m) => m.subject === `New CHARTER on : ${t.shown(session.metadata.date)}`));
+        const confirmation = mocks.sent(session.metadata.email).find((m) => m.subject === `Your private charter on ${t.short(session.metadata.date)} at 11am is confirmed`);
+        assert.match(confirmation.text, /Payment: £400, charged to your saved card at 11am on the day\n/);
+        assert.match(confirmation.text, /You can cancel free of charge up to 48 hours before your charter starts\./);
+        assert.doesNotMatch(confirmation.text, /deposit/i);
+        assert.ok(mocks.sent(t.OWNER).some((m) => /^New charter: Carol Charter, 2 people, 11am /.test(m.subject)));
         assert.equal(mocks.sent().length, 2);
     });
     it('a trip is created the same way, with the trip emails', async () => {
@@ -130,8 +131,8 @@ describe('Stripe says a card was saved (the webhook)', () => {
         await t.webhook(app, session);
         const [b] = await bookingsFor('cs_test_trip');
         assert.deepEqual([b.charter, b.paymentStatus, b.adults], ['false', 'card_saved', 3]);
-        assert.ok(mocks.sent(session.metadata.email).some((m) => m.subject === 'Booking Confirmation Sark Boat Trips'));
-        assert.ok(mocks.sent(t.OWNER).some((m) => m.subject === `New Booking ${t.shown(session.metadata.date)}`));
+        assert.ok(mocks.sent(session.metadata.email).some((m) => m.subject === `Your boat trip on ${t.short(session.metadata.date)} at 11am is confirmed`));
+        assert.ok(mocks.sent(t.OWNER).some((m) => /^New booking: .*, 3 people, 11am /.test(m.subject)));
     });
     it('a charter blocks the trip simply by existing, without writing a capacity setting', async () => {
         await t.webhook(app, t.cardSession('cs_test_blocks', { date: t.day(14) }));
@@ -188,7 +189,7 @@ describe('the trip fills up while the customer is entering their card', () => {
         assert.equal((await t.seatsLeft(app, t.day(15)))['11am'], 2, 'the seats were not taken');
         const toCustomer = mocks.sent(params.metadata.email);
         assert.equal(toCustomer.length, 1);
-        assert.match(toCustomer[0].subject, /Sorry, your trip filled up/);
+        assert.match(toCustomer[0].subject, /^Sorry, the boat trip on .* is full$/);
         assert.match(toCustomer[0].html, /Nothing has been charged/);
         assert.match(mocks.sent(t.OWNER)[0].subject, /Booking NOT made/);
     });

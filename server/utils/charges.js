@@ -6,15 +6,12 @@ const stripe = require('./stripe');
 const { tripStartsAt, guernseyToday } = require('./validateBooking');
 const { readPrices, bookingValue } = require('./prices');
 const { showDay } = require('./dates');
-const { partyText } = require('./party');
 const { trySend } = require('./mailer');
-const { settings } = require('./settings');
+const { failedChargesEmail } = require('../emails');
 const { repeat } = require('./timer');
 
 const RETRY_AFTER_MINUTES = 10; // a charge stuck in "charging" (a crash, or Stripe unreachable) is retried after this
 const MAX_ATTEMPTS = 5; // then it is given up and marked unpaid for the owner to collect
-
-const pounds = (pence) => `£${(pence / 100).toFixed(2).replace(/\.00$/, '')}`;
 
 // Stripe's reasons, in words the owner can act on
 const reasonFor = (error) => {
@@ -115,20 +112,6 @@ const chargeOne = async (booking, prices) => {
         return { outcome: 'retry', booking, amount };
     }
 };
-
-// Plain text on purpose: this one is for the owner and needs no layout
-const failedChargesEmail = (failures) => ({
-    from: settings.mail.sender,
-    to: settings.mail.owner,
-    subject: `Card payment failed for ${failures.length} booking${failures.length === 1 ? '' : 's'}: collect on the day`,
-    text: `These bookings could not be charged to the customer's saved card. They are marked Unpaid on the dashboard.
-Please take the payment on the day (cash or card reader) and press Mark paid.
-
-Open the dashboard: ${settings.dashboardUrl}
-
-${failures.map(({ booking, amount, reason }) => `- ${[booking.firstName, booking.lastName].filter(Boolean).join(' ')}, ${booking.timeslot} on ${showDay(booking.date)}, ${partyText(booking)}${amount ? `, ${pounds(amount)}` : ''}
-  ${reason}${booking.phone ? `\n  Phone: ${booking.phone}` : ''}`).join('\n')}`,
-});
 
 // Charges every booking whose trip has started, that has a saved card and isn't cancelled
 const runDueCharges = async (now = new Date()) => {

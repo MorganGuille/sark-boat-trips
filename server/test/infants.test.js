@@ -42,9 +42,9 @@ describe('booking online with infants', () => {
         assert.deepEqual([booking.adults, booking.children, booking.infants], [1, 0, 2]);
         assert.match(mocks.stripe.created[0].custom_text.submit.message, /£40 will be charged/);
         const confirmation = mocks.sent(body.email)[0];
-        assert.match(confirmation.html, /booking for 1 adult and 2 infants on/);
-        assert.match(confirmation.html, /£40 will be charged/);
-        assert.match(mocks.sent(t.OWNER)[0].html, /for 1 adult and 2 infants/);
+        assert.match(confirmation.text, /Party: 1 adult and 2 infants\n/);
+        assert.match(confirmation.text, /Payment: £40, charged to your saved card/);
+        assert.match(mocks.sent(t.OWNER)[0].text, /Party: 1 adult and 2 infants\n/);
     });
     it('they use seats: a party that only fits without its infants is refused', async () => {
         await t.insertBooking({ date: t.day(10), adults: 10 });

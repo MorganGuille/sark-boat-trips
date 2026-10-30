@@ -151,7 +151,7 @@ describe('when the charge fails', () => {
         const owner = mocks.sent(t.OWNER);
         assert.equal(owner.length, 1, 'one email for all the failures');
         assert.match(owner[0].subject, /Card payment failed for 2 bookings: collect on the day/);
-        assert.match(owner[0].text, /Ann Smith, 11am on 10-07-2030, 2 adults, £80/);
+        assert.ok(owner[0].text.includes(`Ann Smith, 11am on ${t.long('2030-07-10')}, 2 adults, £80.`));
         assert.match(owner[0].text, /Bob Smith/);
         assert.match(owner[0].text, /Open the dashboard: http:\/\/localhost:5173\/dashboard/, 'a link straight to the dashboard');
         assert.equal(mocks.sent('ann@example.test').length, 0);

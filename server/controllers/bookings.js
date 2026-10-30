@@ -3,12 +3,10 @@ const Bookings = require("../models/bookings");
 const Availability = require('../models/availability');
 const { sendEmail, trySend } = require('../utils/mailer');
 const { getAvailability, isSlotEmpty } = require('../utils/availability');
-const { safeHtml } = require('../utils/safeHtml');
-const { settings } = require('../utils/settings');
 const { isDay, showDay } = require('../utils/dates');
 const { readPrices, bookingValue } = require('../utils/prices');
 const { seatsFor, partyText } = require('../utils/party');
-const { cancelRule } = require('../utils/policy');
+const emails = require('../emails');
 const { isMonth, monthRange, buildReport, toCsv } = require('../utils/report');
 const { validatePublicBooking, validateAdminBooking, validateAvailabilitySetting } = require('../utils/validateBooking');
 
@@ -48,78 +46,6 @@ const pounds = (pence) => `£${(pence / 100).toFixed(2).replace(/\.00$/, '')}`;
 // Day view and search hide cancelled bookings unless asked (?includeCancelled=true)
 const statusFilter = (req) => req.query.includeCancelled === 'true' ? {} : { status: { $ne: 'cancelled' } };
 
-// What the confirmation says about paying. A booking with a saved card is charged at the trip time
-// (paymentsspec.md); one made on the dashboard is paid on the day, as before.
-const PAY_ON_THE_DAY = 'Payment is at the end of the trip and you can pay either by cash or card.';
-const cardPaymentLine = (amountPence, timeslot, charter = false) =>
-    `Your card has been saved and nothing has been taken yet. ${amountPence === null ? 'The trip price' : `£${(amountPence / 100).toFixed(2).replace(/\.00$/, '')}`} will be charged at ${timeslot} on the day of your ${charter ? 'charter' : 'trip'}. ${cancelRule(charter)} If we have to cancel because of the weather, you won't be charged.`;
-
-const buildConfirmationEmail = ({ email, firstName, party, date, timeslot, paymentLine = PAY_ON_THE_DAY }) => ({
-                from: settings.mail.sender,
-                to: email,
-                subject: 'Booking Confirmation Sark Boat Trips',
-                html: safeHtml`<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
-                <div style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto 4rem auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
-                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTbfVS_8hzPlk9unxom9wpjtPJyZ_7XgpjsuA&s"
-                        alt="Sark Boat Trips" width="42" height="42"
-                        style="background-color: white; padding: 0.2rem; border-radius: 50px;">
-                <h3>Dear ${firstName},</h3>
-                <p>Your booking for ${party} on ${showDay(date)} at ${timeslot} has been confirmed.</p>
-                <p>Please be at the <strong>Creux Harbour</strong> shortly before ${timeslot}, bring weather appropriate
-                clothing and any snacks
-                and drinks you'd like.</p>
-                <p>${paymentLine}</p>
-                <p>If you have any questions, please dont hesitate to ask</p>
-                <br>
-                <p><strong>Please note that due to weather or availability we may need to change the time of your trip.</strong>
-                </p>
-                <p>We will contact you if anything changes!</p>
-                <br>
-                <p>Thank you so much,</p>
-                <h3>Sark Boat Trips</h3>
-                <hr>
-                <br>
-                <div style="text-align: center;">
-                <a style="color: white; text-decoration: none; margin: 0; padding: 0;"
-                    href="https://maps.app.goo.gl/E2XLJqrGku7eDePZ8" target='_blank'>&#9875 Creux Harbour, Sark</a>
-                <br>
-                <a style="color: white; text-decoration: none;" href="tel:+44-7911-764-246">&#9990 +44 7911 764 246</a>
-                <br>
-                <a style="color: white; text-decoration: none;" href="mailto:${settings.mail.from}">&#9993
-                    ${settings.mail.from}</a>
-        </div>
-    </div>
-</div>`,
-            });
-
-// The owner's "new booking" email for a customer booking
-const newBookingAdminEmail = ({ date, firstName, lastName, phone, party, email, timeslot, message, accommodation }) => ({
-                from: settings.mail.sender,
-                to: settings.mail.owner,
-                subject: `New Booking ${showDay(date)}`,
-                html: safeHtml`<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
-                            <div
-                                style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto 4rem auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
-                                <h3>New Booking ${showDay(date)}</h3>
-                                <p>A new booking has been made by:</p>
-                                <p><strong>${firstName} ${lastName}</strong></p>
-                                <p>for ${party}</p>
-                                <p>on ${showDay(date)} at ${timeslot}.</p>
-                                <hr>
-                                <p>Message:</p>
-                                <p>${message}</p>
-                                <hr>
-                                <p>Email : ${email}</p>
-                                <p>Phone : ${phone}</p>
-                                <p>Accommodation : ${accommodation}</p>
-                                <hr>
-                                <br>
-                                <a style="background-color: rgb(5, 171, 116); color: white; text-decoration: none; padding: 0.5rem;"
-                                    href="${settings.dashboardUrl}" target='_blank'>Go to dashboard</a>
-                            </div>
-                        </div>`,
-            });
-
 // Dashboard only (behind requireAuth): the owner may need to save a booking with missing details
 const adminAddBooking = async (req, res) => {
     const { date, timeslot, firstName, lastName, phone, email, accommodation, message, charter } = req.body;
@@ -139,16 +65,14 @@ const adminAddBooking = async (req, res) => {
         }
 
         // validateBeforeSave is off because the model requires the customer details
-        await new Bookings({
+        const saved = await new Bookings({
             date, timeslot, firstName, lastName, phone, email, adults, children, infants, accommodation, message, charter,
             prices: (await readPrices()) || undefined,
         }).save({ validateBeforeSave: false });
 
         const who = [firstName, lastName].filter(Boolean).join(' ') || 'the booking';
         if (email) {
-            const sent = await trySend(buildConfirmationEmail({
-                email, firstName: firstName || 'guest', party: partyText({ adults, children, infants }), date, timeslot,
-            }));
+            const sent = await trySend(emails.confirmationEmail(saved));
             return res.send({ ok: true, data: `Booking for ${who} on ${showDay(date)} at ${timeslot} saved${sent ? ' and confirmation email sent' : ', but the confirmation email could not be sent'}` });
         }
         res.send({ ok: true, data: `Booking for ${who} on ${showDay(date)} at ${timeslot} saved (no email address, so no confirmation was sent)` });
@@ -157,52 +81,6 @@ const adminAddBooking = async (req, res) => {
         res.status(500).send({ ok: false, data: "An error occurred saving the booking." });
     }
 };
-
-// What a cancellation email says about money, from how the booking stood when it was cancelled
-const cancelPaymentLine = (paymentStatus) => {
-    if (paymentStatus === 'card_saved') return "Your card has not been charged, and it won't be charged for this booking.";
-    if (['paid', 'paid_in_person', 'charging'].includes(paymentStatus)) return "If you've already paid, please get in touch and we'll sort out a refund.";
-    return 'Nothing has been charged.';
-};
-const PAYMENT_FOR_OWNER = {
-    card_saved: 'card saved, it will not be charged', paid: 'PAID ONLINE: refund it in Stripe if needed',
-    paid_in_person: 'PAID IN PERSON: refund it yourself if needed', charging: 'a charge was under way: check Stripe',
-};
-
-// The customer's cancellation email. apology: set when the owner cancelled the whole trip (cancelTrip)
-const cancellationEmail = (cancelledBooking, apology = '') => ({
-            from: settings.mail.sender,
-            to: cancelledBooking.email,
-            subject: 'Booking CANCELLED - Sark Boat Trips',
-            html: safeHtml`<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
-                        <div
-                            style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto 4rem auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
-                            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTbfVS_8hzPlk9unxom9wpjtPJyZ_7XgpjsuA&s"
-                                alt="Sark Boat Trips" width="42" height="42"
-                                style="background-color: white; padding: 0.2rem; border-radius: 50px;">
-                            <h3>Dear ${cancelledBooking.firstName},</h3>
-                            <p>Your booking on ${showDay(cancelledBooking.date)} at ${cancelledBooking.timeslot} has been <strong
-                                    style="color: lightcoral;">CANCELLED</strong>.
-                            </p>
-                            <p>${apology}</p>
-                            <p>${cancelPaymentLine(cancelledBooking.paymentStatus)}</p>
-                            <p>${apology ? '' : 'If this is a mistake please contact us'}</p>
-                            <p>Thank you so much,</p>
-                            <h3>Sark Boat Trips</h3>
-                            <hr>
-                            <br>
-                            <div style="text-align: center;">
-                                <a style="color: white; text-decoration: none; margin: 0; padding: 0;"
-                                    href="https://maps.app.goo.gl/E2XLJqrGku7eDePZ8" target='_blank'>&#9875 Creux Harbour, Sark</a>
-                                <br>
-                                <a style="color: white; text-decoration: none;" href="tel:+44-7911-764-246">&#9990 +44 7911 764 246</a>
-                                <br>
-                                <a style="color: white; text-decoration: none;" href="mailto:${settings.mail.from}">&#9993
-                                    ${settings.mail.from}</a>
-                            </div>
-                        </div>
-                    </div>`,
-});
 
 const cancelBooking = async (req, res) => {
     const { _id } = req.body;
@@ -218,28 +96,9 @@ const cancelBooking = async (req, res) => {
             return res.status(404).send({ ok: false, data: `No active booking found for booking ID : ${_id}` });
         }
 
-        const mailOptionsClient = cancellationEmail(cancelledBooking);
+        const mailOptionsClient = emails.cancellationEmail(cancelledBooking);
+        const mailOptionsAdmin = emails.cancelledOwnerEmail(cancelledBooking);
 
-        const mailOptionsAdmin = {
-            from: settings.mail.sender,
-            to: settings.mail.owner,
-            subject: `Booking CANCELLED ${showDay(cancelledBooking.date)}`,
-            html: safeHtml`<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
-                    <div
-                        style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto 4rem auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
-                        <h3>Booking <strong style="color: lightcoral;">CANCELLED</strong></h3>
-                        <p>Name : ${cancelledBooking.firstName} ${cancelledBooking.lastName} </p>
-                        <p>Date : ${showDay(cancelledBooking.date)} at ${cancelledBooking.timeslot}</p>
-                        <p>Payment : ${PAYMENT_FOR_OWNER[cancelledBooking.paymentStatus] || 'unpaid, nothing to refund'}</p>
-                        <p>Email : ${cancelledBooking.email} </p>
-                        <p>Phone : ${cancelledBooking.phone} </p>
-                        <hr>
-                        <br>
-                        <a style="background-color: rgb(5, 171, 116); color: white; text-decoration: none; padding: 0.5rem;"
-                            href="${settings.dashboardUrl}" target='_blank'>Go to dashboard</a>
-                    </div>
-                </div>`
-        };
 
         const who = bookingName(cancelledBooking);
         try {
@@ -285,10 +144,7 @@ const restoreBooking = async (req, res) => {
             return res.send({ ok: true, data: `Booking for ${who} on ${showDay(booking.date)} at ${booking.timeslot} restored (no email address, so no confirmation was sent)` });
         }
         try {
-            await sendEmail(buildConfirmationEmail({
-                email: booking.email, firstName: booking.firstName || 'guest', party: partyText(booking), date: booking.date, timeslot: booking.timeslot,
-                ...(booking.paymentStatus === 'card_saved' && { paymentLine: cardPaymentLine(bookingValue(booking, await readPrices()), booking.timeslot, booking.charter === 'true') }),
-            }));
+            await sendEmail(emails.confirmationEmail(booking, bookingValue(booking, await readPrices())));
         } catch (emailError) {
             return res.send({ ok: true, data: `Booking for ${who} on ${showDay(booking.date)} at ${booking.timeslot} restored, but the confirmation email could not be sent` });
         }
@@ -377,58 +233,6 @@ const search = async (req, res) => {
 };
 
 
-const updatedBookingClientEmail = (booking) => ({
-            from: settings.mail.sender,
-            to: booking.email,
-            subject: 'Booking UPDATED - Sark Boat Trips',
-            html: safeHtml`<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
-                        <div
-                            style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto 4rem auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
-                            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTbfVS_8hzPlk9unxom9wpjtPJyZ_7XgpjsuA&s"
-                                alt="Sark Boat Trips" width="42" height="42"
-                                style="background-color: white; padding: 0.2rem; border-radius: 50px;">
-                            <h3>Dear ${booking.firstName || 'guest'},</h3>
-                            <p>Your booking has been <strong style="color: aquamarine;">UPDATED</strong>.</p>
-                            <p>You are booked for ${partyText(booking)} on
-                                ${showDay(booking.date)} at ${booking.timeslot}</p>
-                            <p>If this is a mistake please contact us</p>
-                            <p>Thank you so much,</p>
-                            <h3>Sark Boat Trips</h3>
-                            <hr>
-                            <br>
-                            <div style="text-align: center;">
-                                <a style="color: white; text-decoration: none; margin: 0; padding: 0;"
-                                    href="https://maps.app.goo.gl/E2XLJqrGku7eDePZ8" target='_blank'>&#9875 Creux Harbour, Sark</a>
-                                <br>
-                                <a style="color: white; text-decoration: none;" href="tel:+44-7911-764-246">&#9990 +44 7911 764 246</a>
-                                <br>
-                                <a style="color: white; text-decoration: none;" href="mailto:${settings.mail.from}">&#9993
-                                    ${settings.mail.from}</a>
-                            </div>
-                        </div>
-                    </div>`,
-        });
-
-const updatedBookingAdminEmail = (booking) => ({
-            from: settings.mail.sender,
-            to: settings.mail.owner,
-            subject: 'Booking UPDATED',
-            html: safeHtml`<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
-                        <div
-                            style="font-family: sans-serif; text-align: left; width: 20rem; height: 80%; margin: 4rem auto 4rem auto; background-color: rgb(64, 94, 119); color: white; padding: 2rem; border-radius: 2rem;">
-                            <h3>Booking <strong style="color: aquamarine;">UPDATED</strong></h3>
-                            <p>Name : ${[booking.firstName, booking.lastName].filter(Boolean).join(' ') || '(no name)'} </p>
-                            <p>Date : ${showDay(booking.date)} at ${booking.timeslot}</p>
-                            <p>Email : ${booking.email || '(none)'} </p>
-                            <p>Phone : ${booking.phone || '(none)'} </p>
-                            <hr>
-                            <br>
-                            <a style="background-color: rgb(5, 171, 116); color: white; text-decoration: none; padding: 0.5rem;"
-                                href="${settings.dashboardUrl}" target='_blank'>Go to dashboard</a>
-                        </div>
-                    </div>`,
-        });
-
 // Text details the dashboard can edit. Sent empty, one is cleared; left out, it stays as it is.
 const EDITABLE_TEXT = ['firstName', 'lastName', 'phone', 'email', 'accommodation', 'message'];
 
@@ -496,8 +300,8 @@ const updateBooking = async (req, res) => {
 
     // The change is saved, so email problems are reported but never fail the request
     const notify = req.body.notifyCustomer !== false;
-    const customerEmailed = booking.email && notify ? await trySend(updatedBookingClientEmail(booking)) : null;
-    await trySend(updatedBookingAdminEmail(booking));
+    const customerEmailed = booking.email && notify ? await trySend(emails.updatedEmail(booking)) : null;
+    await trySend(emails.updatedOwnerEmail(booking));
 
     let emailNote = '';
     if (booking.email && !notify) emailNote = ' (customer not emailed, as you asked)';
@@ -599,26 +403,13 @@ const cancelTrip = async (req, res) => {
         if (!booking.email) { notEmailed.push(booking); continue; }
         const what = booking.charter === 'true' ? 'charter' : 'trip';
         const apology = `We're very sorry: we've had to cancel this ${what}${TRIP_REASONS[reason]}. We'd love to take you out another day, so please book again or get in touch.`;
-        if (await trySend(cancellationEmail(booking, apology))) emailed++;
+        if (await trySend(emails.cancellationEmail(booking, apology))) emailed++;
         else notEmailed.push(booking);
     }
     const toRefund = cancelled.filter((b) => ['paid', 'paid_in_person', 'charging'].includes(b.paymentStatus));
 
     const trip = `the ${timeslot} trip on ${showDay(date)}`;
-    const line = (b) => `- ${bookingName(b)}, ${partyText(b)}${b.phone ? `, phone ${b.phone}` : ''}`;
-    await trySend({
-        from: settings.mail.sender,
-        to: settings.mail.owner,
-        subject: `Trip CANCELLED: ${timeslot} on ${showDay(date)} (${cancelled.length} booking${cancelled.length === 1 ? '' : 's'})`,
-        text: [
-            `You cancelled ${trip}${TRIP_REASONS[reason]}. It is closed to new bookings (reopen it from the Availability tab).`,
-            `${cancelled.length} booking${cancelled.length === 1 ? '' : 's'} cancelled. Nobody's saved card will be charged.`,
-            cancelled.length ? `\n${cancelled.map(line).join('\n')}` : '',
-            notEmailed.length ? `\nNOT EMAILED (no address, or the email failed), please contact them:\n${notEmailed.map(line).join('\n')}` : '',
-            toRefund.length ? `\nALREADY PAID, refund them (online payments in Stripe):\n${toRefund.map(line).join('\n')}` : '',
-            `\nOpen the dashboard: ${settings.dashboardUrl}`,
-        ].filter(Boolean).join('\n'),
-    });
+    await trySend(emails.tripCancelledOwnerEmail({ date, timeslot, reasonText: TRIP_REASONS[reason], cancelled, notEmailed, toRefund }));
 
     const parts = [`${cancelled.length} booking${cancelled.length === 1 ? '' : 's'} cancelled`, `${emailed} customer${emailed === 1 ? '' : 's'} emailed`];
     if (notEmailed.length) parts.push(`${notEmailed.length} not emailed (see your email)`);
@@ -628,5 +419,5 @@ const cancelTrip = async (req, res) => {
     });
 };
 
-module.exports = { cancelTrip, buildConfirmationEmail, newBookingAdminEmail, cardPaymentLine, markPaid, markUnpaid, monthlyReport, adminAddBooking, cancelBooking, restoreBooking, permanentlyDeleteBooking, checkDate, checkMonthAvail, search, updateBooking, updateAvailability }
+module.exports = { cancelTrip, markPaid, markUnpaid, monthlyReport, adminAddBooking, cancelBooking, restoreBooking, permanentlyDeleteBooking, checkDate, checkMonthAvail, search, updateBooking, updateAvailability }
 

@@ -56,7 +56,7 @@ describe('cancelling a whole trip', () => {
         await cancelTrip({});
         const owner = mocks.sent(t.OWNER);
         assert.equal(owner.length, 1);
-        assert.match(owner[0].subject, /^Trip CANCELLED: 11am on .* \(2 bookings\)$/);
+        assert.equal(owner[0].subject, `Trip cancelled: 11am ${t.short(t.day(10))}, 2 bookings`);
         assert.match(owner[0].text, /Ann Smith, 2 adults, phone 0711/);
         assert.match(owner[0].text, /Nobody's saved card will be charged/);
         assert.match(owner[0].text, /Open the dashboard: http:\/\/localhost:5173\/dashboard/);

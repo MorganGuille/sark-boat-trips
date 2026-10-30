@@ -102,9 +102,9 @@ describe('customers cannot inject markup or links into emails', () => {
         assert.equal(emails.length, 10, 'client and owner emails across all six paths');
         for (const m of emails) {
             for (const bad of DANGEROUS) assert.ok(!m.html.includes(bad), `"${bad}" appeared in: ${m.subject}`);
-            assert.ok(m.html.includes('<div style=') && m.html.includes('<h3>'), 'the template\'s own layout is intact');
+            assert.ok(m.html.includes('<table role="presentation"') && m.html.includes('<h1 style='), 'the template\'s own layout is intact');
         }
-        const ownerCopy = mocks.sent(t.OWNER).find((m) => /New Booking/.test(m.subject));
+        const ownerCopy = mocks.sent(t.OWNER).find((m) => /^New booking:/.test(m.subject));
         const shown = text(ownerCopy.html);
         assert.ok(shown.includes(EVIL.message) && shown.includes(EVIL.lastName) && shown.includes(EVIL.accommodation), 'the owner sees exactly what was typed');
         assert.ok(mocks.sent(email).some((m) => /Dear [^,]*Bob/.test(text(m.html))), 'apostrophes and ampersands read correctly');
@@ -113,7 +113,7 @@ describe('customers cannot inject markup or links into emails', () => {
         await add({ ...t.booking(), firstName: 'Alice', lastName: 'Smith', email: 'alice@example.test', children: '1', message: 'Looking forward to it!' });
         const c = text(mocks.sent('alice@example.test')[0].html), o = text(mocks.sent(t.OWNER)[0].html);
         assert.match(c, /Dear Alice,/);
-        assert.match(c, /2 adults and 1 child on/);
+        assert.match(c, /2 adults and 1 child/);
         assert.doesNotMatch(c, /undefined|&lt;|&amp;/);
         assert.match(o, /Alice Smith/);
         assert.match(o, /Looking forward to it!/);

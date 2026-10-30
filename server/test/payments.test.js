@@ -127,7 +127,7 @@ describe('undo mark paid', () => {
 
 describe('the cancellation email says what happens to the money', () => {
     const cancel = (_id) => t.call(app, 'post', '/bookings/cancel', { token, body: { _id } });
-    const mailTo = (who) => mocks.sent(who).find((m) => /CANCELLED/.test(m.subject));
+    const mailTo = (who) => mocks.sent(who).find((m) => /cancelled/i.test(m.subject));
     const cases = [
         ['a saved card', { paymentStatus: 'card_saved', stripePaymentMethodId: 'pm_test' }, /Your card has not been charged, and it won't be charged for this booking/, /card saved, it will not be charged/],
         ['an unpaid booking', { paymentStatus: 'unpaid' }, /Nothing has been charged\./, /unpaid, nothing to refund/],

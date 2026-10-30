@@ -34,8 +34,8 @@ describe('when reminders are sent', () => {
         assert.deepEqual(await runDueReminders(minutes(SUMMER_6PM, -1)), { sent: 0, failed: 0 }, '5.59pm: not yet');
         assert.deepEqual(await runDueReminders(SUMMER_6PM), { sent: 2, failed: 0 });
         assert.deepEqual(reminders().map((m) => [m.to, m.subject]).sort(), [
-            ['ann@example.test', 'See you tomorrow at 11am - Sark Boat Trips'],
-            ['bob@example.test', 'See you tomorrow at 2pm - Sark Boat Trips'],
+            ['ann@example.test', 'See you tomorrow at 11am'],
+            ['bob@example.test', 'See you tomorrow at 2pm'],
         ]);
     });
 
@@ -103,11 +103,13 @@ describe('the email', () => {
         await runDueReminders(SUMMER_6PM);
         const [mail] = reminders();
         assert.equal(mail.from, `Sark Boat Trips <${t.MAIL_FROM}>`);
-        const text = mail.html.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ');
+        const { text } = mail;
         assert.match(text, /Dear Ann,/);
-        assert.match(text, /your boat trip is tomorrow, 15-07-2027, at 2pm, for 2 adults, 1 child and 1 infant\./);
+        assert.match(text, /Just a reminder that your boat trip is tomorrow\./);
+        assert.match(text, /Date: Thursday 15 July 2027\nTime: 2pm\nMeeting point: Creux Harbour, Sark \(https:\/\/maps\.app\.goo\.gl\/E2XLJqrGku7eDePZ8\)\nParty: 2 adults, 1 child and 1 infant\n/);
         assert.match(text, /Creux Harbour shortly before 2pm/);
-        assert.match(text, /If the weather means we have to change the time or cancel, we will contact you/);
+        assert.match(text, /Bring weather appropriate clothing, and any snacks and drinks you'd like\./);
+        assert.match(text, /the weather means we have to change the time of a trip\. If that happens, we'll contact you/);
         assert.ok(mail.html.includes(`href="mailto:${t.MAIL_FROM}"`));
         assert.doesNotMatch(text, /charged|£/, 'no payment line (owner\'s choice)');
     });
@@ -115,7 +117,7 @@ describe('the email', () => {
     it('says private charter for a charter', async () => {
         await insert({ firstName: 'Cee', charter: 'true' });
         await runDueReminders(SUMMER_6PM);
-        assert.match(reminders()[0].html.replace(/<[^>]+>/g, ''), /your private charter is/);
+        assert.match(reminders()[0].text, /your private charter is tomorrow/);
     });
 
     it('escapes what the customer typed', async () => {

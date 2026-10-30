@@ -46,7 +46,7 @@ const setEnv = (overrides = {}) => {
 // checking webhook signatures; only the calls that would reach Stripe's servers are faked.
 const installMocks = () => {
     const mocks = {
-        mails: [], // every email attempted: { from, to, subject, html, text, result }
+        mails: [], // every email attempted: { from, to, subject, html, text, attachments, result }
         transport: null, // the mail server settings the mailer was given
         mailMode: 'none', // 'none' | 'client' | 'admin' | 'all': which emails should fail
         // keys given to Stripe, checkout sessions requested, customers created, fake sessions and
@@ -72,7 +72,7 @@ const installMocks = () => {
             sendMail: async (options) => {
                 const toOwner = options.to === OWNER;
                 const fail = mocks.mailMode === 'all' || (mocks.mailMode === 'client' && !toOwner) || (mocks.mailMode === 'admin' && toOwner);
-                mocks.mails.push({ from: options.from, to: options.to, subject: options.subject, html: options.html || '', text: options.text || '', result: fail ? 'failed' : 'sent' });
+                mocks.mails.push({ from: options.from, to: options.to, subject: options.subject, html: options.html || '', text: options.text || '', attachments: options.attachments || [], result: fail ? 'failed' : 'sent' });
                 if (fail) throw new Error('fake mail failure');
                 return { messageId: 'fake' };
             },
@@ -171,6 +171,9 @@ const resetDb = async () => {
 const day = (offset) => new Date(Date.now() + offset * 86400000).toISOString().slice(0, 10);
 // the same date the way emails and messages write it for people (dd-mm-yyyy)
 const shown = (isoDay) => require('../utils/dates').showDay(isoDay);
+// how emails write a date: 'Monday 9 November 2026', and 'Mon 9 Nov' in subjects
+const long = (isoDay) => require('../utils/dates').longDay(isoDay);
+const short = (isoDay) => require('../utils/dates').shortDay(isoDay);
 const seedSeason = async () => {
     const midnight = (offset) => { const d = new Date(Date.now() + offset * 86400000); return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())); };
     await require('../models/admin').deleteMany({});
@@ -243,4 +246,4 @@ const bookOnline = async (app, body, { kind = 'trip', ip } = {}) => {
     return { res, session, booking };
 };
 
-module.exports = { dbUri, OWNER, MAIL_FROM, PASSWORD, USERNAME, WEBHOOK_SECRET, setEnv, installMocks, startDb, stopDb, resetDb, seedSeason, day, shown, call, login, booking, insertBooking, findBooking, seatsLeft, webhook, cardSession, bookOnline };
+module.exports = { dbUri, OWNER, MAIL_FROM, PASSWORD, USERNAME, WEBHOOK_SECRET, setEnv, installMocks, startDb, stopDb, resetDb, seedSeason, day, shown, long, short, call, login, booking, insertBooking, findBooking, seatsLeft, webhook, cardSession, bookOnline };

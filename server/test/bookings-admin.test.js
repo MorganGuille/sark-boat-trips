@@ -31,7 +31,7 @@ describe('adding a booking on the dashboard', () => {
     it('with an email address the customer gets a confirmation', async () => {
         const res = await post('/bookings/admin-add', { date: t.day(10), timeslot: '2pm', firstName: 'Bob', lastName: 'Jones', email: 'bob@example.test', adults: '2' });
         assert.match(res.body.data, /saved and confirmation email sent/);
-        assert.ok(mocks.sent('bob@example.test').some((m) => /Booking Confirmation/.test(m.subject)));
+        assert.ok(mocks.sent('bob@example.test').some((m) => /^Your boat trip on .* is confirmed$/.test(m.subject)));
     });
     it('past dates and dates outside the season are allowed (a walk-up from earlier, a special trip)', async () => {
         for (const date of [t.day(-3), t.day(-100), t.day(400)]) {
@@ -115,8 +115,8 @@ describe('editing a booking', () => {
             const res = await edit(id, { date: t.day(12) });
             assert.equal(res.body.ok, true);
             assert.equal((await t.findBooking(id)).date, t.day(12));
-            const email = mocks.sent('bob@example.test').find((m) => /UPDATED/.test(m.subject));
-            assert.ok(email.html.includes(t.shown(t.day(12))) && email.html.includes('11am'));
+            const email = mocks.sent('bob@example.test').find((m) => /^Your booking has changed/.test(m.subject));
+            assert.ok(email.html.includes(t.long(t.day(12))) && email.html.includes('11am'));
         });
         it('taking people away, or editing contact details, never needs room (an over-full trip can still be edited)', async () => {
             await t.insertBooking({ date: t.day(10), adults: 10 });
@@ -165,8 +165,8 @@ describe('editing a booking', () => {
             const id = await withEmail();
             const res = await edit(id, { phone: '111' });
             assert.match(res.body.data, /updated successfully and email sent/);
-            assert.ok(mocks.sent('bob@example.test').some((m) => m.subject === 'Booking UPDATED - Sark Boat Trips'));
-            assert.ok(mocks.sent(t.OWNER).some((m) => m.subject === 'Booking UPDATED'));
+            assert.ok(mocks.sent('bob@example.test').some((m) => /^Your booking has changed: /.test(m.subject)));
+            assert.ok(mocks.sent(t.OWNER).some((m) => /^Booking changed: /.test(m.subject)));
         });
         it('with notifyCustomer false the change is saved and only the owner gets the copy', async () => {
             const id = await withEmail();
@@ -193,7 +193,7 @@ describe('editing a booking', () => {
             await edit(id, { phone: '4' });
             const customer = mocks.sent('bob@example.test')[0], owner = mocks.sent(t.OWNER)[0];
             assert.match(customer.html, /Dear guest/);
-            assert.match(customer.html, /booked for 2 adults on/, 'no "and 0 children"');
+            assert.match(customer.text, /Party: 2 adults\n/, 'no "and 0 children"');
             assert.match(owner.html, /\(no name\)/);
             assert.doesNotMatch(customer.html + owner.html, /undefined/);
         });
@@ -228,8 +228,8 @@ describe('cancelling, restoring and deleting', () => {
         assert.ok(b.cancelledAt instanceof Date);
         assert.equal((await t.seatsLeft(app, t.day(10)))['11am'], 12);
         assert.equal((await get(`/bookings/${t.day(10)}`)).body.data.length, 0);
-        assert.ok(mocks.sent('bob@example.test').some((m) => m.subject === 'Booking CANCELLED - Sark Boat Trips'));
-        assert.ok(mocks.sent(t.OWNER).some((m) => m.subject === `Booking CANCELLED ${t.shown(t.day(10))}`));
+        assert.ok(mocks.sent('bob@example.test').some((m) => m.subject === `Your boat trip on ${t.short(t.day(10))} at 11am has been cancelled`));
+        assert.ok(mocks.sent(t.OWNER).some((m) => /^Cancelled: /.test(m.subject) && m.subject.endsWith(`11am ${t.short(t.day(10))}`)));
     });
     it('a booking with no email address is cancelled without a customer email', async () => {
         const id = await withEmail({ email: '' });
@@ -252,7 +252,7 @@ describe('cancelling, restoring and deleting', () => {
         assert.equal(b.status, 'active');
         assert.equal(b.cancelledAt, undefined);
         assert.equal((await t.seatsLeft(app, t.day(10)))['11am'], 8);
-        assert.ok(mocks.sent('bob@example.test').some((m) => /Booking Confirmation/.test(m.subject)));
+        assert.ok(mocks.sent('bob@example.test').some((m) => /^Your boat trip on .* is confirmed$/.test(m.subject)));
     });
     it('restoring is refused when the trip has filled up since, and nothing is emailed', async () => {
         const id = await withEmail({ adults: 4 });
