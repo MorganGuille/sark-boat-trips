@@ -8,6 +8,7 @@
 //   const app = require('../app');
 //   before(() => t.startDb());  after(() => t.stopDb());
 const Module = require('module');
+let currentMocks; // the fakes installed by installMocks, for the helpers below
 const assert = require('node:assert/strict');
 
 const OWNER = 'sarkboattrips@gmail.com';
@@ -25,7 +26,6 @@ const setEnv = (overrides = {}) => {
         STRIPEKEY: 'sk_live_FAKE',
         STRIPETESTKEY: 'sk_test_FAKE',
         PUBLIC_URL: 'http://localhost:5173',
-        PRICE_ID: 'price_test_FAKE',
         STRIPE_WEBHOOK_SECRET: WEBHOOK_SECRET,
         gmail_address: 'nobody@example.test',
         gmail_password: 'unused',
@@ -42,10 +42,16 @@ const installMocks = () => {
     const mocks = {
         mails: [], // every email attempted: { to, subject, html, text, result }
         mailMode: 'none', // 'none' | 'client' | 'admin' | 'all': which emails should fail
-        stripe: { keys: [], created: [], sessions: {}, fail: false }, // keys given to Stripe, checkout sessions requested, fake sessions it knows, and whether creating one should fail
+        // keys given to Stripe, checkout sessions requested, customers created, fake sessions and
+        // saved cards (setup intents) it knows, and whether creating a session should fail
+        stripe: { keys: [], created: [], customers: [], sessions: {}, setupIntents: {}, fail: false },
     };
+    currentMocks = mocks;
     mocks.sent = (to) => mocks.mails.filter((m) => m.result === 'sent' && (!to || m.to === to));
-    mocks.reset = () => { mocks.mails.length = 0; mocks.mailMode = 'none'; mocks.stripe.created.length = 0; mocks.stripe.fail = false; };
+    mocks.reset = () => {
+        mocks.mails.length = 0; mocks.mailMode = 'none'; mocks.stripe.created.length = 0; mocks.stripe.customers.length = 0; mocks.stripe.fail = false;
+        for (const store of [mocks.stripe.sessions, mocks.stripe.setupIntents]) for (const key of Object.keys(store)) delete store[key];
+    };
 
     require('nodemailer').createTransport = () => ({
         sendMail: async (options) => {
@@ -68,6 +74,14 @@ const installMocks = () => {
                 if (mocks.stripe.fail) throw new Error('fake Stripe outage');
                 mocks.stripe.created.push(params);
                 return { id: `cs_test_created_${mocks.stripe.created.length}`, url: `https://checkout.stripe.test/c/pay/cs_test_created_${mocks.stripe.created.length}` };
+            };
+            client.customers.create = async (params) => {
+                mocks.stripe.customers.push(params);
+                return { id: `cus_test_${mocks.stripe.customers.length}` };
+            };
+            // A saved card. Unless a test set one up, every setup intent holds a Visa ending 4242
+            client.setupIntents.retrieve = async (id) => mocks.stripe.setupIntents[id] || {
+                id, payment_method: { id: `pm_for_${id}`, card: { brand: 'visa', last4: '4242', exp_month: 8, exp_year: 2030 } },
             };
             client.checkout.sessions.retrieve = async (id) => {
                 const session = mocks.stripe.sessions[id];
@@ -165,9 +179,27 @@ const webhook = (app, session, { type = 'checkout.session.completed', secret = W
     const header = signature ?? Stripe('sk_test_signing_only').webhooks.generateTestHeaderString({ payload, secret });
     return require('supertest')(app).post('/charters/webhook').set('Content-Type', 'application/json').set('Stripe-Signature', header).set('X-Forwarded-For', nextIp()).send(payload);
 };
-const paidSession = (id, overrides = {}) => ({
-    id, object: 'checkout.session', payment_status: 'paid',
-    metadata: { timeslot: '11am', firstName: 'Carol', lastName: 'Charter', email: `carol${++seq}@example.test`, phone: '1', adults: '2', children: '0', date: day(12), accommodation: '', message: '', charter: 'true', ...overrides },
+// A finished Stripe checkout in which the customer saved a card (kind 'charter' unless overridden)
+const cardSession = (id, overrides = {}) => ({
+    id, object: 'checkout.session', mode: 'setup', status: 'complete', customer: 'cus_test_saved', setup_intent: `seti_${id}`,
+    metadata: { kind: 'charter', timeslot: '11am', firstName: 'Carol', lastName: 'Charter', email: `carol${++seq}@example.test`, phone: '1', adults: '2', children: '0', date: day(12), accommodation: '', message: '', message2: '', ...overrides },
 });
 
-module.exports = { dbUri, OWNER, PASSWORD, USERNAME, WEBHOOK_SECRET, setEnv, installMocks, startDb, stopDb, resetDb, seedSeason, day, shown, call, login, booking, insertBooking, findBooking, seatsLeft, webhook, paidSession };
+// Books online the way a customer does: starts the checkout (a trip, or kind 'charter'), and if
+// that worked, saves the card on the fake Stripe page and delivers Stripe's webhook. Returns the
+// first reply (res), the Stripe session and the booking made from it (or null).
+const bookOnline = async (app, body, { kind = 'trip', ip } = {}) => {
+    const path = kind === 'charter' ? '/charters/create-checkout-session' : '/bookings/checkout';
+    const res = await call(app, 'post', path, { body, ip });
+    if (!res.body.url) return { res, session: null, booking: null };
+    const params = currentMocks.stripe.created.at(-1);
+    const id = res.body.url.split('/').pop();
+    const session = { id, object: 'checkout.session', mode: 'setup', status: 'complete', customer: params.customer, setup_intent: `seti_${id}`, metadata: params.metadata };
+    currentMocks.stripe.sessions[id] = session;
+    const delivered = await webhook(app, session);
+    assert.equal(delivered.status, 200, 'the webhook should be accepted');
+    const booking = await require('mongoose').connection.db.collection('bookings').findOne({ stripeSessionId: id });
+    return { res, session, booking };
+};
+
+module.exports = { dbUri, OWNER, PASSWORD, USERNAME, WEBHOOK_SECRET, setEnv, installMocks, startDb, stopDb, resetDb, seedSeason, day, shown, call, login, booking, insertBooking, findBooking, seatsLeft, webhook, cardSession, bookOnline };

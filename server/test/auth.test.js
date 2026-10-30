@@ -97,7 +97,7 @@ describe('routes anyone can use', () => {
         assert.equal((await t.call(app, 'get', '/admin/getSeasonDates')).status, 200);
         assert.equal((await t.call(app, 'get', '/admin/getPrices')).status, 200);
         assert.equal((await t.call(app, 'post', '/bookings/monthAvailability', { body: { dates: [t.day(5)] } })).status, 200);
-        assert.equal((await t.call(app, 'post', '/bookings/add', { body: {} })).status, 400);
+        assert.equal((await t.call(app, 'post', '/bookings/checkout', { body: {} })).status, 400);
         assert.equal((await t.call(app, 'get', '/charters/verify-payment')).status, 400);
     });
 });

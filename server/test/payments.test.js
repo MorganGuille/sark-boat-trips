@@ -16,13 +16,12 @@ const markUnpaid = (_id) => t.call(app, 'post', '/bookings/mark-unpaid', { token
 const dayView = async (date) => (await t.call(app, 'get', `/bookings/${date}?includeCancelled=true`, { token })).body.data;
 
 describe('every booking starts unpaid', () => {
-    it('customer, dashboard and charter bookings all start as unpaid', async () => {
-        assert.equal((await t.call(app, 'post', '/bookings/add', { body: t.booking({ date: t.day(10) }) })).body.ok, true);
+    it('online trips and charters start with the card saved; a dashboard booking starts unpaid', async () => {
+        assert.ok((await t.bookOnline(app, t.booking({ date: t.day(10) }))).booking);
         assert.equal((await t.call(app, 'post', '/bookings/admin-add', { token, body: { date: t.day(11), timeslot: '11am', adults: '2' } })).body.ok, true);
-        await t.webhook(app, t.paidSession('cs_test_unpaid', { date: t.day(12) }));
-        const all = await db.collection('bookings').find({}).toArray();
-        assert.equal(all.length, 3);
-        assert.deepEqual(all.map((b) => b.paymentStatus), ['unpaid', 'unpaid', 'unpaid']);
+        assert.ok((await t.bookOnline(app, t.booking({ date: t.day(12) }), { kind: 'charter' })).booking);
+        const all = await db.collection('bookings').find({}).sort({ date: 1 }).toArray();
+        assert.deepEqual(all.map((b) => [b.charter, b.paymentStatus]), [['false', 'card_saved'], [undefined, 'unpaid'], ['true', 'card_saved']]);
     });
     it('the day view and search say what each booking is worth, from its saved prices', async () => {
         await t.insertBooking({ date: t.day(10), adults: 5, children: 1, lastName: 'Family', prices: { adult: 4000, child: 2500, charter: 40000 } });

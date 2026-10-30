@@ -1,4 +1,4 @@
-// A customer booking a trip on the website, and how the seats are counted.
+// A customer booking a trip on the website (through Stripe's card page, faked here), and how the seats are counted.
 const t = require('./helpers');
 t.setEnv();
 const mocks = t.installMocks();
@@ -9,23 +9,26 @@ const assert = require('node:assert/strict');
 let token, db;
 before(async () => { db = await t.startDb(); token = await t.login(app); });
 after(() => t.stopDb());
-beforeEach(async () => { await t.resetDb(); mocks.reset(); });
+beforeEach(async () => { await t.resetDb(); await t.seedSeason(); mocks.reset(); });
 
-const add = (body, opts) => t.call(app, 'post', '/bookings/add', { body, ...opts });
+// The customer's first reply (going to Stripe, or refused). If it went to Stripe, the card is saved
+// and Stripe's message delivered too, so the booking is made.
+const add = async (body, opts) => (await t.bookOnline(app, body, opts)).res;
 const saved = () => db.collection('bookings').find({}).toArray();
 
 describe('a customer makes a booking', () => {
-    it('is saved, and the customer and the owner are both emailed', async () => {
+    it('is saved once the card is saved, with the card, and the customer and the owner are both emailed', async () => {
         const body = t.booking();
         const res = await add(body);
         assert.equal(res.status, 200);
         assert.equal(res.body.ok, true);
-        assert.match(res.body.data, /Thanks Alice, your booking for 2 adults on .* at 11am has been reserved/);
-        assert.match(res.body.data, /check your email/);
-        assert.doesNotMatch(res.body.data, /\s{2,}/, 'no stray spaces or line breaks in the message');
+        assert.match(res.body.url, /^https:\/\/checkout\.stripe\.test\//, 'the customer is sent to Stripe');
 
         const [b] = await saved();
-        assert.deepEqual([b.date, b.timeslot, b.firstName, b.lastName, b.email, b.phone, b.adults, b.children, b.status], [body.date, '11am', 'Alice', 'Smith', body.email, body.phone, 2, 0, 'active']);
+        assert.deepEqual([b.date, b.timeslot, b.firstName, b.lastName, b.email, b.phone, b.adults, b.children, b.status, b.charter], [body.date, '11am', 'Alice', 'Smith', body.email, body.phone, 2, 0, 'active', 'false']);
+        assert.equal(b.paymentStatus, 'card_saved');
+        assert.match(b.stripePaymentMethodId, /^pm_/);
+        assert.equal(b.cardLabel, 'Visa •••• 4242 (expires 08/30)');
 
         assert.equal(mocks.sent().length, 2);
         assert.ok(mocks.sent(body.email).some((m) => m.subject === 'Booking Confirmation Sark Boat Trips'));
@@ -34,11 +37,24 @@ describe('a customer makes a booking', () => {
         const confirmation = mocks.sent(body.email).find((m) => m.subject === 'Booking Confirmation Sark Boat Trips');
         assert.ok(confirmation.html.includes(`on ${t.shown(body.date)} at 11am`));
         assert.ok(!confirmation.html.includes(body.date), 'the stored YYYY-MM-DD form is not shown to the customer');
+        // and it says the card is saved, what it will be charged and when, not "pay on the day"
+        assert.match(confirmation.html, /Your card has been saved and nothing has been taken yet\. £80 will be charged at 11am on the day of your trip/);
+        assert.doesNotMatch(confirmation.html, /Payment is at the end of the trip/);
     });
 
-    it('a family with children reads correctly', async () => {
-        const res = await add(t.booking({ adults: '2', children: '3' }));
-        assert.match(res.body.data, /2 adults and 3 children/);
+    it('nothing is saved or emailed until the card is saved', async () => {
+        const res = await t.call(app, 'post', '/bookings/checkout', { body: t.booking() });
+        assert.ok(res.body.url);
+        assert.equal((await saved()).length, 0);
+        assert.equal(mocks.mails.length, 0);
+    });
+
+    it('a family with children reads correctly, and is charged adult and child prices', async () => {
+        const body = t.booking({ adults: '2', children: '3' });
+        await add(body);
+        const confirmation = mocks.sent(body.email)[0];
+        assert.match(confirmation.html, /2 adults and 3 children/);
+        assert.match(confirmation.html, /£155 will be charged/); // 2 x £40 + 3 x £25
     });
 
     it('cannot choose its own status: a booking sent as "cancelled" is saved as active', async () => {
@@ -48,12 +64,14 @@ describe('a customer makes a booking', () => {
         assert.equal(b.cancelledAt, undefined);
     });
 
-    it('a bot that fills in the hidden field gets a normal-looking reply, and nothing is saved or emailed', async () => {
+    it('a bot that fills in the hidden field is turned away: nothing saved or emailed, and Stripe never called', async () => {
         const res = await add(t.booking({ website_url: 'http://spam.example' }));
         assert.equal(res.status, 200);
-        assert.equal(res.body.ok, true);
+        assert.equal(res.body.ok, false);
+        assert.equal(res.body.url, undefined);
         assert.equal((await saved()).length, 0);
         assert.equal(mocks.mails.length, 0);
+        assert.equal(mocks.stripe.created.length, 0);
     });
 });
 
@@ -88,18 +106,26 @@ describe('a booking that is refused is never saved and never emailed', () => {
             assert.match(res.body.data, message);
             assert.equal((await saved()).length, 0);
             assert.equal(mocks.mails.length, 0);
+            assert.equal(mocks.stripe.created.length, 0, 'never sent to Stripe');
         });
     }
     it('names the season when the date is outside it', async () => {
         const res = await add(t.booking({ date: t.day(250) }));
         assert.match(res.body.data, /Bookings are only taken between \d+ \w+ \d{4} and \d+ \w+ \d{4}/);
     });
+    it('with no prices set, online booking is closed (the card page must say what will be charged)', async () => {
+        await db.collection('admins').updateOne({}, { $unset: { adultPrice: '', childPrice: '', charterPrice: '' } });
+        const res = await add(t.booking());
+        assert.equal(res.status, 503);
+        assert.match(res.body.data, /Online booking isn't available right now/);
+        assert.equal(mocks.stripe.created.length, 0);
+    });
     it('with no season set at all, bookings are not open', async () => {
         await require('../models/admin').deleteMany({});
         const res = await add(t.booking());
         assert.equal(res.status, 400);
         assert.match(res.body.data, /aren't open yet/);
-        await require('mongoose').connection.db.collection('admins').insertOne({ seasonStartDate: new Date(Date.now() - 30 * 864e5), seasonEndDate: new Date(Date.now() + 200 * 864e5) });
+        await t.seedSeason();
     });
 });
 

@@ -11,7 +11,7 @@ const path = require('node:path');
 const INDEX = path.join(__dirname, '..', 'index.js');
 const BASE = {
     admin_username: 'owner', admin_password_hash: 'not-used-here', JWT_SECRET: 'not-used-here',
-    PUBLIC_URL: 'http://localhost:5173', PRICE_ID: 'price_test_FAKE',
+    PUBLIC_URL: 'http://localhost:5173',
 };
 
 // Runs index.js with these lines in a .env file, until it is listening (then stops it) or exits
@@ -29,9 +29,9 @@ const run = (dotenv, { useAtlas = false } = {}) => new Promise((resolve) => {
 });
 
 describe('starting the real server', () => {
-    it('reads the Stripe test key, address and price from .env, and says charter payments are on', async () => {
+    it('reads the Stripe test key and address from .env, and says online booking is on', async () => {
         const { out } = await run({ ...BASE, STRIPETESTKEY: 'sk_test_FAKE', STRIPEKEY: 'sk_live_FAKE' });
-        assert.match(out, /Charter payments are ON \(Stripe test mode\), customers return to http:\/\/localhost:5173/);
+        assert.match(out, /Online booking is ON \(cards saved with Stripe test mode\), customers return to http:\/\/localhost:5173/);
         assert.match(out, /listening on port/);
     });
     it('reports CORS and any warnings from the settings in .env', async () => {
@@ -39,9 +39,9 @@ describe('starting the real server', () => {
         assert.match(out, /CORS: local development pages/);
         assert.match(out, /Warning: PUBLIC_URL is not set/);
     });
-    it('a laptop with only the live key in .env has charter payments switched off, and says why', async () => {
+    it('a laptop with only the live key in .env has online booking switched off, and says why', async () => {
         const { out } = await run({ ...BASE, STRIPEKEY: 'sk_live_FAKE' });
-        assert.match(out, /Charter payments are OFF: only a LIVE Stripe key is available but this is not production/);
+        assert.match(out, /Online booking is OFF \(customers can't save a card\): only a LIVE Stripe key is available but this is not production/);
     });
     it('refuses to start without the login settings, and names the missing one', async () => {
         for (const missing of ['JWT_SECRET', 'admin_username', 'admin_password_hash']) {

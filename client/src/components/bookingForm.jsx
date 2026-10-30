@@ -49,9 +49,17 @@ function BookingForm({ selectedDate, booking, onResult, onDone }) {
         }
 
         try {
-            let response = checkPageDashboard()
-                ? await authAxios.post(`${URL}/bookings/admin-add`, newBooking)
-                : await axios.post(`${URL}/bookings/add`, newBooking)
+            if (!checkPageDashboard()) {
+                // Customers save a card on Stripe's page; the booking is made once it is saved
+                const response = await axios.post(`${URL}/bookings/checkout`, newBooking)
+                if (response.data.url) {
+                    window.location.href = response.data.url
+                    return
+                }
+                showResult(response.data.data, 'error')
+                return
+            }
+            let response = await authAxios.post(`${URL}/bookings/admin-add`, newBooking)
             const failed = response.data.ok === false
             showResult(response.data.data, failed ? 'error' : 'success')
             if (!failed) {
@@ -60,7 +68,7 @@ function BookingForm({ selectedDate, booking, onResult, onDone }) {
             }
         } catch (error) {
             console.log(error)
-            showResult(error.response?.data?.data || 'Sorry, we could not make your booking. Please try again, or contact us to book.', 'error')
+            showResult(error.response?.data?.data || 'Sorry, we could not make your booking. Nothing has been charged. Please try again, or contact us to book.', 'error')
         } finally {
             setIsSubmitting(false)
         }
@@ -266,8 +274,16 @@ function BookingForm({ selectedDate, booking, onResult, onDone }) {
                         </div>
                     )}
 
+                    {!checkPageDashboard() && (
+                        <p className='cardNotice'>
+                            Next you&apos;ll save a card on Stripe&apos;s secure page. <strong>Nothing is charged now:</strong> the
+                            price is charged when your {checkPageCharters() ? 'charter' : 'trip'} starts. If we cancel because of the
+                            weather, you won&apos;t be charged.
+                        </p>
+                    )}
+
                     <button className='btn' type="submit" disabled={isSubmitting}>
-                        {isSubmitting ? <span className="submitter" aria-label="Submitting..."></span> : updating ? 'Save changes' : 'Confirm Booking'}
+                        {isSubmitting ? <span className="submitter" aria-label="Submitting..."></span> : updating ? 'Save changes' : checkPageDashboard() ? 'Confirm Booking' : 'Continue to card details'}
                     </button>
                 </form>
 

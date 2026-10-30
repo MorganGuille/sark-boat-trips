@@ -60,7 +60,7 @@ function Charters() {
 
                     <div className="charter-notice">
                         <h4>If you have any questions or ideas, please contact us and discuss options. We’re sure we can build you an adventure to remember!</h4>
-                        <h4>Or use the form below to book your charter trip! Please note we require a (refundable) deposit of 20% to reserve a charter tour!</h4>
+                        <h4>Or use the form below to book your charter trip! You&apos;ll save a card to reserve it: nothing is charged until your charter starts, and if we cancel because of the weather you won&apos;t be charged.</h4>
                     </div>
                 </section>
             </section>

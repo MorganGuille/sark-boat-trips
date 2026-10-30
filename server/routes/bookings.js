@@ -4,12 +4,14 @@ const express = require('express'),
     asyncHandler = require('../middleware/asyncHandler.js'),
     honeypot = require('../middleware/honeypot.js'),
     { bookingByIp, bookingByEmail, availabilityByIp } = require('../middleware/rateLimiters.js'),
-    controller = require('../controllers/bookings.js');
+    controller = require('../controllers/bookings.js'),
+    checkout = require('../controllers/checkout.js');
 
-// Public: used by the booking page
-router.post('/add', bookingByIp, bookingByEmail,
-    honeypot((res) => res.send({ ok: true, data: 'Thanks, your booking request has been received.' })),
-    asyncHandler(controller.addBooking));
+// Public: used by the booking page. Sends the customer to Stripe to save a card; the booking is
+// made once the card is saved (controllers/checkout.js).
+router.post('/checkout', bookingByIp, bookingByEmail,
+    honeypot((res) => res.json({ ok: false, data: 'Something went wrong. Please try again later.' })),
+    asyncHandler(checkout.startCheckout('trip')));
 router.post('/monthAvailability', availabilityByIp, asyncHandler(controller.checkMonthAvail))
 
 // Dashboard only

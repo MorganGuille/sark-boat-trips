@@ -29,6 +29,19 @@ process.env.CLIENT_DIST = process.env.CLIENT_DIST || require('./build-client')()
     test.get('/bookings', async (req, res) => res.json(await db.collection('bookings').find({}).toArray()));
     test.post('/stripe-fail', (req, res) => { mocks.stripe.fail = Boolean(req.body.fail); res.json({ ok: true }); });
     test.post('/stripe-session', (req, res) => { mocks.stripe.sessions[req.body.id] = req.body; res.json({ ok: true }); });
+    // Plays the customer finishing on Stripe's page: the last checkout started becomes a completed
+    // session with a saved card, which the success page (or a webhook) then turns into a booking
+    test.post('/complete-checkout', (req, res) => {
+        const params = mocks.stripe.created.at(-1);
+        const id = `cs_test_created_${mocks.stripe.created.length}`;
+        mocks.stripe.sessions[id] = { id, object: 'checkout.session', mode: 'setup', status: 'complete', customer: params.customer, setup_intent: `seti_${id}`, metadata: params.metadata };
+        res.json({ id });
+    });
+    // A booking put straight into the database, e.g. to fill a trip
+    test.post('/insert-booking', async (req, res) => {
+        await db.collection('bookings').insertOne({ timeslot: '11am', firstName: 'Test', lastName: 'Booking', adults: 2, children: 0, status: 'active', charter: 'false', ...req.body });
+        res.json({ ok: true });
+    });
     wrapper.use('/__test', test);
     wrapper.use(app);
 

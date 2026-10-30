@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react'
 import axios from 'axios'
 import { URL } from '../../config.js'
 import { showDay } from '../utils/dates.js'
+import { formatPounds } from '../utils/money.js'
 
 function Success() {
     const [response, setResponseData] = useState(null)
+    const [problem, setProblem] = useState(null) // the server's reason it isn't booked, e.g. the trip filled up
     const [loading, setLoading] = useState(true)
 
     const verifyPayment = async () => {
@@ -20,6 +22,8 @@ function Success() {
             const res = await axios.get(`${URL}/charters/verify-payment?session_id=${sessionId}`);
             if (res.data.ok) {
                 setResponseData(res.data);
+            } else {
+                setProblem(res.data.message);
             }
         } catch (error) {
             console.error('Error verifying payment:', error);
@@ -34,7 +38,7 @@ function Success() {
 
     return (
         <>
-            <title>Sark Boat Trips | Payment Successful</title>
+            <title>Sark Boat Trips | Booking Confirmed</title>
 
             <main id="main-content" className='stripe-landing'>
                 <div role="status" aria-live="polite">
@@ -44,16 +48,26 @@ function Success() {
                         <>
                             <h1>Success!</h1>
                             <p>
-                                <strong>{response.name}</strong>, thank you so much for booking your charter tour with us!
+                                <strong>{response.name}</strong>, thank you so much for booking {response.charter ? 'your charter' : 'with us'}!
                             </p>
                             <p>
-                                Your deposit has been confirmed and your charter is reserved for <strong>{showDay(response.date)}</strong>.
+                                Your {response.charter ? 'charter' : 'trip'} is booked for <strong>{response.timeslot} on {showDay(response.date)}</strong>,
+                                and we&apos;ve emailed you the details.
+                            </p>
+                            <p>
+                                Your card{response.cardLabel ? ` (${response.cardLabel})` : ''} has been saved and <strong>nothing has been taken yet</strong>.
+                                {Number.isFinite(response.amount) ? ` ${formatPounds(response.amount / 100)}` : ' The price'} will be charged when
+                                your {response.charter ? 'charter' : 'trip'} starts. If we cancel because of the weather, you won&apos;t be charged.
                             </p>
 
                             <section aria-label="Next steps" style={{ marginTop: '20px' }}>
-                                <p>
-                                    If you haven&apos;t already, please contact us to arrange your trip and let us know what we can do for you!
-                                </p>
+                                {response.charter ? (
+                                    <p>
+                                        If you haven&apos;t already, please contact us to arrange your trip and let us know what we can do for you!
+                                    </p>
+                                ) : (
+                                    <p>Please be at Creux Harbour shortly before your trip. If anything changes, just get in touch.</p>
+                                )}
 
                                 <address style={{ fontStyle: 'normal' }}>
                                     <p>
@@ -68,9 +82,9 @@ function Success() {
                     ) : (
                         <>
                             <h1>We couldn&apos;t confirm your booking</h1>
+                            {problem ? <p>{problem}</p> : null}
                             <p>
-                                If you completed the payment, please don&apos;t pay again. We receive every payment directly,
-                                but please contact us so we can check and confirm your charter.
+                                Nothing has been charged. Please contact us and we&apos;ll sort it out, or choose another trip.
                             </p>
                             <address style={{ fontStyle: 'normal' }}>
                                 <p>

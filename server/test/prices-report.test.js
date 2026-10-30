@@ -85,7 +85,7 @@ describe('setting and reading prices', () => {
         await db.collection('admins').deleteMany({});
         assert.equal((await setPrices(ALL)).body.ok, true);
         assert.equal((await t.call(app, 'get', '/admin/getSeasonDates')).status, 404, 'prices alone are not a season');
-        const closed = await t.call(app, 'post', '/bookings/add', { body: t.booking({ date: t.day(10) }) });
+        const closed = await t.call(app, 'post', '/bookings/checkout', { body: t.booking({ date: t.day(10) }) });
         assert.equal(closed.status, 400);
         assert.match(closed.body.data, /aren't open yet/);
         assert.equal((await t.call(app, 'post', '/admin/setSeasonDates', { token, body: { seasonStartDate: '2031-05-01', seasonEndDate: '2031-09-30' } })).body.ok, true);
@@ -99,9 +99,9 @@ describe('every booking keeps the prices it was made at', () => {
     const saved = async () => db.collection('bookings').find({}).sort({ _id: 1 }).toArray();
 
     it('a customer booking saves the current prices, and a later price change does not touch it', async () => {
-        assert.equal((await t.call(app, 'post', '/bookings/add', { body: t.booking({ date: t.day(10) }) })).body.ok, true);
+        assert.ok((await t.bookOnline(app, t.booking({ date: t.day(10) }))).booking);
         await setPrices({ adultPrice: '50', childPrice: '30', charterPrice: '500' });
-        assert.equal((await t.call(app, 'post', '/bookings/add', { body: t.booking({ date: t.day(11) }) })).body.ok, true);
+        assert.ok((await t.bookOnline(app, t.booking({ date: t.day(11) }))).booking);
         const [first, second] = await saved();
         assert.deepEqual(first.prices, { adult: 4000, child: 2500, charter: 40000 });
         assert.deepEqual(second.prices, { adult: 5000, child: 3000, charter: 50000 });
@@ -112,21 +112,22 @@ describe('every booking keeps the prices it was made at', () => {
         assert.deepEqual((await saved())[0].prices, { adult: 4000, child: 2500, charter: 40000 });
     });
     it('a customer cannot choose the prices, make themselves a charter, or set payment fields', async () => {
-        const res = await t.call(app, 'post', '/bookings/add', { body: { ...t.booking({ date: t.day(10) }), prices: { adult: 1, child: 1, charter: 1 }, charter: 'true', stripeSessionId: 'cs_free', status: 'cancelled', cancelledAt: '2020-01-01', paymentStatus: 'paid', amountPaid: 99999, stripePaymentMethodId: 'pm_x' } });
+        const { res, session } = await t.bookOnline(app, { ...t.booking({ date: t.day(10) }), prices: { adult: 1, child: 1, charter: 1 }, charter: 'true', kind: 'charter', stripeSessionId: 'cs_free', status: 'cancelled', cancelledAt: '2020-01-01', paymentStatus: 'paid', amountPaid: 99999, stripePaymentMethodId: 'pm_x' });
         assert.equal(res.body.ok, true);
         const [booking] = await saved();
+        assert.equal(booking.stripeSessionId, session.id, 'only the real Stripe session');
         assert.deepEqual(booking.prices, { adult: 4000, child: 2500, charter: 40000 });
         assert.notEqual(booking.charter, 'true', 'a charter can only come from a paid checkout');
-        assert.equal(booking.stripeSessionId, undefined);
         assert.equal(booking.status, 'active');
         assert.equal(booking.cancelledAt, undefined);
-        assert.equal(booking.paymentStatus, 'unpaid', 'a customer cannot say they have paid');
+        assert.equal(booking.paymentStatus, 'card_saved', 'a customer cannot say they have paid');
         assert.equal(booking.amountPaid, undefined);
-        assert.equal(booking.stripePaymentMethodId, undefined);
+        assert.equal(booking.stripePaymentMethodId, `pm_for_seti_${session.id}`, 'only the card Stripe saved');
     });
-    it('with no prices set yet, a booking is still made (the prices are simply not saved on it)', async () => {
+    it('with no prices set yet, online booking is closed, but a dashboard booking is still made (with no prices saved on it)', async () => {
         await db.collection('admins').updateOne({}, { $unset: { adultPrice: '', childPrice: '', charterPrice: '' } });
-        assert.equal((await t.call(app, 'post', '/bookings/add', { body: t.booking({ date: t.day(10) }) })).body.ok, true);
+        assert.equal((await t.call(app, 'post', '/bookings/checkout', { body: t.booking({ date: t.day(10) }) })).status, 503);
+        assert.equal((await t.call(app, 'post', '/bookings/admin-add', { token, body: { date: t.day(10), timeslot: '11am', adults: '2' } })).body.ok, true);
         assert.equal((await saved())[0].prices, undefined);
     });
 });

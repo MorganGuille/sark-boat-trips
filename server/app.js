@@ -29,7 +29,7 @@ app.use((req, res, next) => {
 app.post(
   "/charters/webhook",
   express.raw({ type: "application/json" }),
-  require("./middleware/asyncHandler")(require("./controllers/charters").webhook),
+  require("./middleware/asyncHandler")(require("./controllers/checkout").webhook),
 );
 
 app.use(express.json());

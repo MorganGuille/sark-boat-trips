@@ -122,9 +122,9 @@ describe('availability settings', () => {
     });
 });
 
-describe('settings: which Stripe key, address and price are used', () => {
+describe('settings: which Stripe key and address are used', () => {
     const LIVE = 'sk_live_FAKE', TEST = 'sk_test_FAKE';
-    const base = { PUBLIC_URL: 'https://www.example.test', PRICE_ID: 'price_1' };
+    const base = { PUBLIC_URL: 'https://www.example.test' };
     const s = (env) => readSettings({ ...base, ...env });
 
     it('production with a live key: payments on, live mode', () => {
@@ -154,9 +154,10 @@ describe('settings: which Stripe key, address and price are used', () => {
         assert.match(r.stripe.problem, /not a secret key/);
         assert.equal(r.stripe.key, null);
     });
-    it('a missing PUBLIC_URL or PRICE_ID switches payments off', () => {
-        assert.match(readSettings({ STRIPETESTKEY: TEST, PRICE_ID: 'price_1' }).stripe.problem, /PUBLIC_URL is not set/);
-        assert.match(readSettings({ STRIPETESTKEY: TEST, PUBLIC_URL: 'https://x.test' }).stripe.problem, /PRICE_ID is not set/);
+    it('a missing PUBLIC_URL switches online booking off; PRICE_ID is no longer needed', () => {
+        assert.match(readSettings({ STRIPETESTKEY: TEST }).stripe.problem, /PUBLIC_URL is not set/);
+        assert.equal(readSettings({ STRIPETESTKEY: TEST, PUBLIC_URL: 'https://x.test' }).stripe.problem, null);
+        assert.equal(readSettings({ STRIPETESTKEY: TEST, PUBLIC_URL: 'https://x.test' }).priceId, undefined);
     });
     it('a PUBLIC_URL without http(s):// is rejected, and whitespace and trailing slashes are cleaned up', () => {
         assert.match(s({ STRIPETESTKEY: TEST, PUBLIC_URL: 'localhost:5173' }).stripe.problem, /must start with http/);

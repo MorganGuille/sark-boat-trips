@@ -16,26 +16,26 @@ const statuses = async (n, make) => { const out = []; for (let i = 0; i < n; i++
 describe('bookings', () => {
     it('one visitor gets 10 attempts in 15 minutes, the 11th is blocked with a readable message and rate-limit headers', async () => {
         const ip = '198.51.100.1';
-        const codes = await statuses(11, () => t.call(app, 'post', '/bookings/add', { body: bad(), ip }));
+        const codes = await statuses(11, () => t.call(app, 'post', '/bookings/checkout', { body: bad(), ip }));
         assert.deepEqual(codes, [...Array(10).fill(400), 429]);
-        const blocked = await t.call(app, 'post', '/bookings/add', { body: bad(), ip });
+        const blocked = await t.call(app, 'post', '/bookings/checkout', { body: bad(), ip });
         assert.match(blocked.body.data, /Too many booking attempts/);
         assert.ok(Object.keys(blocked.headers).some((h) => h.startsWith('ratelimit')));
-        assert.equal((await t.call(app, 'post', '/bookings/add', { body: bad(), ip: '198.51.100.2' })).status, 400, 'a different visitor is not affected');
+        assert.equal((await t.call(app, 'post', '/bookings/checkout', { body: bad(), ip: '198.51.100.2' })).status, 400, 'a different visitor is not affected');
     });
     it('one email address gets 3 requests an hour even from 4 different visitors (aimed at a full trip so nothing is emailed)', async () => {
         await t.insertBooking({ date: t.day(10), adults: 12 });
         const victim = 'victim@example.test';
         const results = [];
-        for (let i = 0; i < 4; i++) results.push(await t.call(app, 'post', '/bookings/add', { body: t.booking({ email: victim }) }));
+        for (let i = 0; i < 4; i++) results.push(await t.call(app, 'post', '/bookings/checkout', { body: t.booking({ email: victim }) }));
         assert.deepEqual(results.map((r) => r.status), [200, 200, 200, 429]);
         assert.match(results[3].body.data, /this email address/);
-        assert.equal((await t.call(app, 'post', '/bookings/add', { body: t.booking({ email: 'someone.else@example.test' }) })).status, 200);
+        assert.equal((await t.call(app, 'post', '/bookings/checkout', { body: t.booking({ email: 'someone.else@example.test' }) })).status, 200);
         assert.equal(mocks.mails.length, 0);
     });
     it('the email limit ignores capital letters', async () => {
         await t.insertBooking({ date: t.day(10), adults: 12 });
-        const codes = await statuses(4, (i) => t.call(app, 'post', '/bookings/add', { body: t.booking({ email: i % 2 ? 'CASE@example.test' : 'case@example.test' }) }));
+        const codes = await statuses(4, (i) => t.call(app, 'post', '/bookings/checkout', { body: t.booking({ email: i % 2 ? 'CASE@example.test' : 'case@example.test' }) }));
         assert.deepEqual(codes, [200, 200, 200, 429]);
     });
 });
@@ -58,7 +58,7 @@ describe('the other public endpoints', () => {
         assert.deepEqual(codes, [...Array(30).fill(404), 429]);
     });
     it('Stripe\'s webhook is never rate limited (its signature protects it instead)', async () => {
-        const codes = await Promise.all([...Array(40)].map(() => t.webhook(app, t.paidSession('cs_test_x'), { signature: 't=1,v1=x' }).then((r) => r.status)));
+        const codes = await Promise.all([...Array(40)].map(() => t.webhook(app, t.cardSession('cs_test_x'), { signature: 't=1,v1=x' }).then((r) => r.status)));
         assert.ok(codes.every((c) => c !== 429));
     });
 });

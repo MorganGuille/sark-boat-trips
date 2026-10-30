@@ -109,3 +109,9 @@ form textarea {
         width: 300px;
     }
 }
+/* Under the booking form: what happens next with the card */
+.cardNotice {
+    max-width: 32rem;
+    font-size: 0.95rem;
+    line-height: 1.4;
+}

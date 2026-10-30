@@ -431,6 +431,13 @@ input {
     font-weight: 600;
 }
 
+.payCardLabel {
+    display: block;
+    color: #5b6773;
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
 .payNote {
     display: block;
     color: #8c1d18;

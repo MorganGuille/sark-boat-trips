@@ -3,15 +3,15 @@ import { Link } from 'react-router'
 function Canceled() {
     return (
         <>
-            <title>Sark Boat Trips | Payment Canceled</title>
+            <title>Sark Boat Trips | Booking Not Made</title>
 
             <main id="main-content" className='stripe-landing'>
 
                 <div role="status" aria-live="polite">
-                    <h2>Payment Not Processed</h2>
+                    <h2>Booking not made</h2>
                     <p>
-                        Uh oh, it looks like something went wrong with your payment or the session was canceled.
-                        Don&apos;t worry—your card has not been charged.
+                        It looks like the card page was closed before your card was saved, so nothing has been booked.
+                        Don&apos;t worry: nothing has been charged.
                     </p>
                 </div>
 

@@ -18,7 +18,7 @@ In the past I had used paid booking systems but they didnt suit my specific need
 
 - Owner dashboard: a private, password-protected page to see and manage bookings (add, edit, cancel and restore), set seats per trip, keep day notes, set the season dates and ticket prices, and download a monthly passenger and income report as a CSV.
 
-- Private charters: paid for through Stripe, with the booking created by a Stripe webhook as well as the success page, so a customer who closes the tab still gets booked.
+- Card payments without refunds: customers save a card on Stripe's secure page when they book online (trips and private charters), nothing is charged at booking, and the card is charged when the trip starts. A trip cancelled for weather is cancelled on the dashboard first, so there is nothing to refund. The booking is created by a Stripe webhook as well as the success page, so a customer who closes the tab still gets booked.
 
 ### This is a classic MERN stack implementation, using JavaScript across the board.
 

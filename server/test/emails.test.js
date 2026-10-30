@@ -13,30 +13,29 @@ after(() => t.stopDb());
 beforeEach(async () => { await t.resetDb(); mocks.reset(); });
 
 const post = (path, body) => t.call(app, 'post', path, { body, token });
-const add = (body) => t.call(app, 'post', '/bookings/add', { body });
+// A customer booking: Stripe's card page (faked) is completed, so the booking is made
+const add = async (body) => (await t.bookOnline(app, body)).res;
 const count = () => db.collection('bookings').countDocuments({});
 const customer = (extra) => t.insertBooking({ firstName: 'Bob', lastName: 'Jones', email: 'bob@example.test', ...extra });
 
 describe('a failed email never loses or hides a saved change', () => {
-    it('public booking, customer email fails: still saved, the customer is told, the owner is alerted', async () => {
+    it('online booking, customer email fails: still saved, and the owner is alerted to contact them', async () => {
         mocks.mailMode = 'client';
         const res = await add(t.booking());
         assert.equal(res.status, 200);
         assert.equal(res.body.ok, true);
-        assert.match(res.body.data, /has been reserved\. However, we couldn't send your confirmation email/);
         assert.equal(await count(), 1);
         const ownerMail = mocks.sent(t.OWNER)[0];
         assert.match(ownerMail.subject, /CUSTOMER EMAIL FAILED, please contact them/);
     });
-    it('public booking, owner email fails: still saved, and the customer sees the normal message', async () => {
+    it('online booking, owner email fails: still saved, and the customer is still confirmed', async () => {
         mocks.mailMode = 'admin';
         const res = await add(t.booking());
         assert.equal(res.body.ok, true);
-        assert.match(res.body.data, /check your email/);
         assert.equal(await count(), 1);
         assert.equal(mocks.sent().length, 1, 'the customer email still went out');
     });
-    it('public booking, every email fails: still saved and still a 200 (it used to be a 500 and the booking was lost)', async () => {
+    it('online booking, every email fails: still saved and still a 200 (it used to be a 500 and the booking was lost)', async () => {
         mocks.mailMode = 'all';
         const res = await add(t.booking());
         assert.equal(res.status, 200);
@@ -68,9 +67,9 @@ describe('a failed email never loses or hides a saved change', () => {
         assert.match(restored.body.data, /restored, but the confirmation email could not be sent/);
         assert.equal((await t.findBooking(id)).status, 'active');
     });
-    it('a paid charter is still saved when its emails fail, and Stripe still gets a 200', async () => {
+    it('a charter is still saved when its emails fail, and Stripe still gets a 200', async () => {
         mocks.mailMode = 'all';
-        const res = await t.webhook(app, t.paidSession('cs_test_mailfail'));
+        const res = await t.webhook(app, t.cardSession('cs_test_mailfail'));
         assert.equal(res.status, 200);
         assert.equal(await db.collection('bookings').countDocuments({ stripeSessionId: 'cs_test_mailfail' }), 1);
     });
@@ -88,7 +87,7 @@ describe('customers cannot inject markup or links into emails', () => {
     const decode = (s) => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
     const text = (html) => decode(html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' '));
 
-    it('through every path that sends email (booking, dashboard add, edit, cancel, restore, charter payment)', async () => {
+    it('through every path that sends email (online booking, dashboard add, edit, cancel, restore, charter)', async () => {
         const email = 'victim@example.test';
         assert.equal((await add({ ...t.booking(), ...EVIL, email })).body.ok, true, 'hostile text is escaped, not rejected');
         assert.equal((await post('/bookings/admin-add', { date: t.day(11), timeslot: '2pm', ...EVIL, email, adults: '2' })).body.ok, true);
@@ -97,7 +96,7 @@ describe('customers cannot inject markup or links into emails', () => {
         assert.equal((await post(`/bookings/update/${stored._id}`, { phone: '07 <b>1</b>' })).body.ok, true);
         assert.equal((await post('/bookings/cancel', { _id: stored._id.toString() })).body.ok, true);
         assert.equal((await post('/bookings/restore', { _id: stored._id.toString() })).body.ok, true);
-        assert.equal((await t.webhook(app, t.paidSession('cs_test_evil', { ...EVIL, email }))).status, 200);
+        assert.equal((await t.webhook(app, t.cardSession('cs_test_evil', { ...EVIL, email }))).status, 200);
 
         const emails = mocks.sent().filter((m) => m.html);
         assert.equal(emails.length, 10, 'client and owner emails across all six paths');

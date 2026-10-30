@@ -54,6 +54,7 @@ function BookingsTable({ bookings, showDate, onEdit, onCancel, onRestore, onDele
                             <td>
                                 <span className={`payBadge ${payment.className}`}>{payment.label}</span>
                                 {Number.isFinite(amount) ? <span className='payAmount'>{formatPounds(amount / 100)}</span> : null}
+                                {status === 'card_saved' && booking.cardLabel ? <span className='payCardLabel'>{booking.cardLabel}</span> : null}
                                 {booking.paymentNote ? <span className='payNote'>{booking.paymentNote}</span> : null}
                             </td>
                             <td>

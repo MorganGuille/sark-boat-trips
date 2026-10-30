@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Bookings = require("../models/bookings");
 const Availability = require('../models/availability');
-const nodemailer = require('nodemailer');
+const { sendEmail, trySend } = require('../utils/mailer');
 const { getAvailability, isSlotEmpty } = require('../utils/availability');
 const { safeHtml } = require('../utils/safeHtml');
 const { settings } = require('../utils/settings');
@@ -10,36 +10,6 @@ const { readPrices, bookingValue } = require('../utils/prices');
 const { isMonth, monthRange, buildReport, toCsv } = require('../utils/report');
 const { validatePublicBooking, validateAdminBooking, validateAvailabilitySetting } = require('../utils/validateBooking');
 
-
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.gmail_address,
-        pass: process.env.gmail_password,
-    },
-});
-
-const sendEmail = async (mailOptions) => {
-    try {
-        const info = await transporter.sendMail(mailOptions);
-        console.log('Message sent: %s', info.messageId);
-        return info;
-    } catch (error) {
-        console.error('Error sending email:', error);
-        throw error;
-    }
-};
-
-// For emails sent after a booking change has already been saved: a failed email is reported
-// (true or false) and logged by sendEmail, but never undoes or hides the saved change.
-const trySend = async (mailOptions) => {
-    try {
-        await sendEmail(mailOptions);
-        return true;
-    } catch {
-        return false;
-    }
-};
 
 const updateAvailability = async (req, res) => {
     const { date, timeslot, capacity } = req.body;
@@ -76,7 +46,13 @@ const pounds = (pence) => `£${(pence / 100).toFixed(2).replace(/\.00$/, '')}`;
 // Day view and search hide cancelled bookings unless asked (?includeCancelled=true)
 const statusFilter = (req) => req.query.includeCancelled === 'true' ? {} : { status: { $ne: 'cancelled' } };
 
-const buildConfirmationEmail = ({ email, firstName, adults, childResponse, date, timeslot }) => ({
+// What the confirmation says about paying. A booking with a saved card is charged at the trip time
+// (paymentsspec.md); one made on the dashboard is paid on the day, as before.
+const PAY_ON_THE_DAY = 'Payment is at the end of the trip and you can pay either by cash or card.';
+const cardPaymentLine = (amountPence, timeslot) =>
+    `Your card has been saved and nothing has been taken yet. ${amountPence === null ? 'The trip price' : `£${(amountPence / 100).toFixed(2).replace(/\.00$/, '')}`} will be charged at ${timeslot} on the day of your trip. If we have to cancel because of the weather, you won't be charged.`;
+
+const buildConfirmationEmail = ({ email, firstName, adults, childResponse, date, timeslot, paymentLine = PAY_ON_THE_DAY }) => ({
                 from: 'sarkboattrips@gmail.com',
                 to: email,
                 subject: 'Booking Confirmation Sark Boat Trips',
@@ -90,7 +66,7 @@ const buildConfirmationEmail = ({ email, firstName, adults, childResponse, date,
                 <p>Please be at the <strong>Creux Harbour</strong> shortly before ${timeslot}, bring weather appropriate
                 clothing and any snacks
                 and drinks you'd like.</p>
-                <p>Payment is at the end of the trip and you can pay either by cash or card.</p>
+                <p>${paymentLine}</p>
                 <p>If you have any questions, please dont hesitate to ask</p>
                 <br>
                 <p><strong>Please note that due to weather or availability we may need to change the time of your trip.</strong>
@@ -114,25 +90,8 @@ const buildConfirmationEmail = ({ email, firstName, adults, childResponse, date,
 </div>`,
             });
 
-const addBooking = async (req, res) => {
-    let { date, firstName, lastName, phone, adults, children = 0, email, timeslot, message, accommodation } = req.body;
-    let childResponse = ``
-    Number(children) > 0 ? childResponse = `and ${children} children` : childResponse = ``
-
-    const problem = await validatePublicBooking(req.body);
-    if (problem) {
-        return res.status(400).send({ ok: false, data: problem });
-    }
-
-    try {
-
-        const availability = await getAvailability(date, timeslot);
-
-        if (availability >= (Number(adults) + Number(children))) {
-
-            const mailOptionsClient = buildConfirmationEmail({ email, firstName, adults, childResponse, date, timeslot });
-
-            const mailOptionsAdmin = {
+// The owner's "new booking" email for a customer booking
+const newBookingAdminEmail = ({ date, firstName, lastName, phone, adults, childResponse, email, timeslot, message, accommodation }) => ({
                 from: 'sarkboattrips@gmail.com',
                 to: 'sarkboattrips@gmail.com',
                 subject: `New Booking ${showDay(date)}`,
@@ -157,35 +116,7 @@ const addBooking = async (req, res) => {
                                     href="${settings.dashboardUrl}" target='_blank'>Go to dashboard</a>
                             </div>
                         </div>`,
-            };
-            // Save first: the booking must exist even if an email can't be sent
-            // Only these details come from the customer. Status, booking type (charter), payment
-            // fields and prices are never theirs to choose: the prices are the ones in force right now.
-            await Bookings.create({
-                date, timeslot, firstName, lastName, phone, email, adults, children, accommodation, message,
-                prices: (await readPrices()) || undefined,
             });
-
-            const confirmationSent = await trySend(mailOptionsClient);
-            if (!confirmationSent) mailOptionsAdmin.subject += ' (CUSTOMER EMAIL FAILED, please contact them)';
-            await trySend(mailOptionsAdmin);
-
-            const party = `${adults} adults${childResponse ? ` ${childResponse}` : ''}`;
-            const reserved = `Thanks ${firstName}, your booking for ${party} on ${showDay(date)} at ${timeslot} has been reserved.`;
-            res.send({
-                ok: true,
-                data: confirmationSent
-                    ? `${reserved} Please check your email for confirmation (Dont forget to check the spam folder!)`
-                    : `${reserved} However, we couldn't send your confirmation email, so please make a note of these details and contact us if you have any questions.`,
-            });
-        } else {
-            res.send({ ok: false, data: `No spaces available at ${timeslot} on ${showDay(date)}!` });
-        }
-    } catch (error) {
-        console.error(error);
-        res.status(500).send({ ok: false, data: "An error occurred. Please try again later." });
-    }
-};
 
 // Dashboard only (behind requireAuth): the owner may need to save a booking with missing details
 const adminAddBooking = async (req, res) => {
@@ -339,6 +270,7 @@ const restoreBooking = async (req, res) => {
         try {
             await sendEmail(buildConfirmationEmail({
                 email: booking.email, firstName: booking.firstName || 'guest', adults, childResponse: children > 0 ? `and ${children} children` : '', date: booking.date, timeslot: booking.timeslot,
+                ...(booking.paymentStatus === 'card_saved' && { paymentLine: cardPaymentLine(bookingValue(booking, await readPrices()), booking.timeslot) }),
             }));
         } catch (emailError) {
             return res.send({ ok: true, data: `Booking for ${who} on ${showDay(booking.date)} at ${booking.timeslot} restored, but the confirmation email could not be sent` });
@@ -612,5 +544,5 @@ const markUnpaid = async (req, res) => {
     res.send({ ok: true, data: `${bookingName(updated)} on ${showDay(updated.date)} at ${updated.timeslot} is ${back === 'card_saved' ? 'back to being charged to the saved card at the trip time' : 'marked as unpaid again'}` });
 };
 
-module.exports = { markPaid, markUnpaid, monthlyReport, addBooking, adminAddBooking, cancelBooking, restoreBooking, permanentlyDeleteBooking, checkDate, checkMonthAvail, search, updateBooking, updateAvailability }
+module.exports = { buildConfirmationEmail, newBookingAdminEmail, cardPaymentLine, markPaid, markUnpaid, monthlyReport, adminAddBooking, cancelBooking, restoreBooking, permanentlyDeleteBooking, checkDate, checkMonthAvail, search, updateBooking, updateAvailability }
 
