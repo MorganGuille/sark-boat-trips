@@ -8,6 +8,7 @@ const app = require("./app");
 const { settings } = require("./utils/settings");
 const { corsSummary } = require("./middleware/security");
 const { readDatabase } = require("./utils/database");
+const { startChargeTimer } = require("./utils/charges");
 
 const PORT = process.env.PORT || 4040;
 const dbname = process.env.atlasDB_name;
@@ -32,6 +33,12 @@ async function connecting() {
   try {
     await mongoose.connect(database.uri);
     console.log(`Connected to ${dbname || "the database"}${database.user ? ` as ${database.user}` : ""}`);
+    // Saved cards are charged at the trip time (paymentsspec.md). Only once the database is there,
+    // and never without a usable Stripe key.
+    if (!settings.stripe.problem) {
+      startChargeTimer();
+      console.log("Card charges: checking every minute for trips that have started");
+    }
   } catch (error) {
     console.log("ERROR: Could not connect to DB");
   }

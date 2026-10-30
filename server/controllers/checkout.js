@@ -13,9 +13,7 @@ const { safeHtml } = require('../utils/safeHtml');
 const { buildConfirmationEmail, newBookingAdminEmail, cardPaymentLine } = require('./bookings');
 const { charterConfirmationEmail, charterAdminEmail } = require('./charters');
 
-// With no usable key the placeholder is only there so webhooks can still be verified (that needs
-// the signing secret, not a key). Nothing else calls Stripe while settings.stripe.problem is set.
-const stripe = require('stripe')(settings.stripe.key || 'sk_test_not_configured');
+const stripe = require('../utils/stripe');
 
 const UNAVAILABLE = "Online booking isn't available right now. Please call or email us to book.";
 const FULL_NOTE = 'Not booked: the trip filled up while they were entering their card. Nothing was charged.';

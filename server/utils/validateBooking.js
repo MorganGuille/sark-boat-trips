@@ -37,12 +37,32 @@ const guernseyNow = (now = new Date()) => {
     };
 };
 
+// Today in Guernsey, as 'YYYY-MM-DD'
+const guernseyToday = (now = new Date()) => {
+    const day = guernseyNow(now).day;
+    return `${Math.floor(day / 10000)}-${String(Math.floor(day / 100) % 100).padStart(2, '0')}-${String(day % 100).padStart(2, '0')}`;
+};
+
+// The moment a trip starts: its start hour on that day in Guernsey time, whether that is GMT or
+// British Summer Time. Everything that depends on the start time (the booking cutoff, and the card
+// charge in utils/charges.js) asks this function, so when a trip's time can be changed for one day
+// (spec P2-2) only this function needs to know. (date and timeslot must already be valid)
+const tripStartsAt = (date, timeslot) => {
+    const [year, month, day] = date.split('-').map(Number);
+    const wallClock = Date.UTC(year, month - 1, day, TIMESLOTS[timeslot], 0);
+    // How far Guernsey's clocks are ahead of UTC at a moment (0 in winter, 1 hour in summer)
+    const offsetAt = (moment) => {
+        const local = guernseyNow(new Date(moment));
+        const asUtc = Date.UTC(Math.floor(local.day / 10000), (Math.floor(local.day / 100) % 100) - 1, local.day % 100, 0, local.minutes);
+        return asUtc - Math.floor(moment / 60000) * 60000;
+    };
+    return new Date(wallClock - offsetAt(wallClock - offsetAt(wallClock)));
+};
+
 // Has the date passed, or has booking for this trip closed? (date and timeslot must already be valid)
 const whenProblem = (date, timeslot, now = new Date()) => {
-    const today = guernseyNow(now);
-    const day = dayNumber(date);
-    if (day < today.day) return 'That date has already passed.';
-    if (day === today.day && today.minutes + BOOKING_CUTOFF_MINUTES > TIMESLOTS[timeslot] * 60) {
+    if (dayNumber(date) < guernseyNow(now).day) return 'That date has already passed.';
+    if (now.getTime() + BOOKING_CUTOFF_MINUTES * 60000 > tripStartsAt(date, timeslot).getTime()) {
         return 'Online booking for that trip has closed. Please contact us to book.';
     }
     return null;
@@ -126,5 +146,5 @@ const validateAvailabilitySetting = ({ date, timeslot, capacity }) => {
 module.exports = {
     validatePublicBooking, validateAdminBooking, validateAvailabilitySetting,
     // exported so the date and time rules can be tested with a fixed clock
-    dayNumber, guernseyNow, whenProblem, seasonProblem, partyProblem, BOOKING_CUTOFF_MINUTES,
+    dayNumber, guernseyNow, guernseyToday, tripStartsAt, whenProblem, seasonProblem, partyProblem, BOOKING_CUTOFF_MINUTES,
 };

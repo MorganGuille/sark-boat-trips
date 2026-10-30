@@ -77,6 +77,10 @@ const bookingsSchema = new mongoose.Schema({
     stripeCustomerId: { type: String },
     stripePaymentMethodId: { type: String },
     cardLabel: { type: String }, // e.g. "Visa •••• 4242 (expires 08/28)", for the dashboard
+    // The charge at the trip time (utils/charges.js)
+    stripePaymentIntentId: { type: String },
+    chargeStartedAt: { type: Date },
+    chargeAttempts: { type: Number },
     // Set on paid charters. The unique index means one Stripe payment can only ever create one booking
     stripeSessionId: {
         type: String,

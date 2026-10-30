@@ -44,13 +44,19 @@ const installMocks = () => {
         mailMode: 'none', // 'none' | 'client' | 'admin' | 'all': which emails should fail
         // keys given to Stripe, checkout sessions requested, customers created, fake sessions and
         // saved cards (setup intents) it knows, and whether creating a session should fail
-        stripe: { keys: [], created: [], customers: [], sessions: {}, setupIntents: {}, fail: false },
+        stripe: {
+            keys: [], created: [], customers: [], sessions: {}, setupIntents: {}, fail: false,
+            // card charges: every request made, the answers given per idempotency key, and how a
+            // saved card behaves: 'ok' (default), 'declined', 'insufficient_funds',
+            // 'authentication_required', 'unreachable' (Stripe can't be reached) or 'processing'
+            charges: [], intents: {}, cards: {},
+        },
     };
     currentMocks = mocks;
     mocks.sent = (to) => mocks.mails.filter((m) => m.result === 'sent' && (!to || m.to === to));
     mocks.reset = () => {
-        mocks.mails.length = 0; mocks.mailMode = 'none'; mocks.stripe.created.length = 0; mocks.stripe.customers.length = 0; mocks.stripe.fail = false;
-        for (const store of [mocks.stripe.sessions, mocks.stripe.setupIntents]) for (const key of Object.keys(store)) delete store[key];
+        mocks.mails.length = 0; mocks.mailMode = 'none'; mocks.stripe.created.length = 0; mocks.stripe.customers.length = 0; mocks.stripe.charges.length = 0; mocks.stripe.fail = false;
+        for (const store of [mocks.stripe.sessions, mocks.stripe.setupIntents, mocks.stripe.intents, mocks.stripe.cards]) for (const key of Object.keys(store)) delete store[key];
     };
 
     require('nodemailer').createTransport = () => ({
@@ -82,6 +88,31 @@ const installMocks = () => {
             // A saved card. Unless a test set one up, every setup intent holds a Visa ending 4242
             client.setupIntents.retrieve = async (id) => mocks.stripe.setupIntents[id] || {
                 id, payment_method: { id: `pm_for_${id}`, card: { brand: 'visa', last4: '4242', exp_month: 8, exp_year: 2030 } },
+            };
+            client.paymentIntents.create = async (params, options = {}) => {
+                mocks.stripe.charges.push({ params, options });
+                const key = options.idempotencyKey;
+                if (key && mocks.stripe.intents[key]) return mocks.stripe.intents[key]; // the same answer again, like Stripe
+                const behaviour = mocks.stripe.cards[params.payment_method] || 'ok';
+                if (behaviour === 'unreachable') throw Object.assign(new Error('fake Stripe unreachable'), { type: 'StripeConnectionError' });
+                const id = `pi_test_${mocks.stripe.charges.length}`;
+                if (['declined', 'insufficient_funds', 'authentication_required'].includes(behaviour)) {
+                    const error = Object.assign(new Error('Your card was declined.'), {
+                        type: 'StripeCardError',
+                        code: behaviour === 'authentication_required' ? 'authentication_required' : 'card_declined',
+                        decline_code: behaviour === 'insufficient_funds' ? 'insufficient_funds' : behaviour === 'authentication_required' ? 'authentication_required' : 'generic_decline',
+                        payment_intent: { id, status: 'requires_payment_method' },
+                    });
+                    throw error;
+                }
+                const intent = { id, object: 'payment_intent', amount: params.amount, status: behaviour === 'processing' ? 'processing' : 'succeeded' };
+                if (key) mocks.stripe.intents[key] = intent;
+                return intent;
+            };
+            client.paymentIntents.retrieve = async (id) => {
+                const intent = Object.values(mocks.stripe.intents).find((i) => i.id === id);
+                if (!intent) throw Object.assign(new Error(`No such payment_intent: ${id}`), { type: 'StripeInvalidRequestError' });
+                return intent;
             };
             client.checkout.sessions.retrieve = async (id) => {
                 const session = mocks.stripe.sessions[id];
