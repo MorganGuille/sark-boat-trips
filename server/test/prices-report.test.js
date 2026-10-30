@@ -112,7 +112,7 @@ describe('every booking keeps the prices it was made at', () => {
         assert.deepEqual((await saved())[0].prices, { adult: 4000, child: 2500, charter: 40000 });
     });
     it('a customer cannot choose the prices, make themselves a charter, or set payment fields', async () => {
-        const res = await t.call(app, 'post', '/bookings/add', { body: { ...t.booking({ date: t.day(10) }), prices: { adult: 1, child: 1, charter: 1 }, charter: 'true', stripeSessionId: 'cs_free', status: 'cancelled', cancelledAt: '2020-01-01' } });
+        const res = await t.call(app, 'post', '/bookings/add', { body: { ...t.booking({ date: t.day(10) }), prices: { adult: 1, child: 1, charter: 1 }, charter: 'true', stripeSessionId: 'cs_free', status: 'cancelled', cancelledAt: '2020-01-01', paymentStatus: 'paid', amountPaid: 99999, stripePaymentMethodId: 'pm_x' } });
         assert.equal(res.body.ok, true);
         const [booking] = await saved();
         assert.deepEqual(booking.prices, { adult: 4000, child: 2500, charter: 40000 });
@@ -120,6 +120,9 @@ describe('every booking keeps the prices it was made at', () => {
         assert.equal(booking.stripeSessionId, undefined);
         assert.equal(booking.status, 'active');
         assert.equal(booking.cancelledAt, undefined);
+        assert.equal(booking.paymentStatus, 'unpaid', 'a customer cannot say they have paid');
+        assert.equal(booking.amountPaid, undefined);
+        assert.equal(booking.stripePaymentMethodId, undefined);
     });
     it('with no prices set yet, a booking is still made (the prices are simply not saved on it)', async () => {
         await db.collection('admins').updateOne({}, { $unset: { adultPrice: '', childPrice: '', charterPrice: '' } });

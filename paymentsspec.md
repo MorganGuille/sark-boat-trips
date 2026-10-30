@@ -1,6 +1,6 @@
 # Card on file, charged at trip time (payments spec)
 
-**Status: decided, not built yet.** Written up on 26 Oct 2026 from the owner's answers. The original spec written by Gemini is kept at the bottom for reference. Where the two disagree, **this section wins**.
+**Status: being built on the `payments` branch.** Step 1 (payment status and Mark paid) is done; steps 2 (saving cards) and 3 (the charge timer) are next. Written up on 26 Oct 2026 from the owner's answers. The original spec written by Gemini is kept at the bottom for reference. Where the two disagree, **this section wins**.
 
 ## Why
 
@@ -56,6 +56,16 @@ Stripe cannot schedule a charge for us, so something has to check the bookings a
 
 Recommendation: **A**, with the check also reachable through a protected address so **C** can be added if the host ever changes. Moving host is fine for this design as long as the new host keeps the app switched on.
 
+## Technical notes for the charge timer
+
+(Gemini's three notes, which match the plan above, written precisely, with the gaps filled in.)
+
+1. **Catch up, never match exact times.** Each check charges every booking whose trip has *already started* (start time at or before now, in Guernsey time), whose status is `card_saved` and which is not cancelled. A restart or delay at 11:00 is caught on the next check. Bookings store a day (`YYYY-MM-DD`) and a timeslot, not a start time, so the check finds candidates with `date <= today` and works out the exact start (11:00 or 14:00 Guernsey time, including the clock changes) in code, using the same helpers as the booking cutoff in `utils/validateBooking.js`. **The start time comes from one function, `tripStartsAt(date, timeslot)`, never from the timeslot name directly.** Today it maps `11am` to 11:00 and `2pm` to 14:00. When the owner can change a trip's time for one day (spec P2-2, free choice of time), that function checks for a change first, so the charge moves with the trip and nothing in the timer changes. The one-hour booking cutoff should use the same function (today it reads the fixed hours in `validateBooking.js`).
+2. **Claim before charging.** Before calling Stripe, the booking is switched from `card_saved` to `charging` in one database step that only succeeds if it was still `card_saved`. Two overlapping checks (or two copies of the app) can then never both charge it. Afterwards it becomes `paid` or `unpaid` with the reason. A booking left in `charging` by a crash is retried by the next check, which is safe because of point 3.
+3. **One idempotency key per booking: `charge_booking_<booking id>`.** If a request times out or is sent twice, Stripe returns the first result instead of charging again. Two things to keep in mind: Stripe keeps a key for 24 hours, and it rejects the same key sent with a *different amount*. That's fine here because each booking is charged at most once (a failure becomes Unpaid and is never retried automatically). If automatic retries are ever added, the key must include the attempt number.
+4. **Charge as an off-session payment.** The charge is created with the saved customer and card, `off_session: true` and `confirm: true`, so Stripe treats it as a merchant-initiated charge under the UK's strong-authentication rules (the customer agreed when saving the card). If the bank still asks the customer to confirm, Stripe returns an error (`authentication_required`), and the booking becomes Unpaid with a plain-words reason, like a decline.
+5. **Amount, currency, description.** The amount is worked out at that moment in pence (`bookingValue` in `utils/prices.js`), the currency is `gbp`, and the description names the trip ("Sark Boat Trips 11am 14-06-2027"), so the customer's receipt makes sense. A booking worth £0 (for example only infants) is marked paid without calling Stripe.
+
 ## Other things to settle or build around it
 
 - **Customers cancelling themselves** (P2-6) matters more now: until then, a customer who cancels has to phone or email before the trip time, or they will be charged.
@@ -80,7 +90,7 @@ Recommendation: **A**, with the check also reachable through a protected address
 
 ### What gets built (in the sandbox, with the Stripe test key)
 
-1. **Booking fields:** payment status, Stripe customer and saved card, amount paid, when, and the plain-words reason for a failed charge.
+1. **Booking fields:** payment status, Stripe customer and saved card, amount paid, when, and the plain-words reason for a failed charge. **Done (step 1)**, with the dashboard's Payment column (status and amount owed, worked out by the server from the saved prices), **Mark paid** (cash or card reader; also stops a saved card being charged) and **Undo paid** (goes back to Card saved if there is a card). Routes `POST /bookings/mark-paid` and `/mark-unpaid`, owner only. A customer can't send any payment field, and editing a booking can't change them.
 2. **Booking flow:** the public booking form and the charter form both go to Stripe's hosted page in "save a card" mode. The booking is created only when Stripe confirms the card is saved (by the webhook or the success page, through one shared function, as charters work today), and only then are the emails sent. The success page covers both.
 3. **The charge timer:** a check every minute inside the app. Bookings whose trip has started, with a saved card, not cancelled and not yet paid, are charged once (Stripe idempotency key per booking), and the amount is worked out at that moment from the saved prices and the current party size. The result is recorded on the booking; failures go to the owner in one email.
 4. **Dashboard:** a payment status on every booking (Card saved, Paid, Paid in person, Unpaid with the reason), and a "Mark paid in person" button for dashboard bookings and failed charges.

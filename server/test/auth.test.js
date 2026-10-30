@@ -48,6 +48,8 @@ const PROTECTED = [
     ['post', '/bookings/cancel', { _id: '64b000000000000000000000' }],
     ['post', '/bookings/restore', { _id: '64b000000000000000000000' }],
     ['post', '/bookings/permanently-delete', { _id: '64b000000000000000000000' }],
+    ['post', '/bookings/mark-paid', { _id: '64b000000000000000000000' }],
+    ['post', '/bookings/mark-unpaid', { _id: '64b000000000000000000000' }],
     ['post', '/bookings/update/64b000000000000000000000', { phone: '1' }],
     ['post', '/bookings/updateavailability', { date: t.day(5), timeslot: '11am', capacity: '5' }],
     ['get', `/bookings/${t.day(5)}`],

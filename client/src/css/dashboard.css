@@ -400,17 +400,61 @@ input {
     background: #fafbfc;
 }
 
-.messageCell {
-    min-width: 12rem;
-    max-width: 20rem;
-}
-
-.actionsCell {
+/* Payment column */
+.payBadge {
+    display: inline-block;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
     white-space: nowrap;
 }
 
+.payUnpaid {
+    background: #fdecea;
+    color: #8c1d18;
+}
+
+.payCard {
+    background: #e8f0fe;
+    color: #1a4d8f;
+}
+
+.payPaid {
+    background: #e6f4ea;
+    color: #0a5c3c;
+}
+
+.payAmount {
+    display: block;
+    margin-top: 0.2rem;
+    font-weight: 600;
+}
+
+.payNote {
+    display: block;
+    color: #8c1d18;
+    font-size: 0.8rem;
+}
+
+.messageCell {
+    min-width: 8rem;
+    max-width: 20rem;
+}
+
+/* the row's buttons stack, so the table stays narrow enough to fit the card */
+.actionsCell {
+    white-space: nowrap;
+    width: 1%;
+}
+
+.dashboard .actionsCell .btn {
+    display: block;
+    width: 100%;
+}
+
 .dashboard .actionsCell .btn + .btn {
-    margin-left: 0.4rem;
+    margin-top: 0.3rem;
 }
 
 .badge {

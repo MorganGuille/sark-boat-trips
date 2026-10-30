@@ -6,7 +6,7 @@ const { getAvailability, isSlotEmpty } = require('../utils/availability');
 const { safeHtml } = require('../utils/safeHtml');
 const { settings } = require('../utils/settings');
 const { isDay, showDay } = require('../utils/dates');
-const { readPrices } = require('../utils/prices');
+const { readPrices, bookingValue } = require('../utils/prices');
 const { isMonth, monthRange, buildReport, toCsv } = require('../utils/report');
 const { validatePublicBooking, validateAdminBooking, validateAvailabilitySetting } = require('../utils/validateBooking');
 
@@ -67,6 +67,11 @@ const updateAvailability = async (req, res) => {
 const isBlank = (value) => value == null || String(value).trim() === '';
 
 const bookingName = (booking) => [booking.firstName, booking.lastName].filter(Boolean).join(' ') || 'this booking';
+
+// What each booking is worth (pence, or null if no prices are known), so the dashboard can show what to collect
+const withAmountDue = (bookings, prices) => bookings.map((b) => ({ ...b.toObject(), amountDue: bookingValue(b, prices) }));
+
+const pounds = (pence) => `£${(pence / 100).toFixed(2).replace(/\.00$/, '')}`;
 
 // Day view and search hide cancelled bookings unless asked (?includeCancelled=true)
 const statusFilter = (req) => req.query.includeCancelled === 'true' ? {} : { status: { $ne: 'cancelled' } };
@@ -369,7 +374,7 @@ const checkDate = async (req, res) => {
     try {
 
         let bookings = await Bookings.find({ date: date, ...statusFilter(req) })
-        res.send({ ok: true, data: bookings })
+        res.send({ ok: true, data: withAmountDue(bookings, await readPrices()) })
     }
     catch (error) {
         res.send({ ok: false, data: "check console for errors" })
@@ -415,7 +420,7 @@ const search = async (req, res) => {
     let search = req.params.search;
     try {
         let bookings = await Bookings.find({ lastName: { $regex: search, $options: 'i' }, ...statusFilter(req) });
-        res.send({ ok: true, data: bookings });
+        res.send({ ok: true, data: withAmountDue(bookings, await readPrices()) });
     } catch (error) {
         console.error("Error searching bookings:", error);
         res.status(500).send({ ok: false, data: "An error occurred. Please try again later." });
@@ -565,5 +570,47 @@ const monthlyReport = async (req, res) => {
     res.send({ ok: true, month, days: report.days, total: report.total });
 };
 
-module.exports = { monthlyReport, addBooking, adminAddBooking, cancelBooking, restoreBooking, permanentlyDeleteBooking, checkDate, checkMonthAvail, search, updateBooking, updateAvailability }
+// The owner took the money on the day (cash or card reader). Also stops a saved card being charged.
+const markPaid = async (req, res) => {
+    const { _id } = req.body;
+    if (!mongoose.isValidObjectId(_id)) return res.status(404).send({ ok: false, data: 'Booking not found!' });
+    const booking = await Bookings.findById(_id);
+    if (!booking) return res.status(404).send({ ok: false, data: 'Booking not found!' });
+    if (booking.status === 'cancelled') return res.status(409).send({ ok: false, data: 'This booking is cancelled. Restore it before marking it paid.' });
+
+    const amount = bookingValue(booking, await readPrices());
+    // Only from unpaid or card saved, and in one step, so it can't race the card charge
+    const updated = await Bookings.findOneAndUpdate(
+        { _id, paymentStatus: { $in: ['unpaid', 'card_saved', null] } },
+        { $set: { paymentStatus: 'paid_in_person', paidAt: new Date(), ...(amount !== null && { amountPaid: amount }) }, $unset: { paymentNote: '' } },
+        { new: true }
+    );
+    if (!updated) {
+        const now = booking.paymentStatus === 'charging' ? 'is being charged right now' : 'is already paid';
+        return res.status(409).send({ ok: false, data: `This booking ${now}.` });
+    }
+    res.send({ ok: true, data: `${bookingName(updated)} on ${showDay(updated.date)} at ${updated.timeslot} marked as paid in person${amount !== null ? ` (${pounds(amount)})` : ''}` });
+};
+
+// Undoes "Mark paid" (a mis-tap). A booking with a saved card goes back to being charged at the trip time.
+const markUnpaid = async (req, res) => {
+    const { _id } = req.body;
+    if (!mongoose.isValidObjectId(_id)) return res.status(404).send({ ok: false, data: 'Booking not found!' });
+    const booking = await Bookings.findById(_id);
+    if (!booking) return res.status(404).send({ ok: false, data: 'Booking not found!' });
+    if (booking.paymentStatus !== 'paid_in_person') {
+        const why = booking.paymentStatus === 'paid' ? 'It was paid online: refund it in Stripe instead.' : 'It is not marked as paid in person.';
+        return res.status(409).send({ ok: false, data: `Can't undo: ${why}` });
+    }
+    const back = booking.stripePaymentMethodId ? 'card_saved' : 'unpaid';
+    const updated = await Bookings.findOneAndUpdate(
+        { _id, paymentStatus: 'paid_in_person' },
+        { $set: { paymentStatus: back }, $unset: { paidAt: '', amountPaid: '' } },
+        { new: true }
+    );
+    if (!updated) return res.status(409).send({ ok: false, data: 'This booking changed in the meantime. Try again.' });
+    res.send({ ok: true, data: `${bookingName(updated)} on ${showDay(updated.date)} at ${updated.timeslot} is ${back === 'card_saved' ? 'back to being charged to the saved card at the trip time' : 'marked as unpaid again'}` });
+};
+
+module.exports = { markPaid, markUnpaid, monthlyReport, addBooking, adminAddBooking, cancelBooking, restoreBooking, permanentlyDeleteBooking, checkDate, checkMonthAvail, search, updateBooking, updateAvailability }
 

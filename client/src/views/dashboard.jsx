@@ -178,6 +178,19 @@ function Dashboard() {
         }
     }
 
+    const markPaid = (booking) => {
+        const cardNote = booking.paymentStatus === 'card_saved' ? '\n\nTheir saved card will then not be charged.' : ''
+        if (window.confirm(`Mark ${describe(booking)} as paid in person (cash or card reader)?${cardNote}`)) {
+            bookingAction('mark-paid', booking)
+        }
+    }
+
+    const markUnpaid = (booking) => {
+        if (window.confirm(`Undo "paid" for ${describe(booking)}?`)) {
+            bookingAction('mark-unpaid', booking)
+        }
+    }
+
     const deletePermanently = (booking) => {
         if (window.confirm(`Permanently delete the booking for ${describe(booking)}?\n\nThis removes the booking record for good and cannot be undone.`)) {
             bookingAction('permanently-delete', booking)
@@ -310,7 +323,8 @@ function Dashboard() {
                             {bookingsStatus === 'ready' && bookings.length ? (
                                 <BookingsTable bookings={bookings} showDate={searching}
                                     onEdit={setEditing} onCancel={cancelBooking}
-                                    onRestore={restoreBooking} onDeletePermanently={deletePermanently} />
+                                    onRestore={restoreBooking} onDeletePermanently={deletePermanently}
+                                    onMarkPaid={markPaid} onMarkUnpaid={markUnpaid} />
                             ) : null}
                             {bookingsStatus === 'ready' && !bookings.length ? (
                                 <p className='emptyState'>{searching ? 'No bookings found with that last name.' : 'Nothing booked for this day yet.'}</p>

@@ -142,6 +142,28 @@ test('report: the month\'s totals show on screen and download as a CSV file', as
     ]);
 });
 
+test('payment: a new booking shows as unpaid with what is owed, can be marked paid, and the mark can be undone', async ({ page, request }) => {
+    await h.logIn(page);
+    await addBooking(page, { adults: '2' });
+    await dismiss(page);
+    await page.click('role=tab[name="Bookings"]');
+    const row = page.locator('tr:has-text("Walkup")');
+    await expect(row.locator('.payBadge')).toHaveText('Unpaid');
+    await expect(row.locator('.payAmount')).toHaveText('£80');
+
+    await row.locator('button:has-text("Mark paid")').click(); // the "are you sure?" box is accepted
+    await notice(page, 'marked as paid in person (£80)');
+    await expect(row.locator('.payBadge')).toHaveText('Paid in person');
+    await expect(row.locator('button:has-text("Mark paid")')).toHaveCount(0);
+    expect((await h.savedBookings(request))[0]).toMatchObject({ paymentStatus: 'paid_in_person', amountPaid: 8000 });
+
+    await dismiss(page);
+    await row.locator('button:has-text("Undo paid")').click();
+    await notice(page, 'marked as unpaid again');
+    await expect(row.locator('.payBadge')).toHaveText('Unpaid');
+    expect((await h.savedBookings(request))[0].paymentStatus).toBe('unpaid');
+});
+
 test('a booking can be saved with details missing', async ({ page }) => {
     await h.logIn(page);
     await page.click('role=tab[name="New booking"]');

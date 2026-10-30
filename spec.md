@@ -268,6 +268,7 @@ Written after reading the whole codebase and testing the booking and dashboard f
 - **Not included:** the owner's costs (fuel, repairs), which stay in their spreadsheet; trip types such as half trips and fishing; the age wording "3-14 yrs" is still fixed text on the booking page.
 
 #### P2-2 `[Owner]` Trip tools: change a trip's time for one day, close a trip, notify everyone on it
+- **Payments link (see `paymentsspec.md`):** card charges fire at the trip's start time through `tripStartsAt(date, timeslot)`. A changed time for one day must be read by that function (and by the booking cutoff), so the charge moves with the trip.
 **Needs P2-11 and P2-10 first** (see the reminder at the top of this section).
 
 - **Change a trip's departure time for one day.** For example, it is rough at 11am, so the 11am trip goes at 12pm instead, and everyone booked on it is emailed the new time.

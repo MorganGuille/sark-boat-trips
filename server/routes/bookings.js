@@ -16,6 +16,8 @@ router.post('/monthAvailability', availabilityByIp, asyncHandler(controller.chec
 router.post('/admin-add', requireAuth, asyncHandler(controller.adminAddBooking))
 router.post('/cancel', requireAuth, asyncHandler(controller.cancelBooking))
 router.post('/restore', requireAuth, asyncHandler(controller.restoreBooking))
+router.post('/mark-paid', requireAuth, asyncHandler(controller.markPaid))
+router.post('/mark-unpaid', requireAuth, asyncHandler(controller.markUnpaid))
 router.post('/permanently-delete', requireAuth, asyncHandler(controller.permanentlyDeleteBooking))
 router.get('/:date', requireAuth, asyncHandler(controller.checkDate))
 router.get('/report/:month', requireAuth, asyncHandler(controller.monthlyReport))

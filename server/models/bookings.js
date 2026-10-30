@@ -59,6 +59,19 @@ const bookingsSchema = new mongoose.Schema({
         child: { type: Number, min: 0 },
         charter: { type: Number, min: 0 },
     },
+    // Payment (see paymentsspec.md). unpaid: nothing taken yet (dashboard bookings, or a failed charge);
+    // card_saved: will be charged at the trip time; charging: a charge is under way; paid: charged
+    // online; paid_in_person: the owner took cash or card on the day. A booking without one is unpaid.
+    paymentStatus: {
+        type: String,
+        enum: ['unpaid', 'card_saved', 'charging', 'paid', 'paid_in_person'],
+        default: 'unpaid',
+    },
+    paidAt: { type: Date },
+    amountPaid: { type: Number, min: 0 }, // pence
+    paymentNote: { type: String }, // plain-words reason a charge failed
+    stripeCustomerId: { type: String },
+    stripePaymentMethodId: { type: String },
     // Set on paid charters. The unique index means one Stripe payment can only ever create one booking
     stripeSessionId: {
         type: String,
