@@ -1,6 +1,6 @@
 # Card on file, charged at trip time (payments spec)
 
-**Status: being built on the `payments` branch.** Steps 1 (payment status and Mark paid), 2 (saving cards) and 3 (the charge at the trip time) are done; the wording and the `/terms` page are done too (cancellation rules below). Next: the extras listed under "Other things to settle", above all the trip-wide cancel button. Written up on 26 Oct 2026 from the owner's answers. The original spec written by Gemini is kept at the bottom for reference. Where the two disagree, **this section wins**.
+**Status: built on the `payments` branch (30 Oct 2026), waiting to be merged into `version2`.** Steps 1 (payment status and Mark paid), 2 (saving cards) and 3 (the charge at the trip time) are done, with infants, the wording, the `/terms` and `/privacy` pages (cancellation rules below) and the trip-wide cancel. Still open, listed under "Other things to settle": customer self-cancel (P2-6), reliable email (P2-10), and erasing a customer's Stripe record (P2-13). Written up on 26 Oct 2026 from the owner's answers. The original spec written by Gemini is kept at the bottom for reference. Where the two disagree, **this section wins**.
 
 ## Why
 

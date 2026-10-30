@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Sark Boat Trips: booking site and owner dashboard for a small boat-trip business. MERN stack (React 19 + Vite client, Express 4 + Mongoose server, MongoDB Atlas, Stripe for charters, Gmail SMTP for email). Single owner uses the dashboard. This repo is the **sandbox** (`version2` branch, sandbox DB `Bookings-Sandbox`); production is the Heroku app from `main`.
+Sark Boat Trips: booking site and owner dashboard for a small boat-trip business. MERN stack (React 19 + Vite client, Express 4 + Mongoose server, MongoDB Atlas, Stripe for saving and charging customers' cards, Gmail SMTP for email). Single owner uses the dashboard. This repo is the **sandbox** (`version2` branch, sandbox DB `Bookings-Sandbox`); production is the Heroku app from `main`. **The payments work (card saved at booking, charged at the trip time) is on the `payments` branch**, finished and waiting for the owner to merge it into `version2` (a fast-forward: `git switch version2`, `git merge payments`). Check `git branch` before starting: anything described here as payments lives on that branch until then.
 
 The backlog is in `spec.md`. Update it when an item is done or a new problem turns up.
 
@@ -82,7 +82,7 @@ The backlog is in `spec.md`. Update it when an item is done or a new problem tur
 
 ## Working with this owner
 
-- Commit only when asked. The owner pushes themselves. Branch is `version2`. Leave unrelated pre-existing changes out of commits.
+- Commit only when asked. The owner pushes themselves (this shell has no GitHub login, so pushes from here fail). Branch is `version2`, plus `payments` until it is merged. For a big change of how things work, the owner likes a separate branch to merge back once it works. Leave unrelated pre-existing changes out of commits.
 - For anything with a real design choice or behaviour change (new workflow, data changes), give a short recommendation and the options, and ask. Once they say go, implement and verify in the browser.
 - They want simple solutions that suit one person running a small business, and plain-language explanations. Be upfront about what was and wasn't tested, and about side effects of a change.
 - They prefer fields to be optional on the dashboard and strict for customers.
