@@ -1,7 +1,8 @@
 const Admin = require('../models/admin');
 const { dayNumber } = require('./dates');
 
-// Trip start times on a 24 hour clock. The timeslot names are what bookings store.
+// The usual trip start times on a 24 hour clock. The timeslot names are what bookings store: they name
+// the trip, even on a day when the owner has moved it to another time (utils/trips.js).
 const TIMESLOTS = { '11am': 11, '2pm': 14 };
 const MAX_PER_FIELD = 12; // adults, children and infants, each
 const MAX_CAPACITY = 100;
@@ -43,13 +44,13 @@ const guernseyToday = (now = new Date()) => {
     return `${Math.floor(day / 10000)}-${String(Math.floor(day / 100) % 100).padStart(2, '0')}-${String(day % 100).padStart(2, '0')}`;
 };
 
-// The moment a trip starts: its start hour on that day in Guernsey time, whether that is GMT or
-// British Summer Time. Everything that depends on the start time (the booking cutoff, and the card
-// charge in utils/charges.js) asks this function, so when a trip's time can be changed for one day
-// (spec P2-2) only this function needs to know. (date and timeslot must already be valid)
-const tripStartsAt = (date, timeslot) => {
+// The moment a trip starts on that day in Guernsey time, whether that is GMT or British Summer Time.
+// startTime ('15:00') is the trip's time on a day the owner changed it (utils/trips.js, which is what
+// everything else asks); without it, the usual time. (date and timeslot must already be valid)
+const tripStartsAt = (date, timeslot, startTime) => {
     const [year, month, day] = date.split('-').map(Number);
-    const wallClock = Date.UTC(year, month - 1, day, TIMESLOTS[timeslot], 0);
+    const [hour, minute] = startTime ? startTime.split(':').map(Number) : [TIMESLOTS[timeslot], 0];
+    const wallClock = Date.UTC(year, month - 1, day, hour, minute);
     // How far Guernsey's clocks are ahead of UTC at a moment (0 in winter, 1 hour in summer)
     const offsetAt = (moment) => {
         const local = guernseyNow(new Date(moment));
@@ -59,10 +60,11 @@ const tripStartsAt = (date, timeslot) => {
     return new Date(wallClock - offsetAt(wallClock - offsetAt(wallClock)));
 };
 
-// Has the date passed, or has booking for this trip closed? (date and timeslot must already be valid)
-const whenProblem = (date, timeslot, now = new Date()) => {
+// Has the date passed, or has booking for this trip closed? (date and timeslot must already be valid;
+// startTime: the trip's changed time that day, if any)
+const whenProblem = (date, timeslot, now = new Date(), startTime) => {
     if (dayNumber(date) < guernseyNow(now).day) return 'That date has already passed.';
-    if (now.getTime() + BOOKING_CUTOFF_MINUTES * 60000 > tripStartsAt(date, timeslot).getTime()) {
+    if (now.getTime() + BOOKING_CUTOFF_MINUTES * 60000 > tripStartsAt(date, timeslot, startTime).getTime()) {
         return 'Online booking for that trip has closed. Please contact us to book.';
     }
     return null;
@@ -122,7 +124,9 @@ const validatePublicBooking = async (body, now = new Date()) => {
     if (!isTimeslot(body.timeslot)) return 'Please choose a valid trip time.';
     if (dayNumber(body.date) === null) return 'Please choose a valid date.';
 
-    return whenProblem(body.date, body.timeslot, now) || seasonProblem(body.date, await loadSeason());
+    // The trip may have been moved to another time that day (loaded here, not at the top: utils/trips.js uses this file)
+    const { startTime } = await require('./trips').getTrip(body.date, body.timeslot);
+    return whenProblem(body.date, body.timeslot, now, startTime) || seasonProblem(body.date, await loadSeason());
 };
 
 // Checks a booking entered on the dashboard. Details may be missing and past dates are fine, but
@@ -146,5 +150,5 @@ const validateAvailabilitySetting = ({ date, timeslot, capacity }) => {
 module.exports = {
     validatePublicBooking, validateAdminBooking, validateAvailabilitySetting,
     // exported so the date and time rules can be tested with a fixed clock
-    dayNumber, guernseyNow, guernseyToday, tripStartsAt, whenProblem, seasonProblem, partyProblem, BOOKING_CUTOFF_MINUTES,
+    TIMESLOTS, dayNumber, guernseyNow, guernseyToday, tripStartsAt, whenProblem, seasonProblem, partyProblem, BOOKING_CUTOFF_MINUTES,
 };

@@ -38,7 +38,7 @@ Written after reading the whole codebase and testing the booking and dashboard f
 | P1-9 | Server | No error reporting, backup check, or separation of sandbox and production (**DONE**, except error reporting) | S |
 | P1-10 | Server | Dates stored as `dd-mm-yyyy` strings (**DONE**) | M–L |
 | P2-1 | Owner | Monthly passenger and income CSV, and price settings (**DONE**; the day sheet was dropped) | S–M |
-| P2-2 | Owner | Trip tools: change a trip's time for one day, close a trip, notify everyone on it. **Do P2-11 and P2-10 first** (cancelling a whole trip is done) | M–L |
+| P2-2 | Owner | Trip tools: change a trip's time for one day, close a trip, notify everyone on it (cancel a whole trip **DONE**; change time and harbour **DONE** on the `trip-tools` branch; message everyone and extra trips to come) | M–L |
 | P2-3 | Owner | Month overview and better search | M |
 | P2-4 | Owner | Card saved at booking, charged at the trip time; payment status (see `paymentsspec.md`) (**DONE**) | L |
 | P2-5 | Owner | Deliberate overbooking override | S |
@@ -270,9 +270,10 @@ Written after reading the whole codebase and testing the booking and dashboard f
 - **Not included:** the owner's costs (fuel, repairs), which stay in their spreadsheet; trip types such as half trips and fishing; the age wording "3-14 yrs" is still fixed text on the booking page.
 
 #### P2-2 `[Owner]` Trip tools: change a trip's time for one day, close a trip, notify everyone on it
-- **Partly done (30 Oct 2026):** "close a trip and notify everyone on it" is built as **Cancel a whole trip** on the Bookings tab (cancels and emails every booking, closes the trip, one summary for the owner). Still to do: changing a trip's time for one day.
-- **Payments link (see `paymentsspec.md`):** card charges fire at the trip's start time through `tripStartsAt(date, timeslot)`. A changed time for one day must be read by that function (and by the booking cutoff), so the charge moves with the trip.
-**Needs P2-11 and P2-10 first** (see the reminder at the top of this section).
+- **Partly done.** "Close a trip and notify everyone on it" is built as **Cancel a whole trip** (30 Oct 2026). **Change trip details** (31 Oct 2026, `trip-tools` branch, not yet merged): the owner moves one trip for one day to another time and/or to the **Maseline Harbour** (low tide), with an optional note; everyone on it is emailed the new details and a calendar file that replaces the old entry (the owner usually phones them first, so it can be switched off), and the owner gets one summary. The card charge, booking cutoff, reminder, confirmations, Stripe's page, the booking page, calendar panel and dashboard all follow the new time and harbour (`server/utils/trips.js`). The terms now say a customer who can't make a new time can cancel free, and that low tide may mean the Maseline Harbour.
+- **Still to do, owner's plan (31 Oct 2026):** step 2, **message everyone on a trip** (a typed message to everyone booked, same email style and summary); step 3, **extra trips** on chosen days (e.g. an evening trip), built on the same per-day trips. Questions for step 3: its price (normal or its own), seats and length, and whether it is bookable online.
+- The trip times and the 12 limit stay as they are: the owner doesn't need to change the usual times for a whole season.
+- **Payments link:** done. The card charge reads the trip's time that day through `utils/trips.js`, so it moves with the trip (tested). P2-11 and P2-10 (email) were done first, as planned.
 
 - **Change a trip's departure time for one day.** For example, it is rough at 11am, so the 11am trip goes at 12pm instead, and everyone booked on it is emailed the new time.
   - **Free choice of time.** The owner types any time, not a fixed list.

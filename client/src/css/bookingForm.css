@@ -119,3 +119,15 @@ form textarea {
 .cardNotice a {
     text-decoration: underline;
 }
+
+/* The selected trip leaves from another harbour that day (the owner moved it) */
+.tripNote {
+    margin: 0.4rem 0 0;
+    padding: 0.4rem 0.6rem;
+    border-left: 4px solid #e0a100;
+    background: #fff6dc;
+    color: #3b3000;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    max-width: 32rem;
+}

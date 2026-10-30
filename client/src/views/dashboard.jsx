@@ -6,6 +6,7 @@ import SeasonDatesForm from '../components/seasonDatesForm'
 import PricesForm from '../components/pricesForm'
 import ReportPanel from '../components/dashboard/reportPanel'
 import CancelTripForm from '../components/dashboard/cancelTripForm'
+import ChangeTripForm from '../components/dashboard/changeTripForm'
 import LoginForm from '../components/dashboard/loginForm'
 import BookingsTable from '../components/dashboard/bookingsTable'
 import AvailabilityForm from '../components/dashboard/availabilityForm'
@@ -15,6 +16,7 @@ import usePrices from '../hooks/usePrices'
 import { URL } from '../../config.js'
 import { authAxios, setToken, clearToken, hasValidToken, LOGOUT_EVENT } from '../services.jsx/auth.jsx'
 import { toDay, showDay, prettyDate } from '../utils/dates.js'
+import { getDayTrips, USUAL_TRIPS } from '../services.jsx/trips.jsx'
 
 import '../css/dashboard.css'
 
@@ -53,6 +55,7 @@ function Dashboard() {
     const [notes, setNotes] = useState([])
     const [notice, setNotice] = useState(null)
     const [refreshKey, setRefreshKey] = useState(0)
+    const [trips, setTrips] = useState(USUAL_TRIPS) // the day's trips as they are that day
     const [notesKey, setNotesKey] = useState(0)
     const season = useSeasonDates()
     const { prices, updatePrices } = usePrices()
@@ -90,6 +93,17 @@ function Dashboard() {
 
         return () => { cancelled = true }
     }, [loggedin, view, selectedDate, showCancelled, refreshKey])
+
+    // The selected day's trips: the owner may have moved one to another time or harbour
+    useEffect(() => {
+        if (!loggedin) return
+        let cancelled = false
+        getDayTrips(selectedDate)
+            .then((dayTrips) => { if (!cancelled) setTrips(dayTrips) })
+            .catch(() => { if (!cancelled) setTrips(USUAL_TRIPS) })
+        return () => { cancelled = true }
+    }, [loggedin, selectedDate, refreshKey])
+    const movedTrips = trips.filter((trip) => trip.timeChanged || trip.harbourChanged)
 
     useEffect(() => {
         if (!loggedin) return
@@ -319,10 +333,16 @@ function Dashboard() {
                                 </div>
                             </div>
 
+                            {!searching && movedTrips.length ? (
+                                <p className='tripMoved' role='note'>
+                                    {movedTrips.map((trip) => `The ${trip.timeslot} trip leaves at ${trip.time} from the ${trip.harbour} today`).join('. ')}.
+                                </p>
+                            ) : null}
+
                             {bookingsStatus === 'loading' ? <p className='muted' aria-busy='true'>Loading bookings…</p> : null}
                             {bookingsStatus === 'error' ? <p className='seasonError' role='alert'>Could not load bookings. Try again in a moment.</p> : null}
                             {bookingsStatus === 'ready' && bookings.length ? (
-                                <BookingsTable bookings={bookings} showDate={searching}
+                                <BookingsTable bookings={bookings} showDate={searching} trips={trips}
                                     onEdit={setEditing} onCancel={cancelBooking}
                                     onRestore={restoreBooking} onDeletePermanently={deletePermanently}
                                     onMarkPaid={markPaid} onMarkUnpaid={markUnpaid} />
@@ -340,7 +360,11 @@ function Dashboard() {
                             ) : null}
 
                             {!searching && bookingsStatus === 'ready' ? (
-                                <CancelTripForm selectedDate={selectedDate} bookings={bookings} onResult={showNotice} onDone={refreshBookings} />
+                                <>
+                                    <ChangeTripForm key={`${selectedDate}|${trips.map((trip) => trip.startTime + trip.harbourKey).join()}`}
+                                        selectedDate={selectedDate} trips={trips} bookings={bookings} onResult={showNotice} onDone={refreshBookings} />
+                                    <CancelTripForm selectedDate={selectedDate} bookings={bookings} onResult={showNotice} onDone={refreshBookings} />
+                                </>
                             ) : null}
                         </>) : null}
 

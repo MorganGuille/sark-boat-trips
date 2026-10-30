@@ -400,6 +400,57 @@ input {
     background: #fafbfc;
 }
 
+/* A trip moved to another time or harbour today (under the day's heading) */
+.tripMoved {
+    margin: 0 0 1rem;
+    padding: 0.5rem 0.75rem;
+    border-left: 4px solid #e0a100;
+    border-radius: 0.25rem;
+    background: #fff6dc;
+    color: #3b3000;
+}
+
+/* Change trip details (Bookings tab, under the day's list) */
+.changeTrip {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-top: 1.5rem;
+    padding: 1rem;
+    border: 1px solid #c9d8e6;
+    border-radius: 0.5rem;
+    background: #f5f9fc;
+}
+
+.changeTrip h3 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.changeTripRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.changeTripRow label,
+.changeTripNote {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.changeTripNote textarea {
+    width: 100%;
+    max-width: 36rem;
+    box-sizing: border-box;
+    font: inherit;
+    font-weight: normal;
+    padding: 0.4rem;
+}
+
 /* Cancel a whole trip (Bookings tab, under the day's list) */
 .cancelTrip {
     display: flex;

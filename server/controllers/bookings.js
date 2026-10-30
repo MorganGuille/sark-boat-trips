@@ -7,6 +7,7 @@ const { isDay, showDay } = require('../utils/dates');
 const { readPrices, bookingValue } = require('../utils/prices');
 const { seatsFor, partyText } = require('../utils/party');
 const emails = require('../emails');
+const { withTrip, withTrips, getTrip } = require('../utils/trips');
 const { isMonth, monthRange, buildReport, toCsv } = require('../utils/report');
 const { validatePublicBooking, validateAdminBooking, validateAvailabilitySetting } = require('../utils/validateBooking');
 
@@ -72,7 +73,7 @@ const adminAddBooking = async (req, res) => {
 
         const who = [firstName, lastName].filter(Boolean).join(' ') || 'the booking';
         if (email) {
-            const sent = await trySend(emails.confirmationEmail(saved));
+            const sent = await trySend(emails.confirmationEmail(await withTrip(saved)));
             return res.send({ ok: true, data: `Booking for ${who} on ${showDay(date)} at ${timeslot} saved${sent ? ' and confirmation email sent' : ', but the confirmation email could not be sent'}` });
         }
         res.send({ ok: true, data: `Booking for ${who} on ${showDay(date)} at ${timeslot} saved (no email address, so no confirmation was sent)` });
@@ -96,8 +97,9 @@ const cancelBooking = async (req, res) => {
             return res.status(404).send({ ok: false, data: `No active booking found for booking ID : ${_id}` });
         }
 
-        const mailOptionsClient = emails.cancellationEmail(cancelledBooking);
-        const mailOptionsAdmin = emails.cancelledOwnerEmail(cancelledBooking);
+        const forEmail = await withTrip(cancelledBooking);
+        const mailOptionsClient = emails.cancellationEmail(forEmail);
+        const mailOptionsAdmin = emails.cancelledOwnerEmail(forEmail);
 
 
         const who = bookingName(cancelledBooking);
@@ -144,7 +146,7 @@ const restoreBooking = async (req, res) => {
             return res.send({ ok: true, data: `Booking for ${who} on ${showDay(booking.date)} at ${booking.timeslot} restored (no email address, so no confirmation was sent)` });
         }
         try {
-            await sendEmail(emails.confirmationEmail(booking, bookingValue(booking, await readPrices())));
+            await sendEmail(emails.confirmationEmail(await withTrip(booking), bookingValue(booking, await readPrices())));
         } catch (emailError) {
             return res.send({ ok: true, data: `Booking for ${who} on ${showDay(booking.date)} at ${booking.timeslot} restored, but the confirmation email could not be sent` });
         }
@@ -300,8 +302,9 @@ const updateBooking = async (req, res) => {
 
     // The change is saved, so email problems are reported but never fail the request
     const notify = req.body.notifyCustomer !== false;
-    const customerEmailed = booking.email && notify ? await trySend(emails.updatedEmail(booking)) : null;
-    await trySend(emails.updatedOwnerEmail(booking));
+    const forEmail = await withTrip(booking);
+    const customerEmailed = booking.email && notify ? await trySend(emails.updatedEmail(forEmail)) : null;
+    await trySend(emails.updatedOwnerEmail(forEmail));
 
     let emailNote = '';
     if (booking.email && !notify) emailNote = ' (customer not emailed, as you asked)';
@@ -399,7 +402,7 @@ const cancelTrip = async (req, res) => {
     // Saved first, so emails are reported but never undo anything
     const notEmailed = [];
     let emailed = 0;
-    for (const booking of cancelled) {
+    for (const booking of await withTrips(cancelled)) {
         if (!booking.email) { notEmailed.push(booking); continue; }
         const what = booking.charter === 'true' ? 'charter' : 'trip';
         const apology = `We're very sorry: we've had to cancel this ${what}${TRIP_REASONS[reason]}. We'd love to take you out another day, so please book again or get in touch.`;
@@ -409,7 +412,7 @@ const cancelTrip = async (req, res) => {
     const toRefund = cancelled.filter((b) => ['paid', 'paid_in_person', 'charging'].includes(b.paymentStatus));
 
     const trip = `the ${timeslot} trip on ${showDay(date)}`;
-    await trySend(emails.tripCancelledOwnerEmail({ date, timeslot, reasonText: TRIP_REASONS[reason], cancelled, notEmailed, toRefund }));
+    await trySend(emails.tripCancelledOwnerEmail({ date, time: (await getTrip(date, timeslot)).time, reasonText: TRIP_REASONS[reason], cancelled, notEmailed, toRefund }));
 
     const parts = [`${cancelled.length} booking${cancelled.length === 1 ? '' : 's'} cancelled`, `${emailed} customer${emailed === 1 ? '' : 's'} emailed`];
     if (notEmailed.length) parts.push(`${notEmailed.length} not emailed (see your email)`);

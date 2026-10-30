@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router'
 import '../css/bookingForm.css'
 import axios from 'axios'
@@ -6,6 +6,7 @@ import { URL } from '../../config.js'
 import { authAxios } from '../services.jsx/auth.jsx'
 import { showDay } from '../utils/dates.js'
 import { FREE_CANCEL_HOURS } from '../utils/policy.js'
+import { getDayTrips, USUAL_TRIPS } from '../services.jsx/trips.jsx'
 
 
 // booking / onResult / onDone are only passed by the dashboard: booking switches the form
@@ -29,6 +30,20 @@ function BookingForm({ selectedDate, booking, onResult, onDone }) {
     const [isSubmitting, setIsSubmitting] = useState(false)
 
     const showResult = (message, type = 'success') => onResult ? onResult(message, type) : setResponse(message)
+
+    // The day's trips: the owner may have moved one to another time or harbour that day
+    const tripsDate = updating ? booking?.date : selectedDate
+    const [trips, setTrips] = useState(USUAL_TRIPS)
+    const [timeslot, setTimeslot] = useState(booking?.timeslot ?? '11am')
+    useEffect(() => {
+        if (!tripsDate) return
+        let current = true
+        getDayTrips(tripsDate)
+            .then((dayTrips) => { if (current && Array.isArray(dayTrips)) setTrips(dayTrips) })
+            .catch(() => { if (current) setTrips(USUAL_TRIPS) })
+        return () => { current = false }
+    }, [tripsDate])
+    const chosenTrip = trips.find((trip) => trip.timeslot === timeslot)
 
 
     const addBooking = async (e) => {
@@ -211,10 +226,16 @@ function BookingForm({ selectedDate, booking, onResult, onDone }) {
                             <label htmlFor="timeslot">
                                 Preferred time <strong>*</strong>
                             </label>
-                            <select id="timeslot" name="timeslot" defaultValue={booking?.timeslot ?? '11am'} required={fieldsRequired}>
-                                <option value="11am">11am</option>
-                                <option value="2pm">2pm</option>
+                            <select id="timeslot" name="timeslot" value={timeslot} onChange={(e) => setTimeslot(e.target.value)} required={fieldsRequired}>
+                                {trips.map((trip) => (
+                                    <option key={trip.timeslot} value={trip.timeslot}>
+                                        {trip.time}{trip.timeChanged ? ` (moved from ${trip.timeslot})` : ''}
+                                    </option>
+                                ))}
                             </select>
+                            {chosenTrip?.harbourChanged ? (
+                                <p className='tripNote'>On this day the {chosenTrip.time} trip leaves from the <strong>{chosenTrip.harbour}</strong>, not the Creux Harbour.</p>
+                            ) : null}
                         </div>
 
                         <div>

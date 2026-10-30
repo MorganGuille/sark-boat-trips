@@ -3,7 +3,8 @@
 // a booking is claimed before Stripe is called, and Stripe's idempotency key stops a second charge.
 const Bookings = require('../models/bookings');
 const stripe = require('./stripe');
-const { tripStartsAt, guernseyToday } = require('./validateBooking');
+const { guernseyToday } = require('./validateBooking');
+const { tripsFor, tripOfBooking, withTrips } = require('./trips');
 const { readPrices, bookingValue } = require('./prices');
 const { showDay } = require('./dates');
 const { trySend } = require('./mailer');
@@ -120,7 +121,12 @@ const runDueCharges = async (now = new Date()) => {
         status: { $ne: 'cancelled' },
         date: { $lte: guernseyToday(now) },
     });
-    const due = candidates.filter((b) => tripStartsAt(b.date, b.timeslot).getTime() <= now.getTime());
+    // The trip's start that day: the owner may have moved it to another time
+    const trips = await tripsFor(candidates);
+    const due = candidates.filter((b) => {
+        const { startsAt } = tripOfBooking(trips, b);
+        return startsAt && startsAt.getTime() <= now.getTime();
+    });
     if (!due.length) return { paid: 0, failed: 0, retry: 0 };
 
     const prices = await readPrices();
@@ -131,7 +137,10 @@ const runDueCharges = async (now = new Date()) => {
     }
 
     const failures = results.filter((r) => r.outcome === 'failed');
-    if (failures.length) await trySend(failedChargesEmail(failures));
+    if (failures.length) {
+        const forEmail = await withTrips(failures.map((f) => f.booking));
+        await trySend(failedChargesEmail(failures.map((f, i) => ({ ...f, booking: forEmail[i] }))));
+    }
     const count = (outcome) => results.filter((r) => r.outcome === outcome).length;
     return { paid: count('paid'), failed: failures.length, retry: count('retry') };
 };

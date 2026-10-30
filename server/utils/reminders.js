@@ -6,6 +6,7 @@ const Bookings = require('../models/bookings');
 const { guernseyNow } = require('./validateBooking');
 const { trySend } = require('./mailer');
 const { reminderEmail } = require('../emails');
+const { withTrip } = require('./trips');
 const { repeat } = require('./timer');
 
 const REMINDER_HOUR = 18; // 6pm the evening before, Guernsey time
@@ -43,7 +44,7 @@ const runDueReminders = async (now = new Date()) => {
             { new: true }
         );
         if (!booking) continue;
-        if (await trySend(reminderEmail(booking))) {
+        if (await trySend(reminderEmail(await withTrip(booking)))) {
             sent++;
         } else {
             failed++;

@@ -53,7 +53,7 @@ function Success() {
                                 <strong>{response.name}</strong>, thank you so much for booking {response.charter ? 'your charter' : 'with us'}!
                             </p>
                             <p>
-                                Your {response.charter ? 'charter' : 'trip'} is booked for <strong>{response.timeslot} on {showDay(response.date)}</strong>,
+                                Your {response.charter ? 'charter' : 'trip'} is booked for <strong>{response.time || response.timeslot} on {showDay(response.date)}</strong>,
                                 and we&apos;ve emailed you the details.
                             </p>
                             <p>
@@ -72,7 +72,7 @@ function Success() {
                                         If you haven&apos;t already, please contact us to arrange your trip and let us know what we can do for you!
                                     </p>
                                 ) : (
-                                    <p>Please be at Creux Harbour shortly before your trip. If anything changes, just get in touch.</p>
+                                    <p>Please be at the {response.harbour || 'Creux Harbour'} shortly before your trip. If anything changes, just get in touch.</p>
                                 )}
 
                                 <address style={{ fontStyle: 'normal' }}>

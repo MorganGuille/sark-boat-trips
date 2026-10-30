@@ -6,10 +6,19 @@ import axios from 'axios';
 import '../css/myCalendar.css';
 import { URL } from '../../config.js'
 import { parseDay, toDay } from '../utils/dates.js'
+import { getDayTrips, USUAL_TRIPS } from '../services.jsx/trips.jsx'
+
+// '15:00' as the calendar shows times: '3:00 PM'
+const clock = (startTime) => {
+    const [hour, minute] = startTime.split(':').map(Number)
+    return `${((hour + 11) % 12) + 1}:${String(minute).padStart(2, '0')} ${hour >= 12 ? 'PM' : 'AM'}`
+}
 
 function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate, refreshKey }) {
     const [date, setDate] = useState(new Date());
     const [availability, setAvailability] = useState({});
+    // The chosen day's trips: the owner may have moved one to another time or harbour that day
+    const [trips, setTrips] = useState(USUAL_TRIPS);
 
     let currentLoc = useLocation()
 
@@ -65,6 +74,20 @@ function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate, refreshKe
     useEffect(() => {
         fetchMonthAvailability(date);
     }, [date, refreshKey]);
+
+    const day = toDay(date);
+    useEffect(() => {
+        let current = true;
+        getDayTrips(day)
+            .then((dayTrips) => { if (current && Array.isArray(dayTrips)) setTrips(dayTrips); })
+            .catch(() => { if (current) setTrips(USUAL_TRIPS); });
+        return () => { current = false; };
+    }, [day, refreshKey]);
+    const tripLabel = (slot) => {
+        const trip = trips.find((t) => t.timeslot === slot) || USUAL_TRIPS.find((t) => t.timeslot === slot);
+        // the harbour isn't shown here (no room, and the two harbours are 100m apart): the booking form says it
+        return `${clock(trip.startTime)}${trip.timeChanged ? ` (moved from ${slot})` : ''}: `;
+    };
 
     const handleDateChange = (date) => {
         setDate(date);
@@ -133,7 +156,7 @@ function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate, refreshKe
             >
                 <p>Availability for : {date.toDateString()}:</p>
                 <div>
-                    <span>11:00 AM: </span>
+                    <span>{tripLabel('11am')}</span>
                     <span style={{ color: color11am() }}>
                         {!availability[toDay(date)] && availability[toDay(date)] !== 0
                             ? <span className='loader' aria-label="Loading spaces"></span>
@@ -141,7 +164,7 @@ function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate, refreshKe
                     </span>
                 </div>
                 <div>
-                    <span>2:00 PM: </span>
+                    <span>{tripLabel('2pm')}</span>
                     <span style={{ color: color2pm() }}>
                         {!availability[toDay(date)] && availability[toDay(date)] !== 0
                             ? <span className='loader' aria-label="Loading spaces"></span>

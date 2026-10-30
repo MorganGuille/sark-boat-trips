@@ -40,7 +40,7 @@ describe('starting a checkout', () => {
         await tripCheckout({ adults: '4', children: '1' });
         await charterCheckout({ date: t.day(16) });
         const [trip, charter] = mocks.stripe.created.map((p) => p.custom_text.submit.message);
-        assert.equal(trip, `Your card won't be charged now. £185 will be charged at 11am on ${t.shown(t.day(15))}, when your trip starts. You can cancel free of charge up to 24 hours before your trip starts. If we cancel because of the weather, you won't be charged.`);
+        assert.equal(trip, `Your card won't be charged now. £185 will be charged at 11am on ${t.long(t.day(15))}, when your trip starts. You can cancel free of charge up to 24 hours before your trip starts. If we cancel because of the weather, you won't be charged.`);
         assert.match(charter, /£400 will be charged at 11am .* when your charter starts\. You can cancel free of charge up to 48 hours before your charter starts\./);
     });
     it('the kind of booking is set by the address used, never by the customer', async () => {

@@ -24,7 +24,8 @@ function Terms({ className = 'popUpDisplay' }) {
             <section>
                 <p><strong>3. Cancellation or changes by Sark Boat Trips</strong></p>
                 <p>We may cancel or reschedule a trip because of the weather or sea conditions, a mechanical problem, or if fewer than 4 passengers are booked on a scheduled trip. <strong>If we cancel, you won&apos;t be charged</strong>, and if you have already been charged we will refund you in full. We&apos;ll offer you another trip where we can. We are not liable for any consequential losses (for example travel or accommodation costs).</p>
-                <p>If we need to change the time of your trip we&apos;ll contact you. Your card is then charged when the trip actually starts, and if the new time doesn&apos;t suit you, tell us and you won&apos;t be charged.</p>
+                <p>If we need to change the time of your trip we&apos;ll contact you, and your card is then charged when the trip actually starts. <strong>If we change the time of your trip and you can&apos;t make the new time, you can cancel free of charge.</strong></p>
+                <p>Trips usually leave from the Creux Harbour. When the tide is too low we may leave from the Maseline Harbour instead, and we&apos;ll let you know beforehand.</p>
             </section>
 
             <section>

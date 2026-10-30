@@ -2,10 +2,10 @@
 // phone offers to add the trip to the calendar). Owner's lengths, 30 Oct 2026: a trip 2.5 hours, a
 // charter 3. The same booking always has the same id inside the file, so a changed booking replaces
 // the old calendar entry in most calendar apps instead of adding a second one.
-const { tripStartsAt } = require('../utils/validateBooking');
 const { partyText } = require('../utils/party');
 const { settings } = require('../utils/settings');
-const { PHONE, HARBOUR } = require('./layout');
+const { describeTrip } = require('../utils/trips');
+const { PHONE } = require('./layout');
 
 const HOURS = { trip: 2.5, charter: 3 };
 
@@ -28,20 +28,22 @@ const fold = (line) => {
     return out.join('\r\n ');
 };
 
-// The attachment for nodemailer, or null if the booking has no valid date and time
+// The attachment for nodemailer, or null if the booking has no valid date and time. The trip's time
+// and harbour that day come from booking.trip (utils/trips.js withTrips), or are the usual ones.
 const calendarFile = (booking, now = new Date()) => {
-    let start;
+    let trip;
     try {
-        start = tripStartsAt(booking.date || '', booking.timeslot);
+        trip = booking.trip || describeTrip(booking.date, booking.timeslot);
     } catch {
         return null; // not a trip time it knows
     }
-    if (Number.isNaN(start.getTime())) return null;
+    const start = trip.startsAt;
+    if (!start || Number.isNaN(start.getTime())) return null;
     const charter = booking.charter === 'true';
     const end = new Date(start.getTime() + HOURS[charter ? 'charter' : 'trip'] * 3600000);
     const domain = settings.mail.from.split('@')[1] || 'sarkboattrips.com';
     const summary = charter ? 'Sark Boat Trips: private charter' : `Sark Boat Trips: boat trip (${partyText(booking)})`;
-    const description = `Please be at the Creux Harbour shortly before ${booking.timeslot}. Questions? Call ${PHONE} or email ${settings.mail.from}.`;
+    const description = `Please be at the ${trip.harbour.name} shortly before ${trip.time}. Questions? Call ${PHONE} or email ${settings.mail.from}.`;
 
     const lines = [
         'BEGIN:VCALENDAR',
@@ -57,7 +59,7 @@ const calendarFile = (booking, now = new Date()) => {
         `DTSTART:${stamp(start)}`,
         `DTEND:${stamp(end)}`,
         `SUMMARY:${escapeText(summary)}`,
-        `LOCATION:${escapeText(HARBOUR)}`,
+        `LOCATION:${escapeText(`${trip.harbour.name}, Sark`)}`,
         `DESCRIPTION:${escapeText(description)}`,
         'STATUS:CONFIRMED',
         'END:VEVENT',

@@ -4,13 +4,14 @@
 const Bookings = require('../models/bookings');
 const { getAvailability, isSlotEmpty } = require('../utils/availability');
 const { validatePublicBooking } = require('../utils/validateBooking');
-const { showDay } = require('../utils/dates');
+const { showDay, longDay } = require('../utils/dates');
 const { readPrices, bookingValue } = require('../utils/prices');
 const { settings } = require('../utils/settings');
 const { trySend } = require('../utils/mailer');
 const { seatsFor } = require('../utils/party');
 const { cancelRule } = require('../utils/policy');
 const emails = require('../emails');
+const { withTrip, getTrip } = require('../utils/trips');
 
 const stripe = require('../utils/stripe');
 
@@ -86,6 +87,7 @@ const startCheckout = (kind) => async (req, res) => {
     }
 
     const amount = bookingValue(booking, prices);
+    const trip = await getTrip(booking.date, booking.timeslot); // the owner may have moved it that day
     try {
         const customer = await stripe.customers.create({
             email: booking.email, name: `${booking.firstName} ${booking.lastName}`, phone: booking.phone,
@@ -98,10 +100,10 @@ const startCheckout = (kind) => async (req, res) => {
             cancel_url: `${settings.publicUrl}/canceled`,
             metadata: toMetadata(details, kind),
             ...(settings.termsConsent && { consent_collection: { terms_of_service: 'required' } }),
-            setup_intent_data: { description: `Sark Boat Trips ${what(booking)} ${booking.timeslot} ${showDay(booking.date)}` },
+            setup_intent_data: { description: `Sark Boat Trips ${what(booking)} ${trip.time} ${showDay(booking.date)}` },
             custom_text: {
                 submit: {
-                    message: `Your card won't be charged now. ${pounds(amount)} will be charged at ${booking.timeslot} on ${showDay(booking.date)}, when your ${what(booking)} starts. ${cancelRule(booking.charter === 'true')} If we cancel because of the weather, you won't be charged.`,
+                    message: `Your card won't be charged now. ${pounds(amount)} will be charged at ${trip.time} on ${longDay(booking.date)}, when your ${what(booking)} starts${trip.harbourChanged ? ` (it leaves from the ${trip.harbour.name})` : ''}. ${cancelRule(booking.charter === 'true')} If we cancel because of the weather, you won't be charged.`,
                 },
             },
         });
@@ -153,11 +155,13 @@ const fulfillCheckoutSession = async (session) => {
     // The booking is saved, so a failed email must not undo it
     if (room) {
         const amount = bookingValue(booking, prices);
-        const customerEmailFailed = !(await trySend(emails.confirmationEmail(booking, amount)));
-        await trySend(emails.newBookingOwnerEmail(booking, { amount, customerEmailFailed }));
+        const forEmail = await withTrip(booking);
+        const customerEmailFailed = !(await trySend(emails.confirmationEmail(forEmail, amount)));
+        await trySend(emails.newBookingOwnerEmail(forEmail, { amount, customerEmailFailed }));
     } else {
-        const customerEmailFailed = !(await trySend(emails.tripFullEmail(booking)));
-        await trySend(emails.tripFullOwnerEmail(booking, { customerEmailFailed }));
+        const forEmail = await withTrip(booking);
+        const customerEmailFailed = !(await trySend(emails.tripFullEmail(forEmail)));
+        await trySend(emails.tripFullOwnerEmail(forEmail, { customerEmailFailed }));
     }
 
     return { booking, created: true };
@@ -224,12 +228,15 @@ const verifyPayment = async (req, res) => {
 
     const { booking } = await fulfillCheckoutSession(session);
     const active = booking.status !== 'cancelled';
+    const trip = await getTrip(booking.date, booking.timeslot);
     res.json({
         ok: active,
         message: active ? 'Card saved and booking confirmed' : booking.paymentNote || 'This booking is no longer active. Please contact us.',
         name: booking.firstName,
         date: booking.date,
         timeslot: booking.timeslot,
+        time: trip.time, // the trip's time that day, which the owner may have changed
+        harbour: trip.harbour.name,
         charter: booking.charter === 'true',
         amount: bookingValue(booking, null),
         cardLabel: booking.cardLabel,

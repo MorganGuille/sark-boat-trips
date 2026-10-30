@@ -10,7 +10,13 @@ const PAYMENT = {
     paid_in_person: { label: 'Paid in person', className: 'payPaid' },
 }
 
-function BookingsTable({ bookings, showDate, onEdit, onCancel, onRestore, onDeletePermanently, onMarkPaid, onMarkUnpaid }) {
+function BookingsTable({ bookings, showDate, trips = [], onEdit, onCancel, onRestore, onDeletePermanently, onMarkPaid, onMarkUnpaid }) {
+
+    // The day's trip may have moved: show its time that day (not in search results, which span days)
+    const timeCell = (booking) => {
+        const trip = !showDate && trips.find((t) => t.timeslot === booking.timeslot)
+        return trip?.timeChanged ? <>{trip.time}<br /><small className='muted'>usually {booking.timeslot}</small></> : booking.timeslot
+    }
 
     const guests = (booking) => {
         const counts = [['adult', 'adults', booking.adults], ['child', 'children', booking.children], ['infant', 'infants', booking.infants]]
@@ -45,7 +51,7 @@ function BookingsTable({ bookings, showDate, onEdit, onCancel, onRestore, onDele
                         return (
                         <tr key={booking._id} className={isCancelled ? 'cancelledRow' : undefined}>
                             {showDate ? <td>{showDay(booking.date)}</td> : null}
-                            <td>{booking.timeslot}</td>
+                            <td>{timeCell(booking)}</td>
                             <td>
                                 {[booking.firstName, booking.lastName].filter(Boolean).join(' ') || '(no name)'}
                                 {booking.charter === 'true' ? <span className='badge'>Charter</span> : null}

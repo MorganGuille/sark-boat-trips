@@ -49,6 +49,7 @@ const installMocks = () => {
         mails: [], // every email attempted: { from, to, subject, html, text, attachments, result }
         transport: null, // the mail server settings the mailer was given
         mailMode: 'none', // 'none' | 'client' | 'admin' | 'all': which emails should fail
+        failTo: new Set(), // and emails to these addresses fail too
         // keys given to Stripe, checkout sessions requested, customers created, fake sessions and
         // saved cards (setup intents) it knows, and whether creating a session should fail
         stripe: {
@@ -62,7 +63,7 @@ const installMocks = () => {
     currentMocks = mocks;
     mocks.sent = (to) => mocks.mails.filter((m) => m.result === 'sent' && (!to || m.to === to));
     mocks.reset = () => {
-        mocks.mails.length = 0; mocks.mailMode = 'none'; mocks.stripe.created.length = 0; mocks.stripe.customers.length = 0; mocks.stripe.charges.length = 0; mocks.stripe.fail = false;
+        mocks.mails.length = 0; mocks.mailMode = 'none'; mocks.failTo.clear(); mocks.stripe.created.length = 0; mocks.stripe.customers.length = 0; mocks.stripe.charges.length = 0; mocks.stripe.fail = false;
         for (const store of [mocks.stripe.sessions, mocks.stripe.setupIntents, mocks.stripe.intents, mocks.stripe.cards]) for (const key of Object.keys(store)) delete store[key];
     };
 
@@ -71,7 +72,7 @@ const installMocks = () => {
         return {
             sendMail: async (options) => {
                 const toOwner = options.to === OWNER;
-                const fail = mocks.mailMode === 'all' || (mocks.mailMode === 'client' && !toOwner) || (mocks.mailMode === 'admin' && toOwner);
+                const fail = mocks.mailMode === 'all' || (mocks.mailMode === 'client' && !toOwner) || (mocks.mailMode === 'admin' && toOwner) || mocks.failTo.has(options.to);
                 mocks.mails.push({ from: options.from, to: options.to, subject: options.subject, html: options.html || '', text: options.text || '', attachments: options.attachments || [], result: fail ? 'failed' : 'sent' });
                 if (fail) throw new Error('fake mail failure');
                 return { messageId: 'fake' };
