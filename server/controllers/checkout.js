@@ -9,6 +9,7 @@ const { readPrices, bookingValue } = require('../utils/prices');
 const { settings } = require('../utils/settings');
 const { trySend } = require('../utils/mailer');
 const { seatsFor, partyText } = require('../utils/party');
+const { cancelRule } = require('../utils/policy');
 const { safeHtml } = require('../utils/safeHtml');
 const { buildConfirmationEmail, newBookingAdminEmail, cardPaymentLine } = require('./bookings');
 const { charterConfirmationEmail, charterAdminEmail } = require('./charters');
@@ -98,10 +99,11 @@ const startCheckout = (kind) => async (req, res) => {
             success_url: `${settings.publicUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${settings.publicUrl}/canceled`,
             metadata: toMetadata(details, kind),
+            ...(settings.termsConsent && { consent_collection: { terms_of_service: 'required' } }),
             setup_intent_data: { description: `Sark Boat Trips ${what(booking)} ${booking.timeslot} ${showDay(booking.date)}` },
             custom_text: {
                 submit: {
-                    message: `Your card won't be charged now. ${pounds(amount)} will be charged at ${booking.timeslot} on ${showDay(booking.date)}, when your ${what(booking)} starts. If we cancel because of the weather, you won't be charged.`,
+                    message: `Your card won't be charged now. ${pounds(amount)} will be charged at ${booking.timeslot} on ${showDay(booking.date)}, when your ${what(booking)} starts. ${cancelRule(booking.charter === 'true')} If we cancel because of the weather, you won't be charged.`,
                 },
             },
         });
@@ -180,7 +182,7 @@ const fulfillCheckoutSession = async (session) => {
 
     // The booking is saved, so a failed email must not undo it
     if (room) {
-        const line = cardPaymentLine(bookingValue(booking, prices), details.timeslot);
+        const line = cardPaymentLine(bookingValue(booking, prices), details.timeslot, details.charter === 'true');
         const party = partyText(details);
         const [toCustomer, toOwner] = details.charter === 'true'
             ? [charterConfirmationEmail(details, line), charterAdminEmail(details)]

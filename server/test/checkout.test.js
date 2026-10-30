@@ -33,14 +33,15 @@ describe('starting a checkout', () => {
         assert.equal(params.metadata.kind, 'trip');
         assert.equal(params.metadata.date, t.day(15));
         assert.equal(params.line_items, undefined, 'no deposit and no price object any more');
+        assert.equal(params.consent_collection, undefined, 'no terms tick box unless STRIPE_TERMS_CONSENT is set');
         assert.doesNotMatch(JSON.stringify(params), /herokuapp|price_/);
     });
     it('Stripe\'s page tells the customer what will be charged, when, and that weather cancellations are free', async () => {
         await tripCheckout({ adults: '4', children: '1' });
         await charterCheckout({ date: t.day(16) });
         const [trip, charter] = mocks.stripe.created.map((p) => p.custom_text.submit.message);
-        assert.equal(trip, `Your card won't be charged now. £185 will be charged at 11am on ${t.shown(t.day(15))}, when your trip starts. If we cancel because of the weather, you won't be charged.`);
-        assert.match(charter, /£400 will be charged at 11am .* when your charter starts/);
+        assert.equal(trip, `Your card won't be charged now. £185 will be charged at 11am on ${t.shown(t.day(15))}, when your trip starts. You can cancel free of charge up to 24 hours before your trip starts. If we cancel because of the weather, you won't be charged.`);
+        assert.match(charter, /£400 will be charged at 11am .* when your charter starts\. You can cancel free of charge up to 48 hours before your charter starts\./);
     });
     it('the kind of booking is set by the address used, never by the customer', async () => {
         await tripCheckout({ charter: 'true', kind: 'charter' });
@@ -119,7 +120,7 @@ describe('Stripe says a card was saved (the webhook)', () => {
         assert.deepEqual([b.paymentStatus, b.stripeCustomerId, b.stripePaymentMethodId], ['card_saved', 'cus_test_saved', 'pm_for_seti_cs_test_saved']);
         assert.deepEqual(b.prices, { adult: 4000, child: 2500, charter: 40000 }, 'the prices in force are saved on it');
         const confirmation = mocks.sent(session.metadata.email).find((m) => m.subject === 'PRIVATE CHARTER Confirmation Sark Boat Trips');
-        assert.match(confirmation.html, /£400 will be charged at 11am on the day of your trip/);
+        assert.match(confirmation.html, /£400 will be charged at 11am on the day of your charter\. You can cancel free of charge up to 48 hours before your charter starts\./);
         assert.doesNotMatch(confirmation.html, /deposit/i);
         assert.ok(mocks.sent(t.OWNER).some((m) => m.subject === `New CHARTER on : ${t.shown(session.metadata.date)}`));
         assert.equal(mocks.sent().length, 2);

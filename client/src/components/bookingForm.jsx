@@ -5,6 +5,7 @@ import axios from 'axios'
 import { URL } from '../../config.js'
 import { authAxios } from '../services.jsx/auth.jsx'
 import { showDay } from '../utils/dates.js'
+import { FREE_CANCEL_HOURS } from '../utils/policy.js'
 
 
 // booking / onResult / onDone are only passed by the dashboard: booking switches the form
@@ -285,8 +286,9 @@ function BookingForm({ selectedDate, booking, onResult, onDone }) {
                     {!checkPageDashboard() && (
                         <p className='cardNotice'>
                             Next you&apos;ll save a card on Stripe&apos;s secure page. <strong>Nothing is charged now:</strong> the
-                            price is charged when your {checkPageCharters() ? 'charter' : 'trip'} starts. If we cancel because of the
-                            weather, you won&apos;t be charged.
+                            price is charged when your {checkPageCharters() ? 'charter' : 'trip'} starts. You can cancel free of charge
+                            up to {checkPageCharters() ? FREE_CANCEL_HOURS.charter : FREE_CANCEL_HOURS.trip} hours before, and if we cancel
+                            because of the weather, you won&apos;t be charged. <a href='/terms' target='_blank' rel='noopener'>Terms and conditions</a>
                         </p>
                     )}
 

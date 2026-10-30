@@ -4,6 +4,7 @@ import BookingForm from './bookingForm'
 import useSeasonDates from '../hooks/useSeasonDates'
 import usePrices from '../hooks/usePrices'
 import { formatPounds } from '../utils/money.js'
+import { FREE_CANCEL_HOURS } from '../utils/policy.js'
 import { toDay } from '../utils/dates.js'
 import '../css/bookings.css'
 
@@ -48,6 +49,7 @@ function Bookings() {
                             <strong>Infants</strong> (3 and under): free
                         </p>
                         <p><strong>Private Charter</strong>: {formatPounds(prices.charter)}</p>
+                        <p>Pay by card when your trip starts. Free cancellation up to {FREE_CANCEL_HOURS.trip} hours before ({FREE_CANCEL_HOURS.charter} hours for charters).</p>
                     </div>
                 ) : null}
 

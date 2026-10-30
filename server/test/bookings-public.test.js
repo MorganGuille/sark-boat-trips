@@ -38,7 +38,7 @@ describe('a customer makes a booking', () => {
         assert.ok(confirmation.html.includes(`on ${t.shown(body.date)} at 11am`));
         assert.ok(!confirmation.html.includes(body.date), 'the stored YYYY-MM-DD form is not shown to the customer');
         // and it says the card is saved, what it will be charged and when, not "pay on the day"
-        assert.match(confirmation.html, /Your card has been saved and nothing has been taken yet\. £80 will be charged at 11am on the day of your trip/);
+        assert.match(confirmation.html, /Your card has been saved and nothing has been taken yet\. £80 will be charged at 11am on the day of your trip\. You can cancel free of charge up to 24 hours before your trip starts\./);
         assert.doesNotMatch(confirmation.html, /Payment is at the end of the trip/);
     });
 

@@ -8,6 +8,7 @@ const { settings } = require('../utils/settings');
 const { isDay, showDay } = require('../utils/dates');
 const { readPrices, bookingValue } = require('../utils/prices');
 const { seatsFor, partyText } = require('../utils/party');
+const { cancelRule } = require('../utils/policy');
 const { isMonth, monthRange, buildReport, toCsv } = require('../utils/report');
 const { validatePublicBooking, validateAdminBooking, validateAvailabilitySetting } = require('../utils/validateBooking');
 
@@ -50,8 +51,8 @@ const statusFilter = (req) => req.query.includeCancelled === 'true' ? {} : { sta
 // What the confirmation says about paying. A booking with a saved card is charged at the trip time
 // (paymentsspec.md); one made on the dashboard is paid on the day, as before.
 const PAY_ON_THE_DAY = 'Payment is at the end of the trip and you can pay either by cash or card.';
-const cardPaymentLine = (amountPence, timeslot) =>
-    `Your card has been saved and nothing has been taken yet. ${amountPence === null ? 'The trip price' : `£${(amountPence / 100).toFixed(2).replace(/\.00$/, '')}`} will be charged at ${timeslot} on the day of your trip. If we have to cancel because of the weather, you won't be charged.`;
+const cardPaymentLine = (amountPence, timeslot, charter = false) =>
+    `Your card has been saved and nothing has been taken yet. ${amountPence === null ? 'The trip price' : `£${(amountPence / 100).toFixed(2).replace(/\.00$/, '')}`} will be charged at ${timeslot} on the day of your ${charter ? 'charter' : 'trip'}. ${cancelRule(charter)} If we have to cancel because of the weather, you won't be charged.`;
 
 const buildConfirmationEmail = ({ email, firstName, party, date, timeslot, paymentLine = PAY_ON_THE_DAY }) => ({
                 from: 'sarkboattrips@gmail.com',
@@ -282,7 +283,7 @@ const restoreBooking = async (req, res) => {
         try {
             await sendEmail(buildConfirmationEmail({
                 email: booking.email, firstName: booking.firstName || 'guest', party: partyText(booking), date: booking.date, timeslot: booking.timeslot,
-                ...(booking.paymentStatus === 'card_saved' && { paymentLine: cardPaymentLine(bookingValue(booking, await readPrices()), booking.timeslot) }),
+                ...(booking.paymentStatus === 'card_saved' && { paymentLine: cardPaymentLine(bookingValue(booking, await readPrices()), booking.timeslot, booking.charter === 'true') }),
             }));
         } catch (emailError) {
             return res.send({ ok: true, data: `Booking for ${who} on ${showDay(booking.date)} at ${booking.timeslot} restored, but the confirmation email could not be sent` });

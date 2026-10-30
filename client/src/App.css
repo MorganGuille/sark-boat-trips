@@ -153,3 +153,10 @@ body {
   }
 
 }
+/* The terms and privacy policy on their own pages (/terms, /privacy). Top padding clears the navbar. */
+.termsPage {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 6rem 1rem 3rem;
+  line-height: 1.5;
+}

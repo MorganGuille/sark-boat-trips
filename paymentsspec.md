@@ -1,6 +1,6 @@
 # Card on file, charged at trip time (payments spec)
 
-**Status: being built on the `payments` branch.** Steps 1 (payment status and Mark paid), 2 (saving cards) and 3 (the charge at the trip time) are done; next is the wording and the `/terms` page, then the extras listed under "Other things to settle". Written up on 26 Oct 2026 from the owner's answers. The original spec written by Gemini is kept at the bottom for reference. Where the two disagree, **this section wins**.
+**Status: being built on the `payments` branch.** Steps 1 (payment status and Mark paid), 2 (saving cards) and 3 (the charge at the trip time) are done; the wording and the `/terms` page are done too (cancellation rules below). Next: the extras listed under "Other things to settle", above all the trip-wide cancel button. Written up on 26 Oct 2026 from the owner's answers. The original spec written by Gemini is kept at the bottom for reference. Where the two disagree, **this section wins**.
 
 ## Why
 
@@ -38,6 +38,10 @@ A payment status: **Card saved**, **Paid** (charged online), **Paid in person** 
 ## Prices (built first: see the price settings)
 
 Adult, child and charter prices are settings the owner changes in the dashboard (top row, next to the season dates). Infants are free. **Each booking saves the prices in force when it was made**, so changing next year's prices never changes an old booking or last year's income. Both the monthly CSV and this payment feature work out money from those saved prices. Once payments are built, the Stripe `PRICE_ID` setting is no longer needed (the amount is sent to Stripe directly) and should be removed.
+
+## Cancellation rules (decided 30 Oct 2026)
+
+Trips: free to cancel up to **24 hours** before. Charters: up to **48 hours** before. Later, or a no-show: charged in full. Fewer people than booked: charged for the booking as made, unless the customer told the owner before the deadline. Nothing enforces this in code: the owner cancels the booking (nothing charged) or leaves it (charged at the trip time). The rules are on the `/terms` page (section 2), the booking form, the booking and charter pages, Stripe's page text, the confirmation emails and the success page.
 
 ## Wording customers must see before saving a card
 
@@ -81,7 +85,7 @@ Recommendation: **A**, with the check also reachable through a protected address
 ### What the owner does in Stripe (test mode first, then the same in live mode at go-live)
 
 1. **Public details** (Settings → Business → Public details): business name, support phone and email, and a **statement descriptor** such as `SARK BOAT TRIPS`. That is what appears on the customer's bank statement on the day of the trip, so they recognise the charge (the main defence against disputes).
-2. **Terms of service address**, in the same place: the address of the site's terms page (we add a real `/terms` page; today the terms only open as a pop-up in the footer). Stripe's page then shows "I agree to the terms" before the card is saved.
+2. **Terms of service and privacy policy addresses**, in the same place: `https://www.sarkboattrips.com/terms` and `https://www.sarkboattrips.com/privacy` (both are real pages now, as well as footer pop-ups). With the terms address saved and `STRIPE_TERMS_CONSENT=true` set, Stripe's page shows "I agree to the terms" before the card is saved. Done in test mode (30 Oct 2026); repeat in live mode at go-live.
 3. **Branding** (Settings → Branding): logo and colours, so Stripe's page looks like the business. Optional, but it helps trust.
 4. **Receipts** (Settings → Customer emails): switch on "Successful payments", so each customer gets a receipt from Stripe when they are charged on the day.
 5. **Payment methods** (Settings → Payment methods): cards on (they are by default). Apple Pay and Google Pay can stay on: they work for saving a card.

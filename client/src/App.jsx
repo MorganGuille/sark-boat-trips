@@ -11,6 +11,8 @@ import Charters from './views/charters';
 import Dashboard from "./views/dashboard";
 import Success from "./views/success";
 import Canceled from "./views/canceled";
+import TermsPage from "./views/termsPage";
+import PrivacyPage from "./views/privacyPage";
 import NotFound from "./views/notfound";
 
 import Footer from './components/footer';
@@ -41,6 +43,8 @@ function App() {
           <Route path='/dashboard' element={<Dashboard />} />
           <Route path='/success' element={<Success />} />
           <Route path='/canceled' element={<Canceled />} />
+          <Route path='/terms' element={<TermsPage />} />
+          <Route path='/privacy' element={<PrivacyPage />} />
           <Route path='*' element={<NotFound />} />
         </Routes>
       </Wrapper>

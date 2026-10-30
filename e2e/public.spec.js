@@ -24,6 +24,8 @@ test('a customer saves a card on Stripe\'s page, comes back to a confirmation, a
     const date = await h.pickDate(page, 9);
     const email = await h.fillBooking(page, { firstName: 'Alice', email: 'alice@example.test', adults: '2' });
     await expect(page.locator('.cardNotice')).toContainText('Nothing is charged now');
+    await expect(page.locator('.cardNotice')).toContainText('cancel free of charge up to 24 hours before');
+    await expect(page.locator('.cardNotice a')).toHaveAttribute('href', '/terms');
     await page.click('button:has-text("Continue to card details")');
     await page.waitForURL('https://checkout.stripe.test/**');
     expect(await h.savedBookings(request), 'nothing is booked until the card is saved').toHaveLength(0);
@@ -38,6 +40,7 @@ test('a customer saves a card on Stripe\'s page, comes back to a confirmation, a
     await expect(page.locator('main')).toContainText('Visa •••• 4242');
     await expect(page.locator('main')).toContainText('nothing has been taken yet');
     await expect(page.locator('main')).toContainText('£80 will be charged when your trip starts');
+    await expect(page.locator('main')).toContainText('Let us know at least 24 hours before');
 
     const saved = await h.savedBookings(request);
     expect(saved).toHaveLength(1);
@@ -84,6 +87,43 @@ test('a booking the server refuses shows the reason and keeps what the customer 
     expect(await h.savedBookings(request)).toHaveLength(1);
 });
 
+test('the terms have their own page (Stripe links to it) with the payment and cancellation rules', async ({ page }) => {
+    const problems = h.watch(page);
+    await page.goto('/terms');
+    const terms = page.locator('main');
+    await expect(terms.locator('h2')).toHaveText('Terms and Conditions - Sark Boat Trips');
+    await expect(terms).toContainText('Nothing is charged when you book.');
+    await expect(terms).toContainText('cancel at least 24 hours before your trip starts');
+    await expect(terms).toContainText('Private charters: cancel at least 48 hours before');
+    await expect(terms).toContainText('If we cancel, you won\'t be charged');
+    await expect(terms).toContainText('infants (3 and under) go free');
+    await expect(terms).not.toContainText('deposit');
+    expect(problems).toEqual([]);
+});
+
+test('the privacy policy has its own page (Stripe links to it) and explains the saved card', async ({ page }) => {
+    const problems = h.watch(page);
+    await page.goto('/privacy');
+    const policy = page.locator('main');
+    await expect(policy.locator('h2')).toHaveText('Privacy Policy for Sark Boat Trips');
+    await expect(policy).toContainText('your card is saved and later charged by Stripe');
+    await expect(policy).toContainText('We never see or store your full card number');
+    await expect(policy).toContainText('until you ask us to remove them');
+    await expect(policy).not.toContainText('**');
+    await expect(policy).not.toContainText('For charter bookings');
+    expect(problems).toEqual([]);
+    await page.goto('/terms');
+    await expect(page.locator('main a[href="/privacy"]')).toHaveText('privacy policy');
+});
+
+test('the booking page tells customers how cancelling works', async ({ page }) => {
+    await page.goto('/bookings');
+    await expect(page.locator('[aria-label="Pricing information"]')).toContainText('Free cancellation up to 24 hours before (48 hours for charters)');
+    await page.goto('/charters');
+    await expect(page.locator('.charter-notice')).toContainText('cancel free of charge up to 48 hours before');
+    await expect(page.locator('.cardNotice')).toContainText('up to 48 hours before');
+});
+
 test('closing Stripe\'s page leads to a page saying nothing was booked or charged', async ({ page }) => {
     await page.goto('/canceled');
     await expect(page.locator('main')).toContainText('nothing has been booked');
@@ -102,7 +142,7 @@ test('a bot that fills in the hidden field is not seen by people, and gets nothi
 
 test('on a phone nothing scrolls sideways', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    for (const path of ['/', '/bookings', '/charters', '/dashboard']) {
+    for (const path of ['/', '/bookings', '/charters', '/dashboard', '/terms', '/privacy']) {
         await page.goto(path);
         await page.waitForLoadState('networkidle').catch(() => {});
         const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);

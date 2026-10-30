@@ -31,6 +31,9 @@ const readSettings = (env = process.env) => {
 
     return {
         isProduction,
+        // Stripe's page asks customers to tick "I agree to the terms" (needs the terms address saved
+        // in the Stripe dashboard first, or Stripe refuses every booking: so it is off unless set)
+        termsConsent: String(env.STRIPE_TERMS_CONSENT || '').trim().toLowerCase() === 'true',
         publicUrl,
         dashboardUrl: `${publicUrl}/dashboard`,
         stripe: {

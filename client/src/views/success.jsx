@@ -3,6 +3,7 @@ import axios from 'axios'
 import { URL } from '../../config.js'
 import { showDay } from '../utils/dates.js'
 import { formatPounds } from '../utils/money.js'
+import { FREE_CANCEL_HOURS } from '../utils/policy.js'
 
 function Success() {
     const [response, setResponseData] = useState(null)
@@ -58,6 +59,10 @@ function Success() {
                                 Your card{response.cardLabel ? ` (${response.cardLabel})` : ''} has been saved and <strong>nothing has been taken yet</strong>.
                                 {Number.isFinite(response.amount) ? ` ${formatPounds(response.amount / 100)}` : ' The price'} will be charged when
                                 your {response.charter ? 'charter' : 'trip'} starts. If we cancel because of the weather, you won&apos;t be charged.
+                            </p>
+                            <p>
+                                Need to cancel? Let us know at least {response.charter ? FREE_CANCEL_HOURS.charter : FREE_CANCEL_HOURS.trip} hours
+                                before and you won&apos;t be charged. <a href='/terms'>Terms and conditions</a>
                             </p>
 
                             <section aria-label="Next steps" style={{ marginTop: '20px' }}>
