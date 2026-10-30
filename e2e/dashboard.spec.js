@@ -109,7 +109,7 @@ test('prices: set in the top row, shown to customers on the booking page', async
     await customer.goto('/bookings');
     const prices = customer.locator('[aria-label="Pricing information"]');
     await expect(prices).toContainText('Adults: £45');
-    await expect(prices).toContainText('Children (3-14 yrs): £27.50');
+    await expect(prices).toContainText('Children (4-14 yrs): £27.50');
     await expect(prices).toContainText('Private Charter: £450');
     await customer.close();
 
@@ -136,9 +136,9 @@ test('report: the month\'s totals show on screen and download as a CSV file', as
     const d = new Date();
     const today = `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
     expect(lines).toEqual([
-        'Date,Adults,Children,Passengers,Charters,Income (GBP)',
-        `${today},5,0,5,0,200.00`,
-        'Total,5,0,5,0,200.00',
+        'Date,Adults,Children,Infants,Passengers,Charters,Income (GBP)',
+        `${today},5,0,0,5,0,200.00`,
+        'Total,5,0,0,5,0,200.00',
     ]);
 });
 

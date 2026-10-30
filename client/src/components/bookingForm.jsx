@@ -41,6 +41,7 @@ function BookingForm({ selectedDate, booking, onResult, onDone }) {
             phone: e.target.phone.value,
             adults: e.target.adults.value,
             children: e.target.children.value,
+            infants: e.target.infants.value,
             date: selectedDate,
             accommodation: e.target.accommodation.value,
             message: e.target.message.value,
@@ -86,6 +87,7 @@ function BookingForm({ selectedDate, booking, onResult, onDone }) {
             phone: e.target.phone.value,
             adults: e.target.adults.value,
             children: e.target.children.value,
+            infants: e.target.infants.value,
             date: selectedDate,
             accommodation: e.target.accommodation.value,
             message: e.target.message.value,
@@ -124,6 +126,7 @@ function BookingForm({ selectedDate, booking, onResult, onDone }) {
             phone: e.target.phone.value,
             adults: e.target.adults.value,
             children: e.target.children.value,
+            infants: e.target.infants.value,
             date: e.target.date.value,
             accommodation: e.target.accommodation.value,
             message: e.target.message.value,
@@ -242,13 +245,18 @@ function BookingForm({ selectedDate, booking, onResult, onDone }) {
                     <fieldset>
                         <legend>Party Details</legend>
                         <div>
-                            <label htmlFor="adults">Number of adults <strong>*</strong></label>
+                            <label htmlFor="adults">Adults (15 and over) <strong>*</strong></label>
                             <input type="number" min="1" max="12" id="adults" name="adults" defaultValue={booking?.adults || ''} placeholder="max 12" required={fieldsRequired} />
                         </div>
 
                         <div>
-                            <label htmlFor="children">Number of children (14yrs and under)</label>
-                            <input type="number" min="0" max="12" id="children" name="children" defaultValue={booking?.children} placeholder="including infants" />
+                            <label htmlFor="children">Children (4 to 14)</label>
+                            <input type="number" min="0" max="12" id="children" name="children" defaultValue={booking?.children} placeholder="0" />
+                        </div>
+
+                        <div>
+                            <label htmlFor="infants">Infants (3 and under, free)</label>
+                            <input type="number" min="0" max="12" id="infants" name="infants" defaultValue={booking?.infants} placeholder="0" />
                         </div>
 
                         <div>

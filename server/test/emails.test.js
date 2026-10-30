@@ -113,7 +113,7 @@ describe('customers cannot inject markup or links into emails', () => {
         await add({ ...t.booking(), firstName: 'Alice', lastName: 'Smith', email: 'alice@example.test', children: '1', message: 'Looking forward to it!' });
         const c = text(mocks.sent('alice@example.test')[0].html), o = text(mocks.sent(t.OWNER)[0].html);
         assert.match(c, /Dear Alice,/);
-        assert.match(c, /2 adults and 1 children/);
+        assert.match(c, /2 adults and 1 child on/);
         assert.doesNotMatch(c, /undefined|&lt;|&amp;/);
         assert.match(o, /Alice Smith/);
         assert.match(o, /Looking forward to it!/);

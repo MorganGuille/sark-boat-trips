@@ -124,3 +124,24 @@ describe('undo mark paid', () => {
         assert.equal((await markUnpaid(await t.insertBooking({}))).status, 409);
     });
 });
+
+describe('the cancellation email says what happens to the money', () => {
+    const cancel = (_id) => t.call(app, 'post', '/bookings/cancel', { token, body: { _id } });
+    const mailTo = (who) => mocks.sent(who).find((m) => /CANCELLED/.test(m.subject));
+    const cases = [
+        ['a saved card', { paymentStatus: 'card_saved', stripePaymentMethodId: 'pm_test' }, /Your card has not been charged, and it won't be charged for this booking/, /card saved, it will not be charged/],
+        ['an unpaid booking', { paymentStatus: 'unpaid' }, /Nothing has been charged\./, /unpaid, nothing to refund/],
+        ['a booking from before payments (no status)', {}, /Nothing has been charged\./, /unpaid, nothing to refund/],
+        ['a booking paid online', { paymentStatus: 'paid' }, /If you've already paid, please get in touch and we'll sort out a refund/, /PAID ONLINE: refund it in Stripe/],
+        ['a booking paid in person', { paymentStatus: 'paid_in_person' }, /If you've already paid/, /PAID IN PERSON/],
+    ];
+    for (const [name, fields, toCustomer, toOwner] of cases) {
+        it(name, async () => {
+            const id = await t.insertBooking({ email: 'bob@example.test', firstName: 'Bob', ...fields });
+            assert.equal((await cancel(id)).body.ok, true);
+            const decode = (html) => html.replace(/&#39;/g, "'");
+            assert.match(decode(mailTo('bob@example.test').html), toCustomer);
+            assert.match(decode(mailTo(t.OWNER).html), toOwner);
+        });
+    }
+});

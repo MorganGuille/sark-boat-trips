@@ -35,6 +35,10 @@ const bookingsSchema = new mongoose.Schema({
     children: {
         type: Number,
     },
+    // 3 and under: free, but they take a seat (see utils/party.js)
+    infants: {
+        type: Number,
+    },
     accommodation: {
         type: String,
     },

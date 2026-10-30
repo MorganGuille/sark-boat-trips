@@ -8,6 +8,7 @@ const { showDay } = require('../utils/dates');
 const { readPrices, bookingValue } = require('../utils/prices');
 const { settings } = require('../utils/settings');
 const { trySend } = require('../utils/mailer');
+const { seatsFor, partyText } = require('../utils/party');
 const { safeHtml } = require('../utils/safeHtml');
 const { buildConfirmationEmail, newBookingAdminEmail, cardPaymentLine } = require('./bookings');
 const { charterConfirmationEmail, charterAdminEmail } = require('./charters');
@@ -18,7 +19,7 @@ const stripe = require('stripe')(settings.stripe.key || 'sk_test_not_configured'
 
 const UNAVAILABLE = "Online booking isn't available right now. Please call or email us to book.";
 const FULL_NOTE = 'Not booked: the trip filled up while they were entering their card. Nothing was charged.';
-const FIELDS = ['date', 'timeslot', 'firstName', 'lastName', 'phone', 'email', 'adults', 'children', 'accommodation', 'message'];
+const FIELDS = ['date', 'timeslot', 'firstName', 'lastName', 'phone', 'email', 'adults', 'children', 'infants', 'accommodation', 'message'];
 
 const pounds = (pence) => `£${(pence / 100).toFixed(2).replace(/\.00$/, '')}`;
 
@@ -41,6 +42,7 @@ const fromMetadata = (metadata) => ({
     email: metadata.email,
     adults: Number(metadata.adults) || 0,
     children: Number(metadata.children) || 0,
+    infants: Number(metadata.infants) || 0,
     accommodation: metadata.accommodation,
     message: `${metadata.message || ''}${metadata.message2 || ''}`,
     charter: metadata.kind === 'charter' ? 'true' : 'false',
@@ -50,7 +52,7 @@ const isOurs = (session) => Boolean(session) && session.mode === 'setup' && ['tr
 // A charter needs the whole trip; anyone else needs enough seats left
 const hasRoom = async (booking) => booking.charter === 'true'
     ? isSlotEmpty(booking.date, booking.timeslot)
-    : (await getAvailability(booking.date, booking.timeslot)) >= booking.adults + booking.children;
+    : (await getAvailability(booking.date, booking.timeslot)) >= seatsFor(booking);
 
 const what = (booking) => (booking.charter === 'true' ? 'charter' : 'trip');
 
@@ -136,7 +138,7 @@ const tripFullOwnerEmail = (booking) => ({
 It is on the dashboard as a cancelled booking (Show cancelled). If room frees up you can restore it, and their card will then be charged at the trip time.
 
 Name: ${booking.firstName} ${booking.lastName}
-Party: ${booking.adults} adults, ${booking.children} children
+Party: ${partyText(booking)}
 Email: ${booking.email}
 Phone: ${booking.phone}`,
 });
@@ -181,10 +183,10 @@ const fulfillCheckoutSession = async (session) => {
     // The booking is saved, so a failed email must not undo it
     if (room) {
         const line = cardPaymentLine(bookingValue(booking, prices), details.timeslot);
-        const childResponse = details.children > 0 ? `and ${details.children} children` : '';
+        const party = partyText(details);
         const [toCustomer, toOwner] = details.charter === 'true'
             ? [charterConfirmationEmail(details, line), charterAdminEmail(details)]
-            : [buildConfirmationEmail({ ...details, childResponse, paymentLine: line }), newBookingAdminEmail({ ...details, childResponse })];
+            : [buildConfirmationEmail({ ...details, party, paymentLine: line }), newBookingAdminEmail({ ...details, party })];
         if (!(await trySend(toCustomer))) toOwner.subject += ' (CUSTOMER EMAIL FAILED, please contact them)';
         await trySend(toOwner);
     } else {

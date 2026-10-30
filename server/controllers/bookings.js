@@ -7,6 +7,7 @@ const { safeHtml } = require('../utils/safeHtml');
 const { settings } = require('../utils/settings');
 const { isDay, showDay } = require('../utils/dates');
 const { readPrices, bookingValue } = require('../utils/prices');
+const { seatsFor, partyText } = require('../utils/party');
 const { isMonth, monthRange, buildReport, toCsv } = require('../utils/report');
 const { validatePublicBooking, validateAdminBooking, validateAvailabilitySetting } = require('../utils/validateBooking');
 
@@ -52,7 +53,7 @@ const PAY_ON_THE_DAY = 'Payment is at the end of the trip and you can pay either
 const cardPaymentLine = (amountPence, timeslot) =>
     `Your card has been saved and nothing has been taken yet. ${amountPence === null ? 'The trip price' : `£${(amountPence / 100).toFixed(2).replace(/\.00$/, '')}`} will be charged at ${timeslot} on the day of your trip. If we have to cancel because of the weather, you won't be charged.`;
 
-const buildConfirmationEmail = ({ email, firstName, adults, childResponse, date, timeslot, paymentLine = PAY_ON_THE_DAY }) => ({
+const buildConfirmationEmail = ({ email, firstName, party, date, timeslot, paymentLine = PAY_ON_THE_DAY }) => ({
                 from: 'sarkboattrips@gmail.com',
                 to: email,
                 subject: 'Booking Confirmation Sark Boat Trips',
@@ -62,7 +63,7 @@ const buildConfirmationEmail = ({ email, firstName, adults, childResponse, date,
                         alt="Sark Boat Trips" width="42" height="42"
                         style="background-color: white; padding: 0.2rem; border-radius: 50px;">
                 <h3>Dear ${firstName},</h3>
-                <p>Your booking for ${adults} adults ${childResponse} on ${showDay(date)} at ${timeslot} has been confirmed.</p>
+                <p>Your booking for ${party} on ${showDay(date)} at ${timeslot} has been confirmed.</p>
                 <p>Please be at the <strong>Creux Harbour</strong> shortly before ${timeslot}, bring weather appropriate
                 clothing and any snacks
                 and drinks you'd like.</p>
@@ -91,7 +92,7 @@ const buildConfirmationEmail = ({ email, firstName, adults, childResponse, date,
             });
 
 // The owner's "new booking" email for a customer booking
-const newBookingAdminEmail = ({ date, firstName, lastName, phone, adults, childResponse, email, timeslot, message, accommodation }) => ({
+const newBookingAdminEmail = ({ date, firstName, lastName, phone, party, email, timeslot, message, accommodation }) => ({
                 from: 'sarkboattrips@gmail.com',
                 to: 'sarkboattrips@gmail.com',
                 subject: `New Booking ${showDay(date)}`,
@@ -101,7 +102,7 @@ const newBookingAdminEmail = ({ date, firstName, lastName, phone, adults, childR
                                 <h3>New Booking ${showDay(date)}</h3>
                                 <p>A new booking has been made by:</p>
                                 <p><strong>${firstName} ${lastName}</strong></p>
-                                <p>for ${adults} adults ${childResponse}</p>
+                                <p>for ${party}</p>
                                 <p>on ${showDay(date)} at ${timeslot}.</p>
                                 <hr>
                                 <p>Message:</p>
@@ -123,6 +124,7 @@ const adminAddBooking = async (req, res) => {
     const { date, timeslot, firstName, lastName, phone, email, accommodation, message, charter } = req.body;
     const adults = Number(req.body.adults) || 0;
     const children = Number(req.body.children) || 0;
+    const infants = Number(req.body.infants) || 0;
 
     const problem = validateAdminBooking(req.body, { requireTrip: true });
     if (problem) {
@@ -131,20 +133,20 @@ const adminAddBooking = async (req, res) => {
 
     try {
         const availability = await getAvailability(date, timeslot);
-        if (availability < adults + children) {
+        if (availability < adults + children + infants) {
             return res.send({ ok: false, data: `No spaces available at ${timeslot} on ${showDay(date)}!` });
         }
 
         // validateBeforeSave is off because the model requires the customer details
         await new Bookings({
-            date, timeslot, firstName, lastName, phone, email, adults, children, accommodation, message, charter,
+            date, timeslot, firstName, lastName, phone, email, adults, children, infants, accommodation, message, charter,
             prices: (await readPrices()) || undefined,
         }).save({ validateBeforeSave: false });
 
         const who = [firstName, lastName].filter(Boolean).join(' ') || 'the booking';
         if (email) {
             const sent = await trySend(buildConfirmationEmail({
-                email, firstName: firstName || 'guest', adults, childResponse: children > 0 ? `and ${children} children` : '', date, timeslot,
+                email, firstName: firstName || 'guest', party: partyText({ adults, children, infants }), date, timeslot,
             }));
             return res.send({ ok: true, data: `Booking for ${who} on ${showDay(date)} at ${timeslot} saved${sent ? ' and confirmation email sent' : ', but the confirmation email could not be sent'}` });
         }
@@ -153,6 +155,17 @@ const adminAddBooking = async (req, res) => {
         console.error(error);
         res.status(500).send({ ok: false, data: "An error occurred saving the booking." });
     }
+};
+
+// What a cancellation email says about money, from how the booking stood when it was cancelled
+const cancelPaymentLine = (paymentStatus) => {
+    if (paymentStatus === 'card_saved') return "Your card has not been charged, and it won't be charged for this booking.";
+    if (['paid', 'paid_in_person', 'charging'].includes(paymentStatus)) return "If you've already paid, please get in touch and we'll sort out a refund.";
+    return 'Nothing has been charged.';
+};
+const PAYMENT_FOR_OWNER = {
+    card_saved: 'card saved, it will not be charged', paid: 'PAID ONLINE: refund it in Stripe if needed',
+    paid_in_person: 'PAID IN PERSON: refund it yourself if needed', charging: 'a charge was under way: check Stripe',
 };
 
 const cancelBooking = async (req, res) => {
@@ -183,6 +196,7 @@ const cancelBooking = async (req, res) => {
                             <p>Your booking on ${showDay(cancelledBooking.date)} at ${cancelledBooking.timeslot} has been <strong
                                     style="color: lightcoral;">CANCELLED</strong>.
                             </p>
+                            <p>${cancelPaymentLine(cancelledBooking.paymentStatus)}</p>
                             <p>If this is a mistake please contact us</p>
                             <p>Thank you so much,</p>
                             <h3>Sark Boat Trips</h3>
@@ -211,6 +225,7 @@ const cancelBooking = async (req, res) => {
                         <h3>Booking <strong style="color: lightcoral;">CANCELLED</strong></h3>
                         <p>Name : ${cancelledBooking.firstName} ${cancelledBooking.lastName} </p>
                         <p>Date : ${showDay(cancelledBooking.date)} at ${cancelledBooking.timeslot}</p>
+                        <p>Payment : ${PAYMENT_FOR_OWNER[cancelledBooking.paymentStatus] || 'unpaid, nothing to refund'}</p>
                         <p>Email : ${cancelledBooking.email} </p>
                         <p>Phone : ${cancelledBooking.phone} </p>
                         <hr>
@@ -246,15 +261,12 @@ const restoreBooking = async (req, res) => {
             return res.status(404).send({ ok: false, data: "No cancelled booking found with that ID." });
         }
 
-        const adults = Number(booking.adults) || 0;
-        const children = Number(booking.children) || 0;
-
         if (booking.charter === 'true' && !(await isSlotEmpty(booking.date, booking.timeslot))) {
             return res.send({ ok: false, data: `Can't restore this charter: the ${booking.timeslot} trip on ${showDay(booking.date)} already has other bookings (or is closed).` });
         }
 
         const availability = await getAvailability(booking.date, booking.timeslot);
-        if (availability < adults + children) {
+        if (availability < seatsFor(booking)) {
             return res.send({ ok: false, data: `Can't restore: only ${availability} spaces left at ${booking.timeslot} on ${showDay(booking.date)}.` });
         }
 
@@ -269,7 +281,7 @@ const restoreBooking = async (req, res) => {
         }
         try {
             await sendEmail(buildConfirmationEmail({
-                email: booking.email, firstName: booking.firstName || 'guest', adults, childResponse: children > 0 ? `and ${children} children` : '', date: booking.date, timeslot: booking.timeslot,
+                email: booking.email, firstName: booking.firstName || 'guest', party: partyText(booking), date: booking.date, timeslot: booking.timeslot,
                 ...(booking.paymentStatus === 'card_saved' && { paymentLine: cardPaymentLine(bookingValue(booking, await readPrices()), booking.timeslot) }),
             }));
         } catch (emailError) {
@@ -372,7 +384,7 @@ const updatedBookingClientEmail = (booking) => ({
                                 style="background-color: white; padding: 0.2rem; border-radius: 50px;">
                             <h3>Dear ${booking.firstName || 'guest'},</h3>
                             <p>Your booking has been <strong style="color: aquamarine;">UPDATED</strong>.</p>
-                            <p>You are booked for ${Number(booking.adults) || 0} adults and ${Number(booking.children) || 0} children on
+                            <p>You are booked for ${partyText(booking)} on
                                 ${showDay(booking.date)} at ${booking.timeslot}</p>
                             <p>If this is a mistake please contact us</p>
                             <p>Thank you so much,</p>
@@ -415,7 +427,6 @@ const updatedBookingAdminEmail = (booking) => ({
 // Text details the dashboard can edit. Sent empty, one is cleared; left out, it stays as it is.
 const EDITABLE_TEXT = ['firstName', 'lastName', 'phone', 'email', 'accommodation', 'message'];
 
-const seatsIn = (booking) => (Number(booking.adults) || 0) + (Number(booking.children) || 0);
 
 const updateBooking = async (req, res) => {
     const problem = validateAdminBooking(req.body);
@@ -432,7 +443,7 @@ const updateBooking = async (req, res) => {
         return res.status(409).send({ ok: false, data: 'This booking is cancelled. Restore it before editing.' });
     }
 
-    const before = { date: booking.date, timeslot: booking.timeslot, seats: seatsIn(booking), charter: booking.charter };
+    const before = { date: booking.date, timeslot: booking.timeslot, seats: seatsFor(booking), charter: booking.charter };
 
     // The date, timeslot and booking type can be changed but never blanked
     for (const key of ['date', 'timeslot', 'charter']) {
@@ -442,9 +453,10 @@ const updateBooking = async (req, res) => {
         if (req.body[key] !== undefined) booking[key] = isBlank(req.body[key]) ? undefined : req.body[key].trim();
     }
     // Party size drives the seat counts, so a blank adults box leaves the number alone rather than
-    // silently freeing the seats. A blank children box means no children.
+    // silently freeing the seats. A blank children or infants box means none.
     if (!isBlank(req.body.adults)) booking.adults = Number(req.body.adults);
     if (req.body.children !== undefined) booking.children = isBlank(req.body.children) ? 0 : Number(req.body.children);
+    if (req.body.infants !== undefined) booking.infants = isBlank(req.body.infants) ? 0 : Number(req.body.infants);
 
     if (!booking.isModified()) {
         return res.send({ ok: true, data: 'No changes to save.' });
@@ -453,7 +465,7 @@ const updateBooking = async (req, res) => {
     // Moving a booking, adding people, or making it a charter must still fit. (Taking people away
     // or editing contact details never needs room, so a trip that is already over-full can still be edited.)
     const needsRoom = booking.date !== before.date || booking.timeslot !== before.timeslot ||
-        seatsIn(booking) > before.seats || (booking.charter === 'true' && before.charter !== 'true');
+        seatsFor(booking) > before.seats || (booking.charter === 'true' && before.charter !== 'true');
     if (needsRoom) {
         const trip = `the ${booking.timeslot} trip on ${showDay(booking.date)}`;
         if (booking.charter === 'true') {
@@ -462,7 +474,7 @@ const updateBooking = async (req, res) => {
             }
         } else {
             const left = await getAvailability(booking.date, booking.timeslot, booking._id);
-            if (left < seatsIn(booking)) {
+            if (left < seatsFor(booking)) {
                 return res.send({ ok: false, data: `Can't make that change: ${trip} has only ${Math.max(left, 0)} space${left === 1 ? '' : 's'} left. Raise the trip's capacity first if you want to fit more people in.` });
             }
         }

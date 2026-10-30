@@ -44,8 +44,8 @@ function Bookings() {
                         <p>Prices are :</p>
                         <p>
                             <strong>Adults</strong>: {formatPounds(prices.adult)}<br />
-                            <strong>Children</strong> (3-14 yrs): {formatPounds(prices.child)}<br />
-                            <strong>Infants</strong>: free
+                            <strong>Children</strong> (4-14 yrs): {formatPounds(prices.child)}<br />
+                            <strong>Infants</strong> (3 and under): free
                         </p>
                         <p><strong>Private Charter</strong>: {formatPounds(prices.charter)}</p>
                     </div>

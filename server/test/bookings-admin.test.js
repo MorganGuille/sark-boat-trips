@@ -193,7 +193,7 @@ describe('editing a booking', () => {
             await edit(id, { phone: '4' });
             const customer = mocks.sent('bob@example.test')[0], owner = mocks.sent(t.OWNER)[0];
             assert.match(customer.html, /Dear guest/);
-            assert.match(customer.html, /2 adults and 0 children/);
+            assert.match(customer.html, /booked for 2 adults on/, 'no "and 0 children"');
             assert.match(owner.html, /\(no name\)/);
             assert.doesNotMatch(customer.html + owner.html, /undefined/);
         });

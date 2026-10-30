@@ -12,7 +12,8 @@ test('the page loads with the calendar and seat counts, and nothing is blocked o
     // the prices come from the owner's settings, not from the page
     const prices = page.locator('[aria-label="Pricing information"]');
     await expect(prices).toContainText('Adults: £40');
-    await expect(prices).toContainText('Children (3-14 yrs): £25');
+    await expect(prices).toContainText('Children (4-14 yrs): £25');
+    await expect(prices).toContainText('Infants (3 and under): free');
     await expect(prices).toContainText('Private Charter: £400');
     expect(problems).toEqual([]);
 });
@@ -47,6 +48,28 @@ test('a customer saves a card on Stripe\'s page, comes back to a confirmation, a
     await page.reload();
     await expect(page.locator('h1')).toHaveText('Success!');
     expect(await h.savedBookings(request), 'a refresh makes no second booking').toHaveLength(1);
+});
+
+test('a parent with a toddler: the infant box is free, takes a seat, and shows on the dashboard', async ({ page, request }) => {
+    await page.route('https://checkout.stripe.test/**', (route) => route.fulfill({ status: 200, contentType: 'text/html', body: '<h1>Fake Stripe page</h1>' }));
+    await page.goto('/bookings');
+    await expect(page.locator('label[for="infants"]')).toHaveText('Infants (3 and under, free)');
+    await expect(page.locator('label[for="children"]')).toHaveText('Children (4 to 14)');
+    await h.pickDate(page, 9);
+    await h.fillBooking(page, { firstName: 'Parent', adults: '1' });
+    await page.fill('#infants', '1');
+    await page.click('button:has-text("Continue to card details")');
+    await page.waitForURL('https://checkout.stripe.test/**');
+    const { id } = await (await request.post('/__test/complete-checkout')).json();
+    await page.goto(`/success?session_id=${id}`);
+    await expect(page.locator('main')).toContainText('£40 will be charged', { timeout: 15000 });
+    expect((await h.savedBookings(request))[0]).toMatchObject({ adults: 1, children: 0, infants: 1 });
+
+    // on the dashboard (which opens on today, so find the booking by name)
+    await h.logIn(page);
+    await page.fill('#lastNameSearch', 'Smith');
+    await page.click('form[role=search] button[type=submit]');
+    await expect(page.locator('tr:has-text("Parent")')).toContainText('1 adult, 1 infant');
 });
 
 test('a booking the server refuses shows the reason and keeps what the customer typed', async ({ page, request }) => {

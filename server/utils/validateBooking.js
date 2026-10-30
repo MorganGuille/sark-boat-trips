@@ -3,7 +3,7 @@ const { dayNumber } = require('./dates');
 
 // Trip start times on a 24 hour clock. The timeslot names are what bookings store.
 const TIMESLOTS = { '11am': 11, '2pm': 14 };
-const MAX_PER_FIELD = 12; // adults, and children, each
+const MAX_PER_FIELD = 12; // adults, children and infants, each
 const MAX_CAPACITY = 100;
 const BOOKING_CUTOFF_MINUTES = 60; // customers can book online until this long before the trip starts
 const TIMEZONE = 'Europe/Guernsey'; // the server runs in UTC, but trips and cutoffs are in local time
@@ -75,6 +75,9 @@ const partyProblem = (body, { adultsRequired }) => {
     }
     if (!blank(body.children) && (!isWhole(body.children) || Number(body.children) > MAX_PER_FIELD)) {
         return `Please enter between 0 and ${MAX_PER_FIELD} children.`;
+    }
+    if (!blank(body.infants) && (!isWhole(body.infants) || Number(body.infants) > MAX_PER_FIELD)) {
+        return `Please enter between 0 and ${MAX_PER_FIELD} infants.`;
     }
     return null;
 };

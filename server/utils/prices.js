@@ -25,7 +25,7 @@ const readPrices = async () => {
 
 const hasPrices = (prices) => Boolean(prices) && KEYS.every((key) => Number.isInteger(prices[key]));
 
-// What a booking is worth, in pence: the flat charter price, or adults and children at their own
+// What a booking is worth, in pence (infants are free): the flat charter price, or adults and children at their own
 // prices. It uses the prices saved on the booking, or the current ones for a booking that has none.
 // Returns null if no prices are known at all.
 const bookingValue = (booking, current) => {

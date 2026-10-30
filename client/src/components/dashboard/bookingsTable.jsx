@@ -13,10 +13,11 @@ const PAYMENT = {
 function BookingsTable({ bookings, showDate, onEdit, onCancel, onRestore, onDeletePermanently, onMarkPaid, onMarkUnpaid }) {
 
     const guests = (booking) => {
-        const children = Number(booking.children) || 0
-        const adults = Number(booking.adults) || 0
-        if (!adults && !children) return '—'
-        return `${adults} adult${adults === 1 ? '' : 's'}${children ? `, ${children} child${children === 1 ? '' : 'ren'}` : ''}`
+        const counts = [['adult', 'adults', booking.adults], ['child', 'children', booking.children], ['infant', 'infants', booking.infants]]
+            .map(([one, many, n]) => [one, many, Number(n) || 0])
+            .filter(([, , n]) => n)
+        if (!counts.length) return '—'
+        return counts.map(([one, many, n]) => `${n} ${n === 1 ? one : many}`).join(', ')
     }
 
     return (

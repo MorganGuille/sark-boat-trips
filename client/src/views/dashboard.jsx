@@ -235,7 +235,7 @@ function Dashboard() {
 
     const activeBookings = bookings.filter((b) => b.status !== 'cancelled')
     const cancelledCount = bookings.length - activeBookings.length
-    const guestCount = activeBookings.reduce((sum, b) => sum + (Number(b.adults) || 0) + (Number(b.children) || 0), 0)
+    const guestCount = activeBookings.reduce((sum, b) => sum + (Number(b.adults) || 0) + (Number(b.children) || 0) + (Number(b.infants) || 0), 0)
     const searching = view.type === 'search'
 
     return (<>

@@ -48,7 +48,7 @@ function ReportPanel({ selectedDate }) {
         <div className='panelForm'>
             <h2>Monthly report</h2>
             <p className='muted'>
-                Passengers and income for one month. Cancelled bookings are left out. Adults and children include
+                Passengers and income for one month. Cancelled bookings are left out. Infants are free. Adults, children and infants include
                 the people on charters, and each charter is also counted once and earns the charter price.
             </p>
             <div className='fieldRow reportPick'>
@@ -68,7 +68,8 @@ function ReportPanel({ selectedDate }) {
                 <dl className='reportStats' aria-label={`Totals for ${MONTHS[month - 1]} ${year}`}>
                     <div><dt>Adults</dt><dd>{total.adults}</dd></div>
                     <div><dt>Children</dt><dd>{total.children}</dd></div>
-                    <div><dt>Passengers</dt><dd>{total.adults + total.children}</dd></div>
+                    <div><dt>Infants</dt><dd>{total.infants}</dd></div>
+                    <div><dt>Passengers</dt><dd>{total.adults + total.children + total.infants}</dd></div>
                     <div><dt>Charters</dt><dd>{total.charters}</dd></div>
                     <div><dt>Income</dt><dd>{formatPounds(total.income / 100)}</dd></div>
                 </dl>

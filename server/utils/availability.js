@@ -1,5 +1,6 @@
 const Bookings = require('../models/bookings');
 const Availability = require('../models/availability');
+const { seatsFor } = require('./party');
 
 const DEFAULT_CAPACITY = 12;
 
@@ -12,7 +13,7 @@ const getSlotState = async (date, timeslot, excludeId) => {
     ]);
 
     const capacity = settings && Number.isFinite(settings.capacity) ? settings.capacity : DEFAULT_CAPACITY;
-    const bookedSeats = bookings.reduce((sum, b) => sum + (Number(b.adults) || 0) + (Number(b.children) || 0), 0);
+    const bookedSeats = bookings.reduce((sum, b) => sum + seatsFor(b), 0);
 
     return {
         capacity,
@@ -22,7 +23,7 @@ const getSlotState = async (date, timeslot, excludeId) => {
     };
 };
 
-// Seats left on a trip. A private charter takes the whole trip, whatever its party size.
+// Seats left on a trip (everyone takes a seat, infants too). A private charter takes the whole trip, whatever its party size.
 const getAvailability = async (date, timeslot, excludeId) => {
     const { capacity, bookedSeats, hasCharter } = await getSlotState(date, timeslot, excludeId);
     return hasCharter ? 0 : capacity - bookedSeats;

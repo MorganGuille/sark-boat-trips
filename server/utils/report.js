@@ -1,5 +1,5 @@
 // The monthly passenger and income report. One row per day that had bookings, then a total row.
-// Cancelled bookings never count. Adults and children include the people on charters (as in the
+// Cancelled bookings never count. Adults, children and infants include the people on charters (as in the
 // owner's own spreadsheet); a charter is also counted once in Charters and earns the flat charter
 // price, while everyone else earns the adult or child price.
 const { bookingValue } = require('./prices');
@@ -12,7 +12,7 @@ const isMonth = (value) => typeof value === 'string' && MONTH.test(value);
 // month" is just a range of text.
 const monthRange = (month) => ({ first: `${month}-01`, last: `${month}-31` });
 
-const empty = () => ({ adults: 0, children: 0, charters: 0, income: 0 });
+const empty = () => ({ adults: 0, children: 0, infants: 0, charters: 0, income: 0 });
 
 // bookings: the active bookings in the month. current: today's prices (for bookings with none saved).
 // Returns { days, total } with income in pence, or null if some booking's price can't be worked out.
@@ -26,6 +26,7 @@ const buildReport = (bookings, current) => {
         const add = (to) => {
             to.adults += Number(booking.adults) || 0;
             to.children += Number(booking.children) || 0;
+            to.infants += Number(booking.infants) || 0;
             to.charters += booking.charter === 'true' ? 1 : 0;
             to.income += value;
         };
@@ -43,9 +44,9 @@ const pounds = (pence) => (pence / 100).toFixed(2);
 
 // Dates read day-month-year, and money has two decimals, so it opens neatly in a spreadsheet
 const toCsv = ({ days, total }) => {
-    const row = (label, n) => [label, n.adults, n.children, n.adults + n.children, n.charters, pounds(n.income)].join(',');
+    const row = (label, n) => [label, n.adults, n.children, n.infants, n.adults + n.children + n.infants, n.charters, pounds(n.income)].join(',');
     return [
-        'Date,Adults,Children,Passengers,Charters,Income (GBP)',
+        'Date,Adults,Children,Infants,Passengers,Charters,Income (GBP)',
         ...days.map((day) => row(showDay(day.date), day)),
         row('Total', total),
     ].join('\r\n') + '\r\n';
