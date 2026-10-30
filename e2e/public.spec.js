@@ -46,7 +46,7 @@ test('a customer saves a card on Stripe\'s page, comes back to a confirmation, a
     expect(saved).toHaveLength(1);
     expect(saved[0]).toMatchObject({ date, firstName: 'Alice', adults: 2, timeslot: '11am', status: 'active', paymentStatus: 'card_saved' });
     const sent = (await h.mails(request)).filter((m) => m.result === 'sent').map((m) => m.to).sort();
-    expect(sent).toEqual([email, 'sarkboattrips@gmail.com'].sort());
+    expect(sent).toEqual([email, 'owner@sarkboattrips.test'].sort());
 
     await page.reload();
     await expect(page.locator('h1')).toHaveText('Success!');

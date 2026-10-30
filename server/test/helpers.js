@@ -11,7 +11,8 @@ const Module = require('module');
 let currentMocks; // the fakes installed by installMocks, for the helpers below
 const assert = require('node:assert/strict');
 
-const OWNER = 'sarkboattrips@gmail.com';
+const OWNER = 'owner@sarkboattrips.test'; // OWNER_EMAIL: where the owner's alerts go
+const MAIL_FROM = 'hello@sarkboattrips.test'; // every email comes from this address
 const PASSWORD = 'correct horse battery staple';
 const USERNAME = 'owner';
 const WEBHOOK_SECRET = 'whsec_test_secret';
@@ -27,6 +28,11 @@ const setEnv = (overrides = {}) => {
         STRIPETESTKEY: 'sk_test_FAKE',
         PUBLIC_URL: 'http://localhost:5173',
         STRIPE_WEBHOOK_SECRET: WEBHOOK_SECRET,
+        MAIL_FROM,
+        OWNER_EMAIL: OWNER,
+        SMTP_HOST: 'smtp.example.test',
+        SMTP_PASSWORD: 'unused',
+        // the old Gmail settings are still in many .env files: set, to prove they are ignored
         gmail_address: 'nobody@example.test',
         gmail_password: 'unused',
     });
@@ -40,7 +46,8 @@ const setEnv = (overrides = {}) => {
 // checking webhook signatures; only the calls that would reach Stripe's servers are faked.
 const installMocks = () => {
     const mocks = {
-        mails: [], // every email attempted: { to, subject, html, text, result }
+        mails: [], // every email attempted: { from, to, subject, html, text, result }
+        transport: null, // the mail server settings the mailer was given
         mailMode: 'none', // 'none' | 'client' | 'admin' | 'all': which emails should fail
         // keys given to Stripe, checkout sessions requested, customers created, fake sessions and
         // saved cards (setup intents) it knows, and whether creating a session should fail
@@ -59,15 +66,18 @@ const installMocks = () => {
         for (const store of [mocks.stripe.sessions, mocks.stripe.setupIntents, mocks.stripe.intents, mocks.stripe.cards]) for (const key of Object.keys(store)) delete store[key];
     };
 
-    require('nodemailer').createTransport = () => ({
-        sendMail: async (options) => {
-            const toOwner = options.to === OWNER;
-            const fail = mocks.mailMode === 'all' || (mocks.mailMode === 'client' && !toOwner) || (mocks.mailMode === 'admin' && toOwner);
-            mocks.mails.push({ to: options.to, subject: options.subject, html: options.html || '', text: options.text || '', result: fail ? 'failed' : 'sent' });
-            if (fail) throw new Error('fake mail failure');
-            return { messageId: 'fake' };
-        },
-    });
+    require('nodemailer').createTransport = (transport) => {
+        mocks.transport = transport;
+        return {
+            sendMail: async (options) => {
+                const toOwner = options.to === OWNER;
+                const fail = mocks.mailMode === 'all' || (mocks.mailMode === 'client' && !toOwner) || (mocks.mailMode === 'admin' && toOwner);
+                mocks.mails.push({ from: options.from, to: options.to, subject: options.subject, html: options.html || '', text: options.text || '', result: fail ? 'failed' : 'sent' });
+                if (fail) throw new Error('fake mail failure');
+                return { messageId: 'fake' };
+            },
+        };
+    };
 
     const load = Module._load;
     Module._load = function (request) {
@@ -233,4 +243,4 @@ const bookOnline = async (app, body, { kind = 'trip', ip } = {}) => {
     return { res, session, booking };
 };
 
-module.exports = { dbUri, OWNER, PASSWORD, USERNAME, WEBHOOK_SECRET, setEnv, installMocks, startDb, stopDb, resetDb, seedSeason, day, shown, call, login, booking, insertBooking, findBooking, seatsLeft, webhook, cardSession, bookOnline };
+module.exports = { dbUri, OWNER, MAIL_FROM, PASSWORD, USERNAME, WEBHOOK_SECRET, setEnv, installMocks, startDb, stopDb, resetDb, seedSeason, day, shown, call, login, booking, insertBooking, findBooking, seatsLeft, webhook, cardSession, bookOnline };

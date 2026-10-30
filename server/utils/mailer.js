@@ -1,14 +1,9 @@
-// Sends email through Gmail (see spec P2-10: to be replaced by a proper email service).
+// Sends email through the mail server in the settings (SMTP_HOST, e.g. Zoho for info@sarkboattrips.com).
 // The tests replace nodemailer before this file is loaded, so nothing real is ever sent there.
 const nodemailer = require('nodemailer');
+const { settings } = require('./settings');
 
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.gmail_address,
-        pass: process.env.gmail_password,
-    },
-});
+const transporter = nodemailer.createTransport(settings.mail.transport);
 
 // Throws if the email can't be sent: only use it where nothing has been saved yet
 const sendEmail = async (mailOptions) => {

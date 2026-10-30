@@ -1,3 +1,4 @@
+import { CONTACT_EMAIL } from '../utils/contact.js'
 
 // Shown in the footer pop-up and on its own page at /privacy (the page Stripe links to)
 function PrivacyPolicy({ className = 'popUpDisplay' }) {
@@ -17,7 +18,7 @@ function PrivacyPolicy({ className = 'popUpDisplay' }) {
                     <ul>
                         <li>Sark Boat Trips, Dixcart Ln, Sark, GY101SA, Guernsey</li>
                         <li><a href="tel:+447911764246">+44 7911 764 246</a></li>
-                        <li><a href="mailto:sarkboattrips@gmail.com">sarkboattrips@gmail.com</a></li>
+                        <li><a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></li>
                     </ul>
                 </address>
             </section>
@@ -66,7 +67,7 @@ function PrivacyPolicy({ className = 'popUpDisplay' }) {
 
             <section>
                 <p><strong>9. Contact Us</strong></p>
-                <p>For any privacy-related questions, please email us at <a href="mailto:sarkboattrips@gmail.com">sarkboattrips@gmail.com</a>.</p>
+                <p>For any privacy-related questions, please email us at <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.</p>
             </section>
         </article>
     )

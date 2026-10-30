@@ -1,4 +1,5 @@
 import { Link } from 'react-router'
+import { CONTACT_EMAIL } from '../utils/contact.js'
 
 function Canceled() {
     return (
@@ -20,7 +21,7 @@ function Canceled() {
 
                     <address style={{ fontStyle: 'normal', margin: '20px 0' }}>
                         <p>
-                            Email: <a href="mailto:sarkboattrips@gmail.com">sarkboattrips@gmail.com</a>
+                            Email: <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
                         </p>
                         <p>
                             WhatsApp: <a href="https://wa.me/447911764246">+44 7911 764 246</a>

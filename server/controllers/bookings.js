@@ -55,7 +55,7 @@ const cardPaymentLine = (amountPence, timeslot, charter = false) =>
     `Your card has been saved and nothing has been taken yet. ${amountPence === null ? 'The trip price' : `£${(amountPence / 100).toFixed(2).replace(/\.00$/, '')}`} will be charged at ${timeslot} on the day of your ${charter ? 'charter' : 'trip'}. ${cancelRule(charter)} If we have to cancel because of the weather, you won't be charged.`;
 
 const buildConfirmationEmail = ({ email, firstName, party, date, timeslot, paymentLine = PAY_ON_THE_DAY }) => ({
-                from: 'sarkboattrips@gmail.com',
+                from: settings.mail.sender,
                 to: email,
                 subject: 'Booking Confirmation Sark Boat Trips',
                 html: safeHtml`<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
@@ -85,8 +85,8 @@ const buildConfirmationEmail = ({ email, firstName, party, date, timeslot, payme
                 <br>
                 <a style="color: white; text-decoration: none;" href="tel:+44-7911-764-246">&#9990 +44 7911 764 246</a>
                 <br>
-                <a style="color: white; text-decoration: none;" href="mailto:sarkboattrips@gmail.com">&#9993
-                    sarkboattrips@gmail.com</a>
+                <a style="color: white; text-decoration: none;" href="mailto:${settings.mail.from}">&#9993
+                    ${settings.mail.from}</a>
         </div>
     </div>
 </div>`,
@@ -94,8 +94,8 @@ const buildConfirmationEmail = ({ email, firstName, party, date, timeslot, payme
 
 // The owner's "new booking" email for a customer booking
 const newBookingAdminEmail = ({ date, firstName, lastName, phone, party, email, timeslot, message, accommodation }) => ({
-                from: 'sarkboattrips@gmail.com',
-                to: 'sarkboattrips@gmail.com',
+                from: settings.mail.sender,
+                to: settings.mail.owner,
                 subject: `New Booking ${showDay(date)}`,
                 html: safeHtml`<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
                             <div
@@ -171,7 +171,7 @@ const PAYMENT_FOR_OWNER = {
 
 // The customer's cancellation email. apology: set when the owner cancelled the whole trip (cancelTrip)
 const cancellationEmail = (cancelledBooking, apology = '') => ({
-            from: 'sarkboattrips@gmail.com',
+            from: settings.mail.sender,
             to: cancelledBooking.email,
             subject: 'Booking CANCELLED - Sark Boat Trips',
             html: safeHtml`<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
@@ -197,8 +197,8 @@ const cancellationEmail = (cancelledBooking, apology = '') => ({
                                 <br>
                                 <a style="color: white; text-decoration: none;" href="tel:+44-7911-764-246">&#9990 +44 7911 764 246</a>
                                 <br>
-                                <a style="color: white; text-decoration: none;" href="mailto:sarkboattrips@gmail.com">&#9993
-                                    sarkboattrips@gmail.com</a>
+                                <a style="color: white; text-decoration: none;" href="mailto:${settings.mail.from}">&#9993
+                                    ${settings.mail.from}</a>
                             </div>
                         </div>
                     </div>`,
@@ -221,8 +221,8 @@ const cancelBooking = async (req, res) => {
         const mailOptionsClient = cancellationEmail(cancelledBooking);
 
         const mailOptionsAdmin = {
-            from: 'sarkboattrips@gmail.com',
-            to: 'sarkboattrips@gmail.com',
+            from: settings.mail.sender,
+            to: settings.mail.owner,
             subject: `Booking CANCELLED ${showDay(cancelledBooking.date)}`,
             html: safeHtml`<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
                     <div
@@ -378,7 +378,7 @@ const search = async (req, res) => {
 
 
 const updatedBookingClientEmail = (booking) => ({
-            from: 'sarkboattrips@gmail.com',
+            from: settings.mail.sender,
             to: booking.email,
             subject: 'Booking UPDATED - Sark Boat Trips',
             html: safeHtml`<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
@@ -402,16 +402,16 @@ const updatedBookingClientEmail = (booking) => ({
                                 <br>
                                 <a style="color: white; text-decoration: none;" href="tel:+44-7911-764-246">&#9990 +44 7911 764 246</a>
                                 <br>
-                                <a style="color: white; text-decoration: none;" href="mailto:sarkboattrips@gmail.com">&#9993
-                                    sarkboattrips@gmail.com</a>
+                                <a style="color: white; text-decoration: none;" href="mailto:${settings.mail.from}">&#9993
+                                    ${settings.mail.from}</a>
                             </div>
                         </div>
                     </div>`,
         });
 
 const updatedBookingAdminEmail = (booking) => ({
-            from: 'sarkboattrips@gmail.com',
-            to: 'sarkboattrips@gmail.com',
+            from: settings.mail.sender,
+            to: settings.mail.owner,
             subject: 'Booking UPDATED',
             html: safeHtml`<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
                         <div
@@ -601,8 +601,8 @@ const cancelTrip = async (req, res) => {
     const trip = `the ${timeslot} trip on ${showDay(date)}`;
     const line = (b) => `- ${bookingName(b)}, ${partyText(b)}${b.phone ? `, phone ${b.phone}` : ''}`;
     await trySend({
-        from: 'sarkboattrips@gmail.com',
-        to: 'sarkboattrips@gmail.com',
+        from: settings.mail.sender,
+        to: settings.mail.owner,
         subject: `Trip CANCELLED: ${timeslot} on ${showDay(date)} (${cancelled.length} booking${cancelled.length === 1 ? '' : 's'})`,
         text: [
             `You cancelled ${trip}${TRIP_REASONS[reason]}. It is closed to new bookings (reopen it from the Availability tab).`,

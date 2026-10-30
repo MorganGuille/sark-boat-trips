@@ -29,6 +29,19 @@ const readSettings = (env = process.env) => {
     if (isProduction && publicUrl.startsWith('http://')) warnings.push('PUBLIC_URL is not https');
     if (!publicUrl) warnings.push('PUBLIC_URL is not set, so the dashboard link in owner emails will not work');
 
+    // Email: the address every email comes from (and the one customers are told to write to), the
+    // inbox the owner's alerts go to, and the outgoing mail server. Without SMTP_HOST it falls back
+    // to Gmail with gmail_address and gmail_password, which is how the site sent before info@.
+    const mailFrom = String(env.MAIL_FROM || env.gmail_address || '').trim();
+    const smtpHost = String(env.SMTP_HOST || '').trim();
+    const smtpPort = Number(env.SMTP_PORT) || 465;
+    const transport = smtpHost
+        // 465 starts encrypted; 587 starts plain and switches to encryption (STARTTLS)
+        ? { host: smtpHost, port: smtpPort, secure: smtpPort === 465, auth: { user: String(env.SMTP_USER || mailFrom).trim(), pass: env.SMTP_PASSWORD } }
+        : { service: 'gmail', auth: { user: env.gmail_address, pass: env.gmail_password } };
+    if (!mailFrom) warnings.push('MAIL_FROM is not set, so no email can be sent');
+    if (smtpHost && !env.SMTP_PASSWORD) warnings.push('SMTP_HOST is set but SMTP_PASSWORD is not, so no email can be sent');
+
     return {
         isProduction,
         // Stripe's page asks customers to tick "I agree to the terms" (needs the terms address saved
@@ -41,6 +54,13 @@ const readSettings = (env = process.env) => {
             key: keyUsable ? key : null,
             mode,
             problem, // why online booking is switched off, or null if it is on
+        },
+        mail: {
+            from: mailFrom,
+            sender: mailFrom ? `Sark Boat Trips <${mailFrom}>` : '', // the From line customers see
+            owner: String(env.OWNER_EMAIL || mailFrom).trim(), // where the owner's alerts go
+            server: smtpHost || 'Gmail', // for the startup message
+            transport, // holds the password: never log it
         },
         warnings,
     };

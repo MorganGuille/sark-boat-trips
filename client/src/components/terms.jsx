@@ -1,4 +1,5 @@
 import { FREE_CANCEL_HOURS } from '../utils/policy.js'
+import { CONTACT_EMAIL } from '../utils/contact.js'
 
 // Shown in the footer pop-up and on its own page at /terms (the page Stripe links to)
 function Terms({ className = 'popUpDisplay' }) {
@@ -17,7 +18,7 @@ function Terms({ className = 'popUpDisplay' }) {
                 <p><strong>2. Cancellation by you</strong></p>
                 <p>Trips: cancel at least <strong>{FREE_CANCEL_HOURS.trip} hours</strong> before your trip starts and you won&apos;t be charged. Private charters: cancel at least <strong>{FREE_CANCEL_HOURS.charter} hours</strong> before. If you cancel later than that, or don&apos;t come, the full price is charged.</p>
                 <p>If fewer people come than you booked, you&apos;re charged for the booking as it was made, unless you told us about the change before the same deadline.</p>
-                <p>To cancel or change a booking, call or WhatsApp us on +44 7911 764 246, or email sarkboattrips@gmail.com.</p>
+                <p>To cancel or change a booking, call or WhatsApp us on +44 7911 764 246, or email {CONTACT_EMAIL}.</p>
             </section>
 
             <section>

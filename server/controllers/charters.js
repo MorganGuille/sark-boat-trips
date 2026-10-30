@@ -5,7 +5,7 @@ const { showDay } = require('../utils/dates');
 const { settings } = require('../utils/settings');
 
 const charterConfirmationEmail = (charterData, paymentLine) => ({
-                from: 'sarkboattrips@gmail.com',
+                from: settings.mail.sender,
                 to: charterData.email,
                 subject: 'PRIVATE CHARTER Confirmation Sark Boat Trips',
                 html: safeHtml`<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
@@ -19,8 +19,8 @@ const charterConfirmationEmail = (charterData, paymentLine) => ({
                                     ${charterData.timeslot} has been confirmed.</p>
                                 <p>${paymentLine}</p>
                                 <p>We love to run unique charters, so if you haven't already, please get in touch so we can plan your trip!</p>
-                                <p><a style="color: white; text-decoration: none;" href="mailto:sarkboattrips@gmail.com">&#9993
-                                        sarkboattrips@gmail.com</a></p>
+                                <p><a style="color: white; text-decoration: none;" href="mailto:${settings.mail.from}">&#9993
+                                        ${settings.mail.from}</a></p>
                                 <p>If your plans change or you need to cancel your charter, please let us know asap</p>
                                 <br>
                                 <p> Thank you so much for booking with us,</p>
@@ -33,16 +33,16 @@ const charterConfirmationEmail = (charterData, paymentLine) => ({
                                     <br>
                                     <a style="color: white; text-decoration: none;" href="tel:+44-7911-764-246">&#9990 +44 7911 764 246</a>
                                     <br>
-                                    <a style="color: white; text-decoration: none;" href="mailto:sarkboattrips@gmail.com">&#9993
-                                        sarkboattrips@gmail.com</a>
+                                    <a style="color: white; text-decoration: none;" href="mailto:${settings.mail.from}">&#9993
+                                        ${settings.mail.from}</a>
                                 </div>
                             </div>
                         </div>`,
             });
 
 const charterAdminEmail = (charterData) => ({
-                from: 'sarkboattrips@gmail.com',
-                to: 'sarkboattrips@gmail.com',
+                from: settings.mail.sender,
+                to: settings.mail.owner,
                 subject: `New CHARTER on : ${showDay(charterData.date)}`,
                 html: safeHtml`<div style="background-color: rgb(63, 78, 90); width: 100%; height: 100%; display: flex;">
                             <div

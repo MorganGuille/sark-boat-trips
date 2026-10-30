@@ -55,6 +55,7 @@ console.log(
     ? `Online booking is OFF (customers can't save a card): ${settings.stripe.problem}`
     : `Online booking is ON (cards saved with Stripe ${settings.stripe.mode} mode), customers return to ${settings.publicUrl}`,
 );
+console.log(`Email: sending as ${settings.mail.from || "(no address set)"} through ${settings.mail.server}, owner alerts to ${settings.mail.owner || "(no address set)"}`);
 settings.warnings.forEach((warning) => console.warn(`Warning: ${warning}`));
 console.log(corsSummary());
 

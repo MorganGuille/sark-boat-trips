@@ -117,8 +117,8 @@ const chargeOne = async (booking, prices) => {
 
 // Plain text on purpose: this one is for the owner and needs no layout
 const failedChargesEmail = (failures) => ({
-    from: 'sarkboattrips@gmail.com',
-    to: 'sarkboattrips@gmail.com',
+    from: settings.mail.sender,
+    to: settings.mail.owner,
     subject: `Card payment failed for ${failures.length} booking${failures.length === 1 ? '' : 's'}: collect on the day`,
     text: `These bookings could not be charged to the customer's saved card. They are marked Unpaid on the dashboard.
 Please take the payment on the day (cash or card reader) and press Mark paid.

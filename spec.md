@@ -14,11 +14,9 @@ Written after reading the whole codebase and testing the booking and dashboard f
 
 ## Progress (30 Oct 2026)
 
-**Done in the sandbox (`version2`), not yet deployed:** P0-1 to P0-5, P1-1 to P1-10 (error reporting in P1-9 was skipped by the owner), P2-1 (prices and the monthly CSV report) and P3-2 (lint).
+**Done in the sandbox (`version2`), not yet deployed:** P0-1 to P0-5, P1-1 to P1-10 (error reporting in P1-9 was skipped by the owner), P2-1 (prices and the monthly CSV report), P3-2 (lint), P2-4 in full (merged from the `payments` branch on 30 Oct; see `paymentsspec.md`: payment status with Mark paid / Undo paid, a card saved on Stripe's page for every online booking, charged automatically at the trip time, infants, the cancellation rules on `/terms` and `/privacy`, and **Cancel a whole trip**, part of P2-2), and P2-10 plus the email part of P2-11 (the site sends from `info@sarkboattrips.com` through Zoho; addresses come from settings).
 
-**Done on the `payments` branch, waiting for the owner to merge it into `version2`** (`git switch version2`, `git merge payments`, `git push origin version2`; a fast-forward): P2-4 in full (see `paymentsspec.md`): payment status with Mark paid / Undo paid; every online booking saves a card on Stripe's page (no deposit, no `PRICE_ID`); cards charged automatically at the trip time; infants (3 and under, free, taking a seat; children 4 to 14); cancellation emails say what happens to the money; the cancellation rules (24 hours for trips, 48 for charters) on new `/terms` and `/privacy` pages and everywhere customers see payment wording; and **Cancel a whole trip** (part of P2-2). Suggested before merging: one rehearsal on the owner's local server with Stripe test cards (book with 4242, move the booking's date to yesterday, see it charged; cancel a whole trip, see nobody charged).
-
-**Next, after the merge:** the email foundation (P2-11, then P2-10, so the payment and cancellation emails arrive reliably), then customer self-cancel (P2-6) and the rest of P2-2 (changing a trip's time for one day, through `tripStartsAt`). Go-live steps are in `CLAUDE.md`. Anything marked DONE only counts once it is deployed.
+**Next:** customer self-cancel (P2-6) and the rest of P2-2 (changing a trip's time for one day, through `tripStartsAt`, which is also when the trip times move into settings). Go-live steps are in `CLAUDE.md`. Anything marked DONE only counts once it is deployed.
 
 ## Summary
 
@@ -42,14 +40,14 @@ Written after reading the whole codebase and testing the booking and dashboard f
 | P2-1 | Owner | Monthly passenger and income CSV, and price settings (**DONE**; the day sheet was dropped) | S–M |
 | P2-2 | Owner | Trip tools: change a trip's time for one day, close a trip, notify everyone on it. **Do P2-11 and P2-10 first** (cancelling a whole trip is done) | M–L |
 | P2-3 | Owner | Month overview and better search | M |
-| P2-4 | Owner | Card saved at booking, charged at the trip time; payment status (see `paymentsspec.md`) (**DONE** on the `payments` branch) | L |
+| P2-4 | Owner | Card saved at booking, charged at the trip time; payment status (see `paymentsspec.md`) (**DONE**) | L |
 | P2-5 | Owner | Deliberate overbooking override | S |
 | P2-6 | Customer | Manage-my-booking link (self-service change and cancel) | M |
 | P2-7 | Customer | Reminder email the day before | S–M |
 | P2-8 | Customer | Booking form polish (price total, closed days, keep data on error) | M |
 | P2-9 | Client | Each public route prerendered separately, plus sitemap and noindex | M |
-| P2-10 | Server | Move off Gmail SMTP to a transactional email service | M |
-| P2-11 | Server | Business settings hard-coded in many files | M |
+| P2-10 | Server | Move off Gmail SMTP (**DONE**: Zoho, `info@sarkboattrips.com`, with SPF, DKIM and DMARC) | M |
+| P2-11 | Server | Business settings hard-coded in many files (email addresses **DONE**; trip times and the 12 limit still to do) | M |
 | P2-12 | Server | Overbooking race condition | M |
 | P2-13 | Owner | Customer data tools (find, export, erase by email) | S |
 | P3-1 | Build | Untrack committed build output | S |
@@ -261,7 +259,7 @@ Written after reading the whole codebase and testing the booking and dashboard f
 
 ## P2: improvements
 
-> **Reminder: move off the free Gmail address (P2-11, then P2-10) before building the bulk-email features (P2-2).**
+> **Done (30 Oct 2026): the site now sends from `info@sarkboattrips.com` through Zoho, with SPF, DKIM and DMARC. Deploy it before the bulk-email features (P2-2) go live.** Original reminder:
 > A burst of "your trip time has changed" or "your trip is cancelled" emails, all sent at once from a free `@gmail.com` address, is exactly what gets blocked or sent to spam, and customers need those emails to arrive. So the order is: P2-11 (one place for the sender address and contact details), then P2-10 (a proper email service and your own domain with SPF, DKIM and DMARC records), and only then P2-2. The same applies to the day-before reminders (P2-7) and the manage-my-booking emails (P2-6).
 
 ### Owner side
@@ -272,7 +270,7 @@ Written after reading the whole codebase and testing the booking and dashboard f
 - **Not included:** the owner's costs (fuel, repairs), which stay in their spreadsheet; trip types such as half trips and fishing; the age wording "3-14 yrs" is still fixed text on the booking page.
 
 #### P2-2 `[Owner]` Trip tools: change a trip's time for one day, close a trip, notify everyone on it
-- **Partly done (30 Oct 2026, `payments` branch):** "close a trip and notify everyone on it" is built as **Cancel a whole trip** on the Bookings tab (cancels and emails every booking, closes the trip, one summary for the owner). Still to do: changing a trip's time for one day.
+- **Partly done (30 Oct 2026):** "close a trip and notify everyone on it" is built as **Cancel a whole trip** on the Bookings tab (cancels and emails every booking, closes the trip, one summary for the owner). Still to do: changing a trip's time for one day.
 - **Payments link (see `paymentsspec.md`):** card charges fire at the trip's start time through `tripStartsAt(date, timeslot)`. A changed time for one day must be read by that function (and by the booking cutoff), so the charge moves with the trip.
 **Needs P2-11 and P2-10 first** (see the reminder at the top of this section).
 
@@ -300,7 +298,7 @@ Bookings and guests per day and slot on the calendar, an "upcoming bookings" lis
 
 #### P2-4 `[Owner]` Card saved at booking, charged at the trip time
 Decided with the owner on 26 Oct 2026 and written up in **`paymentsspec.md`**: every online booking saves a card on Stripe's hosted page (nothing charged), the card is charged automatically at the trip's start time, the owner cancels in the dashboard first for weather so nothing is ever refunded, a failed charge just shows the booking as Unpaid, and the £80 charter deposit goes away. Open: how the timer runs (recommended: a timer inside the app). Builds on P2-1's prices. Still wanted alongside it: a note on each booking, and a "cancel everything on this trip" button (P2-2) so a weather call is one tap.
-- **Status: DONE** (30 Oct 2026) on the `payments` branch, in five steps plus the trip-wide cancel; details and what was checked against real Stripe test mode are in `paymentsspec.md`.
+- **Status: DONE** (30 Oct 2026, merged into `version2`), in five steps plus the trip-wide cancel; details and what was checked against real Stripe test mode are in `paymentsspec.md`.
 
 #### P2-5 `[Owner]` Deliberate overbooking override
 The dashboard add form currently refuses a booking if the trip is full. Add an explicit "add anyway" confirmation for when you know you can take extra people.
@@ -332,10 +330,13 @@ Meeting point, what to bring and a weather note. Run it with Heroku Scheduler. I
 - **Fix:** Prerender each public route to its own file and have the server serve the right one. Add `sitemap.xml`, add `Disallow: /dashboard` to `robots.txt`, and a `noindex` meta tag on the dashboard, success and canceled pages.
 
 #### P2-10 `[Server]` Move off Gmail SMTP
+- **Status: DONE** (30 Oct 2026, not yet deployed). The owner chose Zoho Mail Lite (about £10 a year) over a transactional service: `info@sarkboattrips.com`, with the domain's DNS at Squarespace holding Zoho's MX, SPF (`include:zohomail.eu`), DKIM (`zmail._domainkey`) and DMARC (`p=none`, reports to info@; tighten to `quarantine` after a few clean weeks) records. The site sends through `smtp.zoho.eu` with an app password (`SMTP_*` settings); a real test email went through. Zoho's sending limit is far above the site's needs. If emails ever start landing in spam or volumes grow, ZeptoMail (Zoho's transactional service), Postmark or Resend are a settings change away (`SMTP_HOST` etc.). Still open from the original idea: one shared email layout (the three layouts are still copied across the controllers).
+- Original notes:
 **The owner plans to leave the free `@gmail.com` address soon** (it gets blocked and lands in spam). `sarkboattrips@gmail.com` is hard-coded about 30 times: 24 in the booking and charter controllers (as sender and as the owner's own address), plus the success, canceled, footer and privacy pages, and the SMTP login in `.env`. Do P2-11 first (one place for the sender address, owner address and contact details), then switch. **Do both before P2-2 (changing a trip's time and notifying everyone on it)**, which sends many emails at once. With a custom domain, also set up SPF, DKIM and DMARC records so the emails aren't treated as spam.
 Gmail SMTP has daily sending limits, weaker deliverability (your own email asks customers to check spam), and it ties delivery to one personal account. Use a transactional service (Resend, Postmark or SES) behind one `mailer.js` module that also holds the three email layouts now copied across the code, the HTML escaping (P1-5), and failure alerts to you.
 
 #### P2-11 `[Server]` Business settings hard-coded in many files
+- **Partly done** (30 Oct 2026, not yet deployed): **email addresses.** The server reads `MAIL_FROM`, `OWNER_EMAIL` and the mail server from its settings (`settings.mail`), the website pages use `CONTACT_EMAIL` (`client/src/utils/contact.js`), and `email-settings.test.js` fails if the old Gmail address comes back. Prices and the Stripe price id were done in P2-1 and P2-4. **Still to do:** the trip times (`'11am'`, `'2pm'`), the 12 limit and the phone number; best done with P2-2 (changing a trip's time).
 Timeslots (`'11am'`, `'2pm'`), default capacity 12, prices and the "2026" text, the Stripe price id, the domain, and the email addresses are scattered across files. Put them in one server config plus a small settings document editable from the dashboard, and have the client read them.
 
 #### P2-12 `[Server]` Overbooking race condition
@@ -361,8 +362,8 @@ Booking checks availability and then creates the record, which isn't atomic. Two
 1. **Safety (P0 plus P1-6):** P0-1, P0-5, P1-6, then P0-2, P0-3, P0-4 as one Stripe pass.
 2. **Correctness:** P1-3, P1-1, P1-2, P1-4, P1-5, with P1-8 (tests and CI) built alongside so each fix has a test.
 3. **Foundations:** P1-10 (date format), P1-9, P1-7, P3-1, P3-2.
-4. **Owner value that needs no bulk email:** P2-1 (done), P2-4 (done on the `payments` branch), then P2-3.
-5. **Email foundation:** P2-11 (one place for the sender address, contact details and trip times), then P2-10 (a proper email service and your own domain instead of the free Gmail address).
+4. **Owner value that needs no bulk email:** P2-1 (done), P2-4 (done), then P2-3.
+5. **Email foundation (done 30 Oct 2026, apart from the trip times):** P2-11 (one place for the sender address, contact details and trip times), then P2-10 (a proper email service and your own domain instead of the free Gmail address).
 6. **Trip tools:** P2-2 (change a trip's time, close a trip, notify everyone on it). Only after step 5, because it sends many emails at once.
 7. **Customer growth and SEO:** P2-9, P2-6, P2-7, P2-8.
 
@@ -371,7 +372,7 @@ Booking checks availability and then creates the record, which isn't atomic. Two
 - ~~**Refund flow (P2-4)**~~ Decided: no refund flow. The card is charged at the trip time, and a weather cancellation is made in the dashboard before then, so nothing was charged (see `paymentsspec.md`).
 - **How the automatic charge runs (P2-4):** a timer inside the app (recommended), Heroku Scheduler, or an outside pinger. See `paymentsspec.md`.
 - **Stripe webhook (P0-2):** is it OK to configure one in the Stripe dashboard? (Needed at go-live; see `CLAUDE.md`.)
-- **Email provider (P2-10):** are you happy to move from Gmail to Resend, Postmark or SES, and to change the "from" address if needed?
+- ~~**Email provider (P2-10)**~~ Decided: Zoho Mail Lite, `info@sarkboattrips.com`, also used by the website to send.
 - **Self-service cancellation (P2-6):** how close to the trip should customers be allowed to cancel themselves, if at all?
 - ~~**Cutoff (P1-3)**~~ Decided: customers can book until 1 hour before the trip; charters follow the same rule.
 - ~~**Prices in the dashboard**~~ Decided and built (P2-1): adult, child and charter prices, locked until Edit is pressed.

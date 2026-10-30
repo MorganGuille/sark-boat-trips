@@ -8,6 +8,7 @@ import googleLogo from '../assets/logos/googleIcon.png'
 import tripLogo from '../assets/logos/tripadvisorIcon.png'
 import faceLogo from '../assets/logos/facebookIcon.png'
 import instaLogo from '../assets/logos/instagramIcon.png'
+import { CONTACT_EMAIL } from '../utils/contact.js'
 
 function Footer() {
     const [showPrivacyP, setshowPrivacyP] = useState(false)
@@ -45,7 +46,7 @@ function Footer() {
                     <a href="tel:+447911764246" aria-label="Call us at +44 7911 764 246">
                         +44 7911 764 246
                     </a>
-                    <a href="mailto:sarkboattrips@gmail.com">sarkboattrips@gmail.com</a>
+                    <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
                 </address>
 
                 <div className="footer-section">

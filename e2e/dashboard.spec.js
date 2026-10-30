@@ -179,7 +179,7 @@ test('cancel a whole trip: one button cancels every booking on it, emails them, 
     const saved = await h.savedBookings(request);
     expect(saved.map((b) => b.status)).toEqual(['cancelled', 'cancelled']);
     const sent = (await h.mails(request)).filter((m) => m.result === 'sent' && /CANCELLED/.test(m.subject)).map((m) => m.to).sort();
-    expect(sent).toEqual(['ann@example.test', 'bob@example.test', 'sarkboattrips@gmail.com']);
+    expect(sent).toEqual(['ann@example.test', 'bob@example.test', 'owner@sarkboattrips.test']);
 });
 
 test('a booking can be saved with details missing', async ({ page }) => {
@@ -204,7 +204,7 @@ test('editing: the email-the-customer box is ticked by default, and unticking it
     await page.click('button:has-text("Save changes")');
     await notice(page, 'customer not emailed, as you asked');
     expect((await h.savedBookings(request))[0].phone).toBe('0999');
-    expect((await h.mails(request)).slice(emailsBefore).every((m) => m.to === 'sarkboattrips@gmail.com')).toBe(true);
+    expect((await h.mails(request)).slice(emailsBefore).every((m) => m.to === 'owner@sarkboattrips.test')).toBe(true);
 });
 
 test('editing: adding people that do not fit is refused with the reason, and the form stays open to correct it', async ({ page }) => {

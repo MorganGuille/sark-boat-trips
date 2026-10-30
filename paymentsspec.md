@@ -1,6 +1,6 @@
 # Card on file, charged at trip time (payments spec)
 
-**Status: built on the `payments` branch (30 Oct 2026), waiting to be merged into `version2`.** Steps 1 (payment status and Mark paid), 2 (saving cards) and 3 (the charge at the trip time) are done, with infants, the wording, the `/terms` and `/privacy` pages (cancellation rules below) and the trip-wide cancel. Still open, listed under "Other things to settle": customer self-cancel (P2-6), reliable email (P2-10), and erasing a customer's Stripe record (P2-13). Written up on 26 Oct 2026 from the owner's answers. The original spec written by Gemini is kept at the bottom for reference. Where the two disagree, **this section wins**.
+**Status: built, and merged into `version2` on 30 Oct 2026 (not yet deployed).** Steps 1 (payment status and Mark paid), 2 (saving cards) and 3 (the charge at the trip time) are done, with infants, the wording, the `/terms` and `/privacy` pages (cancellation rules below) and the trip-wide cancel. Still open, listed under "Other things to settle": customer self-cancel (P2-6), reliable email (P2-10), and erasing a customer's Stripe record (P2-13). Written up on 26 Oct 2026 from the owner's answers. The original spec written by Gemini is kept at the bottom for reference. Where the two disagree, **this section wins**.
 
 ## Why
 
@@ -74,7 +74,7 @@ Recommendation: **A**, with the check also reachable through a protected address
 
 - **Customers cancelling themselves** (P2-6) matters more now: until then, a customer who cancels has to phone or email before the trip time, or they will be charged.
 - **Pause for the day: DONE (30 Oct 2026).** "Cancel a whole trip" on the dashboard's Bookings tab: one tap cancels every booking on the trip (so nobody is charged), emails each customer with an apology, closes the trip to new bookings, and sends the owner one summary (including anyone already paid who needs a refund).
-- **Failed-charge alert:** the owner gets an email listing bookings that failed, and the dashboard shows them as Unpaid. The email depends on the Gmail replacement (P2-10) being reliable.
+- **Failed-charge alert:** the owner gets an email listing bookings that failed, and the dashboard shows them as Unpaid. The email depends on the Gmail replacement (P2-10, done: Zoho, info@) being reliable.
 - **Erasing a customer's data** (P2-13) must also delete their Stripe customer and saved card.
 - **The webhook** (`/charters/webhook`) gets new events: the card-saved event creates the booking, and payment results update its status. Needs the same signing secret as now.
 - **Test before the season:** Stripe has test cards that are declined or demand a bank check, so the failure paths can be tried in test mode. A real charge cannot be rehearsed automatically.
