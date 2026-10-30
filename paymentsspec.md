@@ -73,7 +73,7 @@ Recommendation: **A**, with the check also reachable through a protected address
 ## Other things to settle or build around it
 
 - **Customers cancelling themselves** (P2-6) matters more now: until then, a customer who cancels has to phone or email before the trip time, or they will be charged.
-- **Pause for the day:** a trip-wide "cancel everything for this trip" (P2-2) would make a weather call one tap instead of one per booking. Worth building before the first season of automatic charges.
+- **Pause for the day: DONE (30 Oct 2026).** "Cancel a whole trip" on the dashboard's Bookings tab: one tap cancels every booking on the trip (so nobody is charged), emails each customer with an apology, closes the trip to new bookings, and sends the owner one summary (including anyone already paid who needs a refund).
 - **Failed-charge alert:** the owner gets an email listing bookings that failed, and the dashboard shows them as Unpaid. The email depends on the Gmail replacement (P2-10) being reliable.
 - **Erasing a customer's data** (P2-13) must also delete their Stripe customer and saved card.
 - **The webhook** (`/charters/webhook`) gets new events: the card-saved event creates the booking, and payment results update its status. Needs the same signing secret as now.

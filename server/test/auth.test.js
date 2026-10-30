@@ -46,6 +46,7 @@ describe('logging in', () => {
 const PROTECTED = [
     ['post', '/bookings/admin-add', { date: t.day(5), timeslot: '11am' }],
     ['post', '/bookings/cancel', { _id: '64b000000000000000000000' }],
+    ['post', '/bookings/cancel-trip', { date: t.day(5), timeslot: '2pm', reason: 'weather' }],
     ['post', '/bookings/restore', { _id: '64b000000000000000000000' }],
     ['post', '/bookings/permanently-delete', { _id: '64b000000000000000000000' }],
     ['post', '/bookings/mark-paid', { _id: '64b000000000000000000000' }],

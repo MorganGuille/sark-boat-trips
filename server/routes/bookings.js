@@ -17,6 +17,7 @@ router.post('/monthAvailability', availabilityByIp, asyncHandler(controller.chec
 // Dashboard only
 router.post('/admin-add', requireAuth, asyncHandler(controller.adminAddBooking))
 router.post('/cancel', requireAuth, asyncHandler(controller.cancelBooking))
+router.post('/cancel-trip', requireAuth, asyncHandler(controller.cancelTrip))
 router.post('/restore', requireAuth, asyncHandler(controller.restoreBooking))
 router.post('/mark-paid', requireAuth, asyncHandler(controller.markPaid))
 router.post('/mark-unpaid', requireAuth, asyncHandler(controller.markUnpaid))

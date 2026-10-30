@@ -400,6 +400,30 @@ input {
     background: #fafbfc;
 }
 
+/* Cancel a whole trip (Bookings tab, under the day's list) */
+.cancelTrip {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+    padding: 1rem;
+    border: 1px solid #f1c7c4;
+    border-radius: 0.5rem;
+    background: #fff8f7;
+}
+
+.cancelTrip h3 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.cancelTripRow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
 /* Payment column */
 .payBadge {
     display: inline-block;

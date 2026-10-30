@@ -5,6 +5,7 @@ import BookingForm from '../components/bookingForm'
 import SeasonDatesForm from '../components/seasonDatesForm'
 import PricesForm from '../components/pricesForm'
 import ReportPanel from '../components/dashboard/reportPanel'
+import CancelTripForm from '../components/dashboard/cancelTripForm'
 import LoginForm from '../components/dashboard/loginForm'
 import BookingsTable from '../components/dashboard/bookingsTable'
 import AvailabilityForm from '../components/dashboard/availabilityForm'
@@ -336,6 +337,10 @@ function Dashboard() {
                                     <button type='button' className='btnLink' onClick={() => changeTab('notes')}>Manage</button>
                                     {notes.map((note) => <p key={note._id}>{note.content}</p>)}
                                 </div>
+                            ) : null}
+
+                            {!searching && bookingsStatus === 'ready' ? (
+                                <CancelTripForm selectedDate={selectedDate} bookings={bookings} onResult={showNotice} onDone={refreshBookings} />
                             ) : null}
                         </>) : null}
 

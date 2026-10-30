@@ -169,21 +169,8 @@ const PAYMENT_FOR_OWNER = {
     paid_in_person: 'PAID IN PERSON: refund it yourself if needed', charging: 'a charge was under way: check Stripe',
 };
 
-const cancelBooking = async (req, res) => {
-    const { _id } = req.body;
-
-    try {
-        const cancelledBooking = await Bookings.findOneAndUpdate(
-            { _id, status: { $ne: 'cancelled' } },
-            { $set: { status: 'cancelled', cancelledAt: new Date() } },
-            { new: true }
-        );
-
-        if (!cancelledBooking) {
-            return res.status(404).send({ ok: false, data: `No active booking found for booking ID : ${_id}` });
-        }
-
-        const mailOptionsClient = {
+// The customer's cancellation email. apology: set when the owner cancelled the whole trip (cancelTrip)
+const cancellationEmail = (cancelledBooking, apology = '') => ({
             from: 'sarkboattrips@gmail.com',
             to: cancelledBooking.email,
             subject: 'Booking CANCELLED - Sark Boat Trips',
@@ -197,8 +184,9 @@ const cancelBooking = async (req, res) => {
                             <p>Your booking on ${showDay(cancelledBooking.date)} at ${cancelledBooking.timeslot} has been <strong
                                     style="color: lightcoral;">CANCELLED</strong>.
                             </p>
+                            <p>${apology}</p>
                             <p>${cancelPaymentLine(cancelledBooking.paymentStatus)}</p>
-                            <p>If this is a mistake please contact us</p>
+                            <p>${apology ? '' : 'If this is a mistake please contact us'}</p>
                             <p>Thank you so much,</p>
                             <h3>Sark Boat Trips</h3>
                             <hr>
@@ -214,7 +202,23 @@ const cancelBooking = async (req, res) => {
                             </div>
                         </div>
                     </div>`,
-        };
+});
+
+const cancelBooking = async (req, res) => {
+    const { _id } = req.body;
+
+    try {
+        const cancelledBooking = await Bookings.findOneAndUpdate(
+            { _id, status: { $ne: 'cancelled' } },
+            { $set: { status: 'cancelled', cancelledAt: new Date() } },
+            { new: true }
+        );
+
+        if (!cancelledBooking) {
+            return res.status(404).send({ ok: false, data: `No active booking found for booking ID : ${_id}` });
+        }
+
+        const mailOptionsClient = cancellationEmail(cancelledBooking);
 
         const mailOptionsAdmin = {
             from: 'sarkboattrips@gmail.com',
@@ -557,5 +561,66 @@ const markUnpaid = async (req, res) => {
     res.send({ ok: true, data: `${bookingName(updated)} on ${showDay(updated.date)} at ${updated.timeslot} is ${back === 'card_saved' ? 'back to being charged to the saved card at the trip time' : 'marked as unpaid again'}` });
 };
 
-module.exports = { buildConfirmationEmail, newBookingAdminEmail, cardPaymentLine, markPaid, markUnpaid, monthlyReport, adminAddBooking, cancelBooking, restoreBooking, permanentlyDeleteBooking, checkDate, checkMonthAvail, search, updateBooking, updateAvailability }
+// Why the owner cancelled a whole trip, as the customer reads it
+const TRIP_REASONS = { weather: ' because of the weather and sea conditions', other: '' };
+
+// Cancels every booking on one trip (a weather day) and closes the trip to new bookings. Nobody's
+// card is charged, because cancelled bookings never are. Each customer gets the cancellation email
+// with an apology; the owner gets one summary instead of one email per booking.
+const cancelTrip = async (req, res) => {
+    const { date, timeslot, reason = 'weather' } = req.body;
+    const problem = validateAvailabilitySetting({ date, timeslot, capacity: '0' });
+    if (problem) return res.status(400).send({ ok: false, data: problem });
+    if (typeof reason !== 'string' || !Object.hasOwn(TRIP_REASONS, reason)) return res.status(400).send({ ok: false, data: 'Please choose a reason.' });
+
+    // Close it first, so nobody can book it while the bookings are being cancelled
+    await Availability.findOneAndUpdate({ date, timeslot }, { capacity: 0 }, { upsert: true });
+
+    const cancelled = [];
+    for (const booking of await Bookings.find({ date, timeslot, status: { $ne: 'cancelled' } })) {
+        const done = await Bookings.findOneAndUpdate(
+            { _id: booking._id, status: { $ne: 'cancelled' } },
+            { $set: { status: 'cancelled', cancelledAt: new Date() } },
+            { new: true }
+        );
+        if (done) cancelled.push(done);
+    }
+
+    // Saved first, so emails are reported but never undo anything
+    const notEmailed = [];
+    let emailed = 0;
+    for (const booking of cancelled) {
+        if (!booking.email) { notEmailed.push(booking); continue; }
+        const what = booking.charter === 'true' ? 'charter' : 'trip';
+        const apology = `We're very sorry: we've had to cancel this ${what}${TRIP_REASONS[reason]}. We'd love to take you out another day, so please book again or get in touch.`;
+        if (await trySend(cancellationEmail(booking, apology))) emailed++;
+        else notEmailed.push(booking);
+    }
+    const toRefund = cancelled.filter((b) => ['paid', 'paid_in_person', 'charging'].includes(b.paymentStatus));
+
+    const trip = `the ${timeslot} trip on ${showDay(date)}`;
+    const line = (b) => `- ${bookingName(b)}, ${partyText(b)}${b.phone ? `, phone ${b.phone}` : ''}`;
+    await trySend({
+        from: 'sarkboattrips@gmail.com',
+        to: 'sarkboattrips@gmail.com',
+        subject: `Trip CANCELLED: ${timeslot} on ${showDay(date)} (${cancelled.length} booking${cancelled.length === 1 ? '' : 's'})`,
+        text: [
+            `You cancelled ${trip}${TRIP_REASONS[reason]}. It is closed to new bookings (reopen it from the Availability tab).`,
+            `${cancelled.length} booking${cancelled.length === 1 ? '' : 's'} cancelled. Nobody's saved card will be charged.`,
+            cancelled.length ? `\n${cancelled.map(line).join('\n')}` : '',
+            notEmailed.length ? `\nNOT EMAILED (no address, or the email failed), please contact them:\n${notEmailed.map(line).join('\n')}` : '',
+            toRefund.length ? `\nALREADY PAID, refund them (online payments in Stripe):\n${toRefund.map(line).join('\n')}` : '',
+            `\nOpen the dashboard: ${settings.dashboardUrl}`,
+        ].filter(Boolean).join('\n'),
+    });
+
+    const parts = [`${cancelled.length} booking${cancelled.length === 1 ? '' : 's'} cancelled`, `${emailed} customer${emailed === 1 ? '' : 's'} emailed`];
+    if (notEmailed.length) parts.push(`${notEmailed.length} not emailed (see your email)`);
+    res.send({
+        ok: true,
+        data: `${trip.replace(/^the/, 'The')} is cancelled and closed to new bookings: ${parts.join(', ')}. Nobody will be charged.${toRefund.length ? ` ${toRefund.length} had already paid: refund them (see your email).` : ''}`,
+    });
+};
+
+module.exports = { cancelTrip, buildConfirmationEmail, newBookingAdminEmail, cardPaymentLine, markPaid, markUnpaid, monthlyReport, adminAddBooking, cancelBooking, restoreBooking, permanentlyDeleteBooking, checkDate, checkMonthAvail, search, updateBooking, updateAvailability }
 
