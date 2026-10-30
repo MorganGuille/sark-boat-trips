@@ -81,6 +81,9 @@ const bookingsSchema = new mongoose.Schema({
     stripePaymentIntentId: { type: String },
     chargeStartedAt: { type: Date },
     chargeAttempts: { type: Number },
+    // The reminder email the evening before the trip (utils/reminders.js)
+    reminderSentAt: { type: Date },
+    reminderAttempts: { type: Number },
     // Set on paid charters. The unique index means one Stripe payment can only ever create one booking
     stripeSessionId: {
         type: String,

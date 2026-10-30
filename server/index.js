@@ -9,6 +9,7 @@ const { settings } = require("./utils/settings");
 const { corsSummary } = require("./middleware/security");
 const { readDatabase } = require("./utils/database");
 const { startChargeTimer } = require("./utils/charges");
+const { startReminderTimer } = require("./utils/reminders");
 
 const PORT = process.env.PORT || 4040;
 const dbname = process.env.atlasDB_name;
@@ -33,6 +34,9 @@ async function connecting() {
   try {
     await mongoose.connect(database.uri);
     console.log(`Connected to ${dbname || "the database"}${database.user ? ` as ${database.user}` : ""}`);
+    // The reminder email the evening before each trip (utils/reminders.js)
+    startReminderTimer();
+    console.log("Reminders: emailed at 6pm (Guernsey time) the evening before each trip");
     // Saved cards are charged at the trip time (paymentsspec.md). Only once the database is there,
     // and never without a usable Stripe key.
     if (!settings.stripe.problem) {

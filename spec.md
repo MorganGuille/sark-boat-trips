@@ -14,7 +14,7 @@ Written after reading the whole codebase and testing the booking and dashboard f
 
 ## Progress (30 Oct 2026)
 
-**Done in the sandbox (`version2`), not yet deployed:** P0-1 to P0-5, P1-1 to P1-10 (error reporting in P1-9 was skipped by the owner), P2-1 (prices and the monthly CSV report), P3-2 (lint), P2-4 in full (merged from the `payments` branch on 30 Oct; see `paymentsspec.md`: payment status with Mark paid / Undo paid, a card saved on Stripe's page for every online booking, charged automatically at the trip time, infants, the cancellation rules on `/terms` and `/privacy`, and **Cancel a whole trip**, part of P2-2), and P2-10 plus the email part of P2-11 (the site sends from `info@sarkboattrips.com` through Zoho; addresses come from settings).
+**Done in the sandbox (`version2`), not yet deployed:** P0-1 to P0-5, P1-1 to P1-10 (error reporting in P1-9 was skipped by the owner), P2-1 (prices and the monthly CSV report), P3-2 (lint), P2-4 in full (merged from the `payments` branch on 30 Oct; see `paymentsspec.md`: payment status with Mark paid / Undo paid, a card saved on Stripe's page for every online booking, charged automatically at the trip time, infants, the cancellation rules on `/terms` and `/privacy`, and **Cancel a whole trip**, part of P2-2), P2-10 plus the email part of P2-11 (the site sends from `info@sarkboattrips.com` through Zoho; addresses come from settings), and P2-7 (the reminder email at 6pm the evening before).
 
 **Next:** customer self-cancel (P2-6) and the rest of P2-2 (changing a trip's time for one day, through `tripStartsAt`, which is also when the trip times move into settings). Go-live steps are in `CLAUDE.md`. Anything marked DONE only counts once it is deployed.
 
@@ -43,7 +43,7 @@ Written after reading the whole codebase and testing the booking and dashboard f
 | P2-4 | Owner | Card saved at booking, charged at the trip time; payment status (see `paymentsspec.md`) (**DONE**) | L |
 | P2-5 | Owner | Deliberate overbooking override | S |
 | P2-6 | Customer | Manage-my-booking link (self-service change and cancel) | M |
-| P2-7 | Customer | Reminder email the day before | S–M |
+| P2-7 | Customer | Reminder email the day before (**DONE**) | S–M |
 | P2-8 | Customer | Booking form polish (price total, closed days, keep data on error) | M |
 | P2-9 | Client | Each public route prerendered separately, plus sitemap and noindex | M |
 | P2-10 | Server | Move off Gmail SMTP (**DONE**: Zoho, `info@sarkboattrips.com`, with SPF, DKIM and DMARC) | M |
@@ -314,7 +314,8 @@ A signed link in the confirmation email where the customer can view their bookin
 The "your trip time has changed" email from P2-2 should include this link, so a customer who can't make the new time can cancel straight from the email. (Until this exists, that email just asks them to reply or contact you.)
 
 #### P2-7 `[Customer]` Reminder email the day before
-Meeting point, what to bring and a weather note. Run it with Heroku Scheduler. It reduces no-shows. Needs P1-10 to query "tomorrow's bookings" reliably.
+- **Status: DONE** (30 Oct 2026, not yet deployed). `server/utils/reminders.js`, run every minute by `index.js` (the same in-app timer as the card charges, not Heroku Scheduler, so it needs the dyno awake like the charges do). Owner's decisions: sent at **6pm Guernsey time the evening before**, to **every booking with an email** (online and dashboard, trips and charters, not cancelled), **not** to a booking made after 6pm for the next day (it has only just had its confirmation), and **no payment line**. Content: day, time, party, be at Creux Harbour shortly before, what to bring, the weather note, and how to get in touch. Sent once (`reminderSentAt`, claimed before sending so two checks can't both send), a failed send is retried a minute later up to 3 times, a reminder missed by midnight isn't sent the next morning, and moving a booking to another day resets it. Tests: `reminders.test.js`.
+- Original notes: meeting point, what to bring and a weather note. It reduces no-shows.
 
 #### P2-8 `[Customer]` Booking form polish
 - Show the price total as the party size changes.
@@ -365,7 +366,7 @@ Booking checks availability and then creates the record, which isn't atomic. Two
 4. **Owner value that needs no bulk email:** P2-1 (done), P2-4 (done), then P2-3.
 5. **Email foundation (done 30 Oct 2026, apart from the trip times):** P2-11 (one place for the sender address, contact details and trip times), then P2-10 (a proper email service and your own domain instead of the free Gmail address).
 6. **Trip tools:** P2-2 (change a trip's time, close a trip, notify everyone on it). Only after step 5, because it sends many emails at once.
-7. **Customer growth and SEO:** P2-9, P2-6, P2-7, P2-8.
+7. **Customer growth and SEO:** P2-9, P2-6, P2-7 (done), P2-8.
 
 ## Decisions needed from you
 

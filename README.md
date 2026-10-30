@@ -20,6 +20,8 @@ In the past I had used paid booking systems but they didnt suit my specific need
 
 - Card payments without refunds: customers save a card on Stripe's secure page when they book online (trips and private charters), nothing is charged at booking, and the server charges the card automatically when the trip starts. Free cancellation up to 24 hours before (48 for charters), as set out on the terms page. A trip cancelled for weather is cancelled on the dashboard first, so there is nothing to refund. The booking is created by a Stripe webhook as well as the success page, so a customer who closes the tab still gets booked.
 
+- Emails from the business's own address (info@sarkboattrips.com, through Zoho): booking confirmations, changes and cancellations, alerts to the owner, and a reminder at 6pm the evening before each trip.
+
 ### This is a classic MERN stack implementation, using JavaScript across the board.
 
 ## Project Structure

@@ -9,6 +9,7 @@ const { showDay } = require('./dates');
 const { partyText } = require('./party');
 const { trySend } = require('./mailer');
 const { settings } = require('./settings');
+const { repeat } = require('./timer');
 
 const RETRY_AFTER_MINUTES = 10; // a charge stuck in "charging" (a crash, or Stripe unreachable) is retried after this
 const MAX_ATTEMPTS = 5; // then it is given up and marked unpaid for the owner to collect
@@ -153,22 +154,9 @@ const runDueCharges = async (now = new Date()) => {
 };
 
 // Started by index.js once the database is connected. Never overlaps itself.
-const startChargeTimer = (everyMs = 60000) => {
-    let running = false;
-    const tick = async () => {
-        if (running) return;
-        running = true;
-        try {
-            const result = await runDueCharges();
-            if (result.paid || result.failed) console.log(`Card charges: ${result.paid} paid, ${result.failed} failed`);
-        } catch (error) {
-            console.error('Card charge check failed:', error.message);
-        } finally {
-            running = false;
-        }
-    };
-    tick();
-    return setInterval(tick, everyMs);
-};
+const startChargeTimer = (everyMs = 60000) => repeat('Card charge', async () => {
+    const result = await runDueCharges();
+    if (result.paid || result.failed) console.log(`Card charges: ${result.paid} paid, ${result.failed} failed`);
+}, everyMs);
 
 module.exports = { runDueCharges, startChargeTimer, RETRY_AFTER_MINUTES, MAX_ATTEMPTS };

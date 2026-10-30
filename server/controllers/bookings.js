@@ -485,6 +485,12 @@ const updateBooking = async (req, res) => {
         }
     }
 
+    // Moved to another day: it gets a reminder the evening before the new day
+    if (booking.date !== before.date) {
+        booking.reminderSentAt = undefined;
+        booking.reminderAttempts = undefined;
+    }
+
     // validateBeforeSave is off because bookings made on the dashboard may be missing details
     await booking.save({ validateBeforeSave: false });
 
