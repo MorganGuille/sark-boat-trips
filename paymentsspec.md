@@ -25,6 +25,12 @@ Every customer who books online saves a card (nothing is charged). The card is c
 | Card entry | **Stripe's hosted page in "save a card" mode**, the same kind of page charters use now. No card fields on our site, so no new security-policy changes and no card handling by us. (This replaces the spec's own Elements form. It still uses a SetupIntent underneath, which was the spec's strict requirement.) |
 | Fees | About the same as the owner already pays on SumUp (roughly 80% of payments are by card). Disputes are not expected to be a problem. |
 
+## Bookings made weeks or months ahead (decided 30 Oct 2026)
+
+A card saved this way has **no time limit** on Stripe: it stays on the customer's record until the card expires or we remove it, so a January booking for an August trip is charged in August. (The 7 to 30 day limits people quote are for *authorisation holds*, where money is reserved at booking. We deliberately don't do that.)
+
+The longer the gap, the more can go wrong on the day: the card expired or was replaced (Stripe updates many reissued cards automatically, not all), was cancelled, has no funds, or the bank asks the customer to confirm. **Decision: option 1, treat every booking the same.** A failed charge marks the booking Unpaid and the owner collects after the trip. **Each failed charge records why**, so after a season the owner can see how often early bookings fail. If it turns out to matter, add later: a hold for the full amount two days before the trip, taken at the trip time, with an email asking for a new card if the hold fails (released, not refunded, if the trip is cancelled). Nothing built now would need undoing for that.
+
 ## What the owner sees on each booking
 
 A payment status: **Card saved**, **Paid** (charged online), **Paid in person** (cash or card reader, marked by hand), **Unpaid** (no card, or the charge failed). A dashboard booking is Unpaid until marked. A failed charge also shows why, in plain words.
@@ -37,7 +43,7 @@ Adult, child and charter prices are settings the owner changes in the dashboard 
 
 Plain words next to the card step (and in the confirmation email): the card is **not charged now**; it is charged **£X at the trip's start time** on the day; **trips cancelled for weather are never charged**; how to cancel (until a manager link exists in P2-6: phone or email before the trip time). The owner to approve the exact text.
 
-## How the automatic charge runs (open: owner to choose)
+## How the automatic charge runs (recommended A; owner to confirm)
 
 Stripe cannot schedule a charge for us, so something has to check the bookings and start the charge at 11:00 and 14:00. The check looks for bookings whose trip start has passed, that have a saved card, are not cancelled and not already paid, and charges each one. It must be **safe to run twice** (a booking can never be charged twice: Stripe's idempotency key per booking) and must **catch up** if the server was busy or restarting at the exact minute.
 
@@ -59,6 +65,33 @@ Recommendation: **A**, with the check also reachable through a protected address
 - **The webhook** (`/charters/webhook`) gets new events: the card-saved event creates the booking, and payment results update its status. Needs the same signing secret as now.
 - **Test before the season:** Stripe has test cards that are declined or demand a bank check, so the failure paths can be tried in test mode. A real charge cannot be rehearsed automatically.
 - **Order of work:** price settings and the CSV report first (they give the amounts), then this, then the customer cancel link and the trip-wide cancel.
+
+## Setting it up, step by step
+
+### What the owner does in Stripe (test mode first, then the same in live mode at go-live)
+
+1. **Public details** (Settings → Business → Public details): business name, support phone and email, and a **statement descriptor** such as `SARK BOAT TRIPS`. That is what appears on the customer's bank statement on the day of the trip, so they recognise the charge (the main defence against disputes).
+2. **Terms of service address**, in the same place: the address of the site's terms page (we add a real `/terms` page; today the terms only open as a pop-up in the footer). Stripe's page then shows "I agree to the terms" before the card is saved.
+3. **Branding** (Settings → Branding): logo and colours, so Stripe's page looks like the business. Optional, but it helps trust.
+4. **Receipts** (Settings → Customer emails): switch on "Successful payments", so each customer gets a receipt from Stripe when they are charged on the day.
+5. **Payment methods** (Settings → Payment methods): cards on (they are by default). Apple Pay and Google Pay can stay on: they work for saving a card.
+6. **Webhook**: no new events needed. Setup-mode checkouts send the same `checkout.session.completed` event the charters already use. The webhook itself is set up at go-live (see the go-live checklist in `CLAUDE.md`). On a laptop, the Stripe CLI (`stripe listen --forward-to localhost:4040/charters/webhook`) forwards test events.
+7. **Nothing else:** the `PRICE_ID` price object is no longer used (amounts come from the dashboard prices) and the £80 deposit disappears. Saving a card costs nothing; Stripe's fee is taken only when a charge succeeds.
+
+### What gets built (in the sandbox, with the Stripe test key)
+
+1. **Booking fields:** payment status, Stripe customer and saved card, amount paid, when, and the plain-words reason for a failed charge.
+2. **Booking flow:** the public booking form and the charter form both go to Stripe's hosted page in "save a card" mode. The booking is created only when Stripe confirms the card is saved (by the webhook or the success page, through one shared function, as charters work today), and only then are the emails sent. The success page covers both.
+3. **The charge timer:** a check every minute inside the app. Bookings whose trip has started, with a saved card, not cancelled and not yet paid, are charged once (Stripe idempotency key per booking), and the amount is worked out at that moment from the saved prices and the current party size. The result is recorded on the booking; failures go to the owner in one email.
+4. **Dashboard:** a payment status on every booking (Card saved, Paid, Paid in person, Unpaid with the reason), and a "Mark paid in person" button for dashboard bookings and failed charges.
+5. **Wording:** the booking and charter pages, the confirmation emails and a new `/terms` page say clearly when the card is charged, that weather cancellations are never charged, and how to cancel. The charter page's "refundable deposit of 20%" text goes. **The owner approves the final wording.**
+6. **Tidy-up:** remove the deposit checkout and the `PRICE_ID` setting.
+7. **Tests:** server tests with a fake Stripe (saved, charged, declined, bank asks to confirm, charged only once, cancelled never charged), browser tests for the new flow, and the checks that each test can fail.
+8. **A real rehearsal in Stripe test mode** (fake money): save a card on Stripe's real page, move the booking's date into the past on the dashboard so the timer charges it, and confirm it in the Stripe dashboard. Stripe's test cards cover the failures: `4242 4242 4242 4242` (works), `4000 0000 0000 0341` (saves, but every later charge is declined), `4000 0000 0000 9995` (declined, no funds), `4000 0027 6000 3184` (the bank always asks the customer to confirm).
+
+### At go-live (added to the checklist in `CLAUDE.md` when this is built)
+
+Repeat the owner's Stripe steps in live mode, deploy, and make sure the Heroku plan is one that stays switched on (the $7 Basic plan does), because the timer runs inside the app.
 
 ## Data to store on each booking
 
