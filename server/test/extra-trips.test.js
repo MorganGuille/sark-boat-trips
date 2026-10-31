@@ -99,9 +99,16 @@ describe('a customer booking an extra trip online', () => {
         assert.ok((await t.bookOnline(app, t.booking({ date: DAY, timeslot: swim.timeslot, adults: '6' }))).booking);
         const { res, booking } = await t.bookOnline(app, t.booking({ date: DAY, timeslot: swim.timeslot, adults: '3' }));
         assert.equal(booking, null);
-        assert.equal(res.body.data, `No spaces available at Swim trip (4:30pm) on ${t.shown(DAY)}!`);
+        assert.equal(res.body.data, `Sorry, there are only 2 spaces left on the Swim trip (4:30pm) on ${t.shown(DAY)}, and you asked for 3. Please book fewer people or choose another trip.`);
         assert.deepEqual((await t.seatsLeft(app, DAY)).extras.map((x) => x.spaces), [2]);
         assert.equal((await t.seatsLeft(app, DAY))['11am'], 12, 'the usual trips are untouched');
+    });
+
+    it('the owner adding too many on the dashboard is told how many seats are left', async () => {
+        const swim = await addSwim();
+        const res = await t.call(app, 'post', '/bookings/admin-add', { token, body: { date: DAY, timeslot: swim.timeslot, firstName: 'Big', adults: '10' } });
+        assert.equal(res.body.ok, false);
+        assert.equal(res.body.data, `Only 8 spaces left on the Swim trip (4:30pm) on ${t.shown(DAY)}, and this booking is for 10. Raise the trip's seats first if you want to fit them in.`);
     });
 
     it('can\'t book it as a private charter', async () => {

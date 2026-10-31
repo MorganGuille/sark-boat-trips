@@ -81,7 +81,7 @@ test('a booking the server refuses shows the reason and keeps what the customer 
     await request.post('/__test/insert-booking', { data: { date, adults: 12 } }); // the 11am trip is now full
     await h.fillBooking(page, { firstName: 'Latecomer', email: 'late@example.test', adults: '2' });
     await page.click('button:has-text("Continue to card details")');
-    await expect(page.locator('.responseDisplay h3')).toContainText('No spaces available');
+    await expect(page.locator('.responseDisplay h3')).toContainText('is full. Please choose another trip.');
     await page.click('.responseDisplay button');
     await expect(page.locator('#firstName')).toHaveValue('Latecomer');
     expect(await h.savedBookings(request)).toHaveLength(1);
@@ -128,6 +128,16 @@ test('closing Stripe\'s page leads to a page saying nothing was booked or charge
     await page.goto('/canceled');
     await expect(page.locator('main')).toContainText('nothing has been booked');
     await expect(page.locator('main')).toContainText('nothing has been charged');
+    // Try again goes back to the booking page (trips are the default), and there is a way home
+    await expect(page.getByRole('link', { name: 'Return to the booking page to try again' })).toHaveAttribute('href', '/bookings');
+    await page.getByRole('link', { name: 'Back to home' }).click();
+    await expect(page).toHaveURL(/\/$/);
+
+    await page.goto('/canceled?kind=charter');
+    await expect(page.getByRole('link', { name: 'Return to the charters page to try again' })).toHaveAttribute('href', '/charters');
+    await page.goto('/canceled?kind=trip');
+    await page.getByRole('link', { name: 'Return to the booking page to try again' }).click();
+    await expect(page).toHaveURL(/\/bookings$/);
 });
 
 test('a bot that fills in the hidden field is not seen by people, and gets nothing saved', async ({ page, request }) => {

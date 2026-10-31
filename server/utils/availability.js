@@ -1,6 +1,7 @@
 const Bookings = require('../models/bookings');
 const Availability = require('../models/availability');
 const { seatsFor } = require('./party');
+const { showDay } = require('./dates');
 
 const DEFAULT_CAPACITY = 12;
 
@@ -51,4 +52,20 @@ const withTripLock = (date, timeslot, fn) => {
     return result;
 };
 
-module.exports = { getAvailability, isSlotEmpty, withTripLock };
+// Why a booking doesn't fit, in words: how many spaces are left and how many it needs, rather than
+// just "no spaces". owner: worded for the dashboard instead of the customer.
+const noRoomMessage = ({ trip, date, left, booking, owner = false }) => {
+    const on = `the ${trip.named} on ${showDay(date)}`;
+    if (booking.charter === 'true') {
+        return `Sorry, ${on} already has bookings, and a private charter needs the whole boat. Please choose another trip.`;
+    }
+    if (left <= 0) return owner ? `${on.replace(/^t/, 'T')} is full.` : `Sorry, ${on} is full. Please choose another trip.`;
+    const spaces = `${left} space${left === 1 ? '' : 's'}`;
+    const wanted = seatsFor(booking);
+    const infants = booking.infants > 0 ? ' (infants take a seat too)' : '';
+    return owner
+        ? `Only ${spaces} left on ${on}, and this booking is for ${wanted}${infants}. Raise the trip's seats first if you want to fit them in.`
+        : `Sorry, there ${left === 1 ? 'is' : 'are'} only ${spaces} left on ${on}, and you asked for ${wanted}${infants}. Please book fewer people or choose another trip.`;
+};
+
+module.exports = { getAvailability, isSlotEmpty, withTripLock, noRoomMessage };

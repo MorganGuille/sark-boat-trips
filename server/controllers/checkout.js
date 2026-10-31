@@ -2,7 +2,7 @@
 // saves a card on Stripe's own page ("setup" mode: nothing is charged), and the booking is only
 // created once Stripe confirms the card is saved. The card is charged later, at the trip time.
 const Bookings = require('../models/bookings');
-const { getAvailability, isSlotEmpty, withTripLock } = require('../utils/availability');
+const { getAvailability, isSlotEmpty, withTripLock, noRoomMessage } = require('../utils/availability');
 const { validatePublicBooking } = require('../utils/validateBooking');
 const { showDay, longDay } = require('../utils/dates');
 const { readPrices, bookingValue, pricesFor } = require('../utils/prices');
@@ -88,7 +88,8 @@ const startCheckout = (kind) => async (req, res) => {
         return res.status(400).json({ ok: false, data: "That trip can't be booked as a private charter. Please choose another time." });
     }
     if (!(await hasRoom(booking))) {
-        return res.send({ ok: false, data: `No spaces available at ${trip.label} on ${showDay(booking.date)}!` });
+        const left = await getAvailability(booking.date, booking.timeslot);
+        return res.send({ ok: false, data: noRoomMessage({ trip, date: booking.date, left, booking }) });
     }
 
     const amount = bookingValue(booking, pricesFor(trip, prices));
@@ -101,7 +102,7 @@ const startCheckout = (kind) => async (req, res) => {
             currency: 'gbp',
             customer: customer.id,
             success_url: `${settings.publicUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${settings.publicUrl}/canceled`,
+            cancel_url: `${settings.publicUrl}/canceled?kind=${kind}`, // so that page's Try again goes back to the right booking page
             metadata: toMetadata(details, kind),
             ...(settings.termsConsent && { consent_collection: { terms_of_service: 'required' } }),
             setup_intent_data: { description: `Sark Boat Trips ${what(booking, trip)} ${trip.time} ${showDay(booking.date)}` },

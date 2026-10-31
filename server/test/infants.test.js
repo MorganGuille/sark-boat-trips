@@ -50,7 +50,7 @@ describe('booking online with infants', () => {
         await t.insertBooking({ date: t.day(10), adults: 10 });
         const refused = await t.bookOnline(app, t.booking({ adults: '1', infants: '2' }));
         assert.equal(refused.res.body.ok, false);
-        assert.match(refused.res.body.data, /No spaces available/);
+        assert.match(refused.res.body.data, /only 2 spaces left on the 11am trip on .*, and you asked for 3 \(infants take a seat too\)/);
         assert.ok((await t.bookOnline(app, t.booking({ adults: '1', infants: '1' }))).booking);
         assert.equal((await t.seatsLeft(app, t.day(10)))['11am'], 0);
     });

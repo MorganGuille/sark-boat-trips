@@ -110,6 +110,13 @@ body {
   height: 85vh;
 }
 
+.landingButtons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1em;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

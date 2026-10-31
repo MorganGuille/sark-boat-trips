@@ -42,7 +42,7 @@ describe('adding a booking on the dashboard', () => {
         await t.insertBooking({ date: t.day(10), adults: 11 });
         const res = await post('/bookings/admin-add', { date: t.day(10), timeslot: '11am', firstName: 'Late', adults: '2' });
         assert.equal(res.body.ok, false);
-        assert.match(res.body.data, /No spaces available/);
+        assert.match(res.body.data, /^Only 1 space left on the 11am trip on .*, and this booking is for 2\./);
         assert.equal((await all()).length, 1);
     });
     it('a missing party size is stored as 0 and uses no seats', async () => {

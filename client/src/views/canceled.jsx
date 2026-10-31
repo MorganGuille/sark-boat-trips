@@ -1,7 +1,17 @@
+import { useSyncExternalStore } from 'react'
 import { Link } from 'react-router'
 import { CONTACT_EMAIL } from '../utils/contact.js'
 
+// Where a customer lands after closing Stripe's card page, for a trip or a charter. Stripe sends them
+// back to /canceled?kind=trip or ?kind=charter, so Try again returns them to the page they came from.
 function Canceled() {
+    // The prerendered page has no address to read, so it starts as a trip and React then updates it
+    const charter = useSyncExternalStore(
+        () => () => {},
+        () => new URLSearchParams(window.location.search).get('kind') === 'charter',
+        () => false
+    )
+
     return (
         <>
             <title>Sark Boat Trips | Booking Not Made</title>
@@ -29,9 +39,13 @@ function Canceled() {
                     </address>
                 </section>
 
-                <Link className='btn' to='/charters' aria-label="Return to the charters page to try again">
-                    Back to charters
-                </Link>
+                <div className='landingButtons'>
+                    <Link className='btn' to={charter ? '/charters' : '/bookings'}
+                        aria-label={charter ? 'Return to the charters page to try again' : 'Return to the booking page to try again'}>
+                        Try again
+                    </Link>
+                    <Link className='btn' to='/'>Back to home</Link>
+                </div>
             </main>
         </>
     )

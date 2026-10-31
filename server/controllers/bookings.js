@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const Bookings = require("../models/bookings");
 const Availability = require('../models/availability');
 const { sendEmail, trySend } = require('../utils/mailer');
-const { getAvailability, isSlotEmpty, withTripLock } = require('../utils/availability');
+const { getAvailability, isSlotEmpty, withTripLock, noRoomMessage } = require('../utils/availability');
 const { isDay, showDay } = require('../utils/dates');
 const { readPrices, bookingValue, pricesFor } = require('../utils/prices');
 const { seatsFor, partyText } = require('../utils/party');
@@ -82,8 +82,10 @@ const adminAddBooking = async (req, res) => {
         if (!trip) return res.status(400).send({ ok: false, data: 'That trip is not running on that day.' });
         if (trip.extra && charter === 'true') return res.status(400).send({ ok: false, data: NO_EXTRA_CHARTER });
         // Checked and saved inside the trip's lock, so a customer booking at the same moment can't also take the seats
+        let left;
         const saved = await withTripLock(date, timeslot, async () => {
-            if (await getAvailability(date, timeslot) < adults + children + infants) return null;
+            left = await getAvailability(date, timeslot);
+            if (left < adults + children + infants) return null;
             // validateBeforeSave is off because the model requires the customer details
             return new Bookings({
                 date, timeslot, firstName, lastName, phone, email, adults, children, infants, accommodation, message, charter,
@@ -91,7 +93,7 @@ const adminAddBooking = async (req, res) => {
             }).save({ validateBeforeSave: false });
         });
         if (!saved) {
-            return res.send({ ok: false, data: `No spaces available at ${trip.label} on ${showDay(date)}!` });
+            return res.send({ ok: false, data: noRoomMessage({ trip, date, left, booking: { adults, children, infants }, owner: true }) });
         }
 
         const who = [firstName, lastName].filter(Boolean).join(' ') || 'the booking';

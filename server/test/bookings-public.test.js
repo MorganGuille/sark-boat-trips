@@ -145,7 +145,7 @@ describe('seats', () => {
         const res = await add(t.booking());
         assert.equal(res.status, 200);
         assert.equal(res.body.ok, false);
-        assert.match(res.body.data, /No spaces available at 11am/);
+        assert.match(res.body.data, /^Sorry, the 11am trip on .* is full\. Please choose another trip\.$/);
         assert.equal((await saved()).length, 1);
         assert.equal(mocks.mails.length, 0);
     });

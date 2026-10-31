@@ -29,7 +29,7 @@ describe('starting a checkout', () => {
         assert.equal(params.customer, 'cus_test_1');
         assert.deepEqual(mocks.stripe.customers[0], { email: params.metadata.email, name: 'Alice Smith', phone: '07123 456789' });
         assert.equal(params.success_url, 'http://localhost:5173/success?session_id={CHECKOUT_SESSION_ID}');
-        assert.equal(params.cancel_url, 'http://localhost:5173/canceled');
+        assert.equal(params.cancel_url, 'http://localhost:5173/canceled?kind=trip');
         assert.equal(params.metadata.kind, 'trip');
         assert.equal(params.metadata.date, t.day(15));
         assert.equal(params.line_items, undefined, 'no deposit and no price object any more');
@@ -42,6 +42,10 @@ describe('starting a checkout', () => {
         const [trip, charter] = mocks.stripe.created.map((p) => p.custom_text.submit.message);
         assert.equal(trip, `Your card won't be charged now. £185 will be charged at 11am on ${t.long(t.day(15))}, when your trip starts. You can cancel free of charge up to 24 hours before your trip starts. If we cancel because of the weather, you won't be charged.`);
         assert.match(charter, /£400 will be charged at 11am .* when your charter starts\. You can cancel free of charge up to 48 hours before your charter starts\./);
+    });
+    it('closing Stripe\'s page returns a charter customer to a page that sends them back to the charters page', async () => {
+        await charterCheckout();
+        assert.equal(mocks.stripe.created[0].cancel_url, 'http://localhost:5173/canceled?kind=charter');
     });
     it('the kind of booking is set by the address used, never by the customer', async () => {
         await tripCheckout({ charter: 'true', kind: 'charter' });
@@ -78,7 +82,7 @@ describe('starting a checkout', () => {
         await t.insertBooking({ date: t.day(15), adults: 1 });
         const refused = await charterCheckout();
         assert.equal(refused.body.ok, false);
-        assert.match(refused.body.data, /No spaces available/);
+        assert.match(refused.body.data, /already has bookings, and a private charter needs the whole boat/);
         await db.collection('bookings').updateMany({}, { $set: { status: 'cancelled' } });
         assert.ok((await charterCheckout()).body.url);
     });
