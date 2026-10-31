@@ -47,7 +47,7 @@ Written after reading the whole codebase and testing the booking and dashboard f
 | P2-9 | Client | Each public route prerendered separately, plus sitemap and noindex | M |
 | P2-10 | Server | Move off Gmail SMTP (**DONE**: Zoho, `info@sarkboattrips.com`, with SPF, DKIM and DMARC) | M |
 | P2-11 | Server | Business settings hard-coded in many files (email addresses **DONE**; trip times and the 12 limit still to do) | M |
-| P2-12 | Server | Overbooking race condition | M |
+| P2-12 | Server | Overbooking race condition: DONE | M |
 | P2-13 | Owner | Customer data tools (find, export, erase by email) | S |
 | P3-1 | Build | Untrack committed build output | S |
 | P3-2 | Build | Lint baseline of 108 errors | S–M |
@@ -339,6 +339,7 @@ Gmail SMTP has daily sending limits, weaker deliverability (your own email asks 
 Timeslots (`'11am'`, `'2pm'`), default capacity 12, prices and the "2026" text, the Stripe price id, the domain, and the email addresses are scattered across files. Put them in one server config plus a small settings document editable from the dashboard, and have the client read them.
 
 #### P2-12 `[Server]` Overbooking race condition
+- **Done** (1 Nov 2026, `trip-tools` branch, not yet deployed). More important once the owner confirmed 12 is a legal limit: a test showed two customers saving cards at once could put 14 on a 12-seat trip, or two charters on one trip. Now everything that adds people to a trip (online bookings, dashboard add, edit and restore) checks and saves inside `withTripLock` (`utils/availability.js`), one at a time per trip, so the second sees the first and gets the existing "trip filled up" booking (cancelled, nothing charged, customer and owner emailed). The lock is in memory, which suits the single Heroku dyno; running more than one copy would need a database-level guard instead. Tests: `overbooking.test.js`.
 Booking checks availability and then creates the record, which isn't atomic. Two customers submitting at once for the last seats can both succeed. Fix with a re-check after insert (undo if over capacity) or an atomic per-slot counter. Low risk at your volume, so do this after the other server work.
 
 ---

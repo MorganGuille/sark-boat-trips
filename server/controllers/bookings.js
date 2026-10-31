@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const Bookings = require("../models/bookings");
 const Availability = require('../models/availability');
 const { sendEmail, trySend } = require('../utils/mailer');
-const { getAvailability, isSlotEmpty } = require('../utils/availability');
+const { getAvailability, isSlotEmpty, withTripLock } = require('../utils/availability');
 const { isDay, showDay } = require('../utils/dates');
 const { readPrices, bookingValue, pricesFor } = require('../utils/prices');
 const { seatsFor, partyText } = require('../utils/party');
@@ -81,16 +81,18 @@ const adminAddBooking = async (req, res) => {
         const trip = await findTrip(date, timeslot);
         if (!trip) return res.status(400).send({ ok: false, data: 'That trip is not running on that day.' });
         if (trip.extra && charter === 'true') return res.status(400).send({ ok: false, data: NO_EXTRA_CHARTER });
-        const availability = await getAvailability(date, timeslot);
-        if (availability < adults + children + infants) {
+        // Checked and saved inside the trip's lock, so a customer booking at the same moment can't also take the seats
+        const saved = await withTripLock(date, timeslot, async () => {
+            if (await getAvailability(date, timeslot) < adults + children + infants) return null;
+            // validateBeforeSave is off because the model requires the customer details
+            return new Bookings({
+                date, timeslot, firstName, lastName, phone, email, adults, children, infants, accommodation, message, charter,
+                prices: pricesFor(trip, await readPrices()) || undefined,
+            }).save({ validateBeforeSave: false });
+        });
+        if (!saved) {
             return res.send({ ok: false, data: `No spaces available at ${trip.label} on ${showDay(date)}!` });
         }
-
-        // validateBeforeSave is off because the model requires the customer details
-        const saved = await new Bookings({
-            date, timeslot, firstName, lastName, phone, email, adults, children, infants, accommodation, message, charter,
-            prices: pricesFor(trip, await readPrices()) || undefined,
-        }).save({ validateBeforeSave: false });
 
         const who = [firstName, lastName].filter(Boolean).join(' ') || 'the booking';
         if (email) {
@@ -154,19 +156,22 @@ const restoreBooking = async (req, res) => {
             return res.send({ ok: false, data: `Can't restore: the trip this booking was on (${await labelOf(booking)}) no longer runs on ${showDay(booking.date)}. Make a new booking instead.` });
         }
         const at = trip.label;
-        if (booking.charter === 'true' && !(await isSlotEmpty(booking.date, booking.timeslot))) {
-            return res.send({ ok: false, data: `Can't restore this charter: the ${trip.named} on ${showDay(booking.date)} already has other bookings (or is closed).` });
-        }
-
-        const availability = await getAvailability(booking.date, booking.timeslot);
-        if (availability < seatsFor(booking)) {
-            return res.send({ ok: false, data: `Can't restore: only ${availability} spaces left at ${at} on ${showDay(booking.date)}.` });
-        }
-
-        booking.status = 'active';
-        booking.cancelledAt = undefined;
-        // validateBeforeSave is off because bookings made on the dashboard may be incomplete
-        await booking.save({ validateBeforeSave: false });
+        // Checked and saved inside the trip's lock, so a customer booking at the same moment can't also take the seats
+        const refused = await withTripLock(booking.date, booking.timeslot, async () => {
+            if (booking.charter === 'true' && !(await isSlotEmpty(booking.date, booking.timeslot))) {
+                return `Can't restore this charter: the ${trip.named} on ${showDay(booking.date)} already has other bookings (or is closed).`;
+            }
+            const availability = await getAvailability(booking.date, booking.timeslot);
+            if (availability < seatsFor(booking)) {
+                return `Can't restore: only ${availability} spaces left at ${at} on ${showDay(booking.date)}.`;
+            }
+            booking.status = 'active';
+            booking.cancelledAt = undefined;
+            // validateBeforeSave is off because bookings made on the dashboard may be incomplete
+            await booking.save({ validateBeforeSave: false });
+            return null;
+        });
+        if (refused) return res.send({ ok: false, data: refused });
 
         const who = bookingName(booking);
         if (!booking.email) {
@@ -315,19 +320,20 @@ const updateBooking = async (req, res) => {
     // or editing contact details never needs room, so a trip that is already over-full can still be edited.)
     const needsRoom = booking.date !== before.date || booking.timeslot !== before.timeslot ||
         seatsFor(booking) > before.seats || (booking.charter === 'true' && before.charter !== 'true');
-    if (needsRoom) {
+    const roomProblem = async () => {
         const trip = `the ${newTrip?.named || `${booking.timeslot} trip`} on ${showDay(booking.date)}`;
         if (booking.charter === 'true') {
             if (!(await isSlotEmpty(booking.date, booking.timeslot, booking._id))) {
-                return res.send({ ok: false, data: `Can't make that change: ${trip} already has other bookings (or is closed), and a charter needs the whole trip.` });
+                return `Can't make that change: ${trip} already has other bookings (or is closed), and a charter needs the whole trip.`;
             }
         } else {
             const left = await getAvailability(booking.date, booking.timeslot, booking._id);
             if (left < seatsFor(booking)) {
-                return res.send({ ok: false, data: `Can't make that change: ${trip} has only ${Math.max(left, 0)} space${left === 1 ? '' : 's'} left. Raise the trip's capacity first if you want to fit more people in.` });
+                return `Can't make that change: ${trip} has only ${Math.max(left, 0)} space${left === 1 ? '' : 's'} left. Raise the trip's capacity first if you want to fit more people in.`;
             }
         }
-    }
+        return null;
+    };
 
     // Moved onto or off an extra trip: it costs what the new trip costs (owner's decision). Between the
     // usual trips it keeps the prices it was booked at.
@@ -342,8 +348,14 @@ const updateBooking = async (req, res) => {
         booking.reminderAttempts = undefined;
     }
 
-    // validateBeforeSave is off because bookings made on the dashboard may be missing details
-    await booking.save({ validateBeforeSave: false });
+    // Checked and saved inside the trip's lock, so a customer booking at the same moment can't also take the seats.
+    // validateBeforeSave is off because bookings made on the dashboard may be missing details.
+    const refused = await withTripLock(booking.date, booking.timeslot, async () => {
+        const problem = needsRoom ? await roomProblem() : null;
+        if (!problem) await booking.save({ validateBeforeSave: false });
+        return problem;
+    });
+    if (refused) return res.send({ ok: false, data: refused });
 
     // The change is saved, so email problems are reported but never fail the request
     const notify = req.body.notifyCustomer !== false;

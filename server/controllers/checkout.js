@@ -2,7 +2,7 @@
 // saves a card on Stripe's own page ("setup" mode: nothing is charged), and the booking is only
 // created once Stripe confirms the card is saved. The card is charged later, at the trip time.
 const Bookings = require('../models/bookings');
-const { getAvailability, isSlotEmpty } = require('../utils/availability');
+const { getAvailability, isSlotEmpty, withTripLock } = require('../utils/availability');
 const { validatePublicBooking } = require('../utils/validateBooking');
 const { showDay, longDay } = require('../utils/dates');
 const { readPrices, bookingValue, pricesFor } = require('../utils/prices');
@@ -130,25 +130,27 @@ const fulfillCheckoutSession = async (session) => {
     const details = fromMetadata(session.metadata);
     const setupIntent = await stripe.setupIntents.retrieve(session.setup_intent, { expand: ['payment_method'] });
     const card = setupIntent.payment_method;
-    // Someone may have taken the last places while this customer was entering their card. Nothing
-    // has been charged, so the trip is never overbooked: the booking is kept as cancelled, with the
-    // reason, so the owner can see it and restore it if room frees up.
-    // An extra trip the owner deleted meanwhile has no room either
-    const trip = await findTrip(details.date, details.timeslot);
-    const room = Boolean(trip) && await hasRoom(details);
-    const prices = pricesFor(trip, await readPrices());
 
-    let booking;
+    // Someone may have taken the last places while this customer was entering their card, or be
+    // saving theirs at this very moment (hence the lock). Nothing has been charged, so the trip is
+    // never overbooked: the booking is kept as cancelled, with the reason, so the owner can see it
+    // and restore it if room frees up. An extra trip the owner deleted meanwhile has no room either.
+    let booking, room, prices;
     try {
-        booking = await Bookings.create({
-            ...details,
-            stripeSessionId: session.id,
-            stripeCustomerId: session.customer,
-            stripePaymentMethodId: typeof card === 'string' ? card : card?.id,
-            cardLabel: describeCard(card),
-            paymentStatus: 'card_saved',
-            prices: prices || undefined,
-            ...(!room && { status: 'cancelled', cancelledAt: new Date(), paymentNote: FULL_NOTE }),
+        await withTripLock(details.date, details.timeslot, async () => {
+            const trip = await findTrip(details.date, details.timeslot);
+            room = Boolean(trip) && await hasRoom(details);
+            prices = pricesFor(trip, await readPrices());
+            booking = await Bookings.create({
+                ...details,
+                stripeSessionId: session.id,
+                stripeCustomerId: session.customer,
+                stripePaymentMethodId: typeof card === 'string' ? card : card?.id,
+                cardLabel: describeCard(card),
+                paymentStatus: 'card_saved',
+                prices: prices || undefined,
+                ...(!room && { status: 'cancelled', cancelledAt: new Date(), paymentNote: FULL_NOTE }),
+            });
         });
     } catch (error) {
         if (error.code === 11000) {

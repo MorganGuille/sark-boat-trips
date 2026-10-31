@@ -35,4 +35,20 @@ const isSlotEmpty = async (date, timeslot, excludeId) => {
     return capacity > 0 && bookingCount === 0;
 };
 
-module.exports = { getAvailability, isSlotEmpty };
+// One booking change at a time per trip (spec P2-12). Checking for room and then saving takes a few
+// steps, so two customers saving their cards for the last seats at the same moment could both pass
+// the check. Everything that adds people to a trip (online bookings, dashboard add, edit and
+// restore) does its check and save inside this, so the second one waits and sees the first.
+// Different trips don't wait for each other. It lives in memory, which is enough for the single
+// copy of the app that runs on Heroku (like the rate limits; see CLAUDE.md if that ever changes).
+const queues = new Map();
+const withTripLock = (date, timeslot, fn) => {
+    const key = `${date} ${timeslot}`;
+    const result = (queues.get(key) || Promise.resolve()).then(() => fn());
+    const done = result.catch(() => {}); // a failure must not block the trip for the next one
+    queues.set(key, done);
+    done.then(() => { if (queues.get(key) === done) queues.delete(key); });
+    return result;
+};
+
+module.exports = { getAvailability, isSlotEmpty, withTripLock };
