@@ -30,6 +30,12 @@ export const addTrip = async (trip) => {
     return res.data;
 };
 
+// Dashboard: change an extra trip. { date, timeslot, ...the same details as addTrip, notifyCustomers }
+export const editTrip = async (trip) => {
+    const res = await authAxios.post(`${URL}/bookings/edit-trip`, trip);
+    return res.data;
+};
+
 // Dashboard: delete an extra trip (refused while anyone is booked on it). { date, timeslot }
 export const removeTrip = async (body) => {
     const res = await authAxios.post(`${URL}/bookings/remove-trip`, body);

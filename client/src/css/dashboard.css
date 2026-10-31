@@ -873,6 +873,18 @@ input {
     width: 12rem;
 }
 
+/* The trip being edited, and the Edit / Delete (and Save / Stop editing) buttons side by side */
+.extraTrips li.beingEdited {
+    border-color: #1d4ed8;
+    box-shadow: 0 0 0 1px #1d4ed8;
+}
+
+.extraTripButtons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
 /* An extra trip's name under its time in the bookings table */
 .tripNameCell {
     color: #1d4ed8;

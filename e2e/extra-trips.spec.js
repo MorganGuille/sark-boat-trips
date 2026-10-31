@@ -37,7 +37,7 @@ test('the owner adds a swim trip; it shows on the dashboard and calendar with it
     const day = await h.pickDate(page, 5);
     const box = await addSwimTrip(page);
     await notice(page, 'at 4:30pm from the Creux Harbour: 8 seats, 1.5 hours, £45 adults, £30 children. Customers can book it now.');
-    await expect(box.locator('.extraTrips li')).toContainText('Swim trip (4:30pm): 1.5 hours, £45 adults, £30 children, 0 bookings');
+    await expect(box.locator('.extraTrips li')).toContainText('Swim trip (4:30pm): 8 seats, 1.5 hours, £45 adults, £30 children, 0 bookings');
 
     const row = page.locator('.calendarDisplay div', { hasText: 'Swim trip' });
     await expect(row.locator('.tripTime')).toHaveText('4:30 PM:Swim trip');
@@ -100,6 +100,28 @@ test('the owner deletes an extra trip; it is refused while someone is booked on 
     await notice(page, 'deleted. Customers can no longer see it.');
     await expect(box.getByText('No extra trips on this day.')).toBeVisible();
     await expect(page.locator('.calendarDisplay')).not.toContainText('Swim trip');
+});
+
+test('the owner edits an extra trip: fixes its name, adds seats and changes its price', async ({ page }) => {
+    await h.logIn(page);
+    await h.pickDate(page, 8);
+    const box = await addSwimTrip(page);
+
+    await box.getByRole('button', { name: 'Edit Swim trip (4:30pm)' }).click();
+    await expect(box.getByRole('heading', { name: 'Edit Swim trip (4:30pm)' })).toBeVisible();
+    await expect(box.getByLabel('Name')).toHaveValue('Swim trip');
+    await expect(box.getByLabel('Seats')).toHaveValue('8');
+    await expect(box.getByLabel('Adult price (£)')).toHaveValue('45');
+    await expect(box.getByLabel('Note to customers (optional)')).toHaveValue('Bring swimwear and a towel.');
+
+    await box.getByLabel('Name').fill('Swimming trip');
+    await box.getByLabel('Seats').fill('10');
+    await box.getByLabel('Adult price (£)').fill('50');
+    await box.getByRole('button', { name: 'Save changes' }).click(); // the "are you sure?" box is accepted
+    await notice(page, 'Swimming trip (4:30pm) on');
+    await expect(box.locator('.extraTrips li')).toContainText('Swimming trip (4:30pm): 10 seats, 1.5 hours, £50 adults, £30 children');
+    await expect(box.getByRole('heading', { name: 'Add a trip' })).toBeVisible(); // back to adding
+    await expect(page.locator('.calendarDisplay div', { hasText: 'Swimming trip' })).toContainText('10 spaces available');
 });
 
 test('on a phone all six dashboard tabs are on screen (they wrap onto two lines)', async ({ page }) => {

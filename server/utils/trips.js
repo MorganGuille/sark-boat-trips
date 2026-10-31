@@ -62,6 +62,7 @@ const describeTrip = (date, timeslot, row) => {
             name: row.name, // 'Swim trip'
             note: row.note || '', // 'Bring swimwear and a towel'
             hours: row.hours, // how long it lasts
+            capacity: row.capacity, // seats
             prices: { adult: row.prices?.adult, child: row.prices?.child }, // pence
             removed: Boolean(row.removed),
         }),

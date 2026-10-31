@@ -221,6 +221,91 @@ describe('extra trips on the dashboard', () => {
     });
 });
 
+describe('editing an extra trip', () => {
+    const edit = (swim, body = {}, options) => post('/bookings/edit-trip', { ...SWIM, timeslot: swim.timeslot, ...body }, options);
+
+    it('is for the owner only, and only for extra trips', async () => {
+        const swim = await addSwim();
+        assert.equal((await edit(swim, {}, { auth: false })).status, 401);
+        assert.match((await edit({ timeslot: '11am' })).body.data, /Only an extra trip/);
+    });
+
+    it('checks the details the same way as adding', async () => {
+        const swim = await addSwim();
+        const res = await edit(swim, { capacity: '0' });
+        assert.equal(res.status, 400);
+        assert.match(res.body.data, /number of seats/);
+    });
+
+    it('says so when nothing changed', async () => {
+        const swim = await addSwim();
+        assert.equal((await edit(swim)).body.data, 'Nothing to change.');
+    });
+
+    it('fixing the name, note, length and seats saves them and emails nobody', async () => {
+        const swim = await addSwim();
+        await t.insertBooking({ date: DAY, timeslot: swim.timeslot, email: 'ann@example.test' });
+        mocks.reset();
+        const res = await edit(swim, { name: 'Swimming trip', note: '', hours: '2', capacity: '10' });
+        assert.equal(res.body.data, `Swimming trip (4:30pm) on ${t.shown(DAY)} saved.`);
+        const after = (await dayTrips()).body.data.find((trip) => trip.extra);
+        assert.deepEqual([after.timeslot, after.name, after.note, after.hours, after.capacity], [swim.timeslot, 'Swimming trip', '', 2, 10]);
+        assert.equal((await t.seatsLeft(app, DAY)).extras[0].spaces, 8);
+        assert.equal(mocks.mails.length, 0);
+    });
+
+    it('a new price applies to everyone on it who hasn\'t paid yet', async () => {
+        const swim = await addSwim();
+        const old = { adult: 4500, child: 3000, charter: 40000 };
+        const unpaid = await t.insertBooking({ date: DAY, timeslot: swim.timeslot, prices: old });
+        const card = await t.insertBooking({ date: DAY, timeslot: swim.timeslot, prices: old, paymentStatus: 'card_saved' });
+        const paid = await t.insertBooking({ date: DAY, timeslot: swim.timeslot, prices: old, paymentStatus: 'paid', amountPaid: 9000 });
+        const res = await edit(swim, { adultPrice: '50', childPrice: '32.50' });
+        assert.equal(res.body.data, `Swim trip (4:30pm) on ${t.shown(DAY)} saved. 2 bookings on it now pay the new price.`);
+        const now = { adult: 5000, child: 3250, charter: 40000 };
+        assert.deepEqual((await t.findBooking(unpaid)).prices, now);
+        assert.deepEqual((await t.findBooking(card)).prices, now);
+        assert.deepEqual((await t.findBooking(paid)).prices, old, 'already paid: left alone');
+        assert.deepEqual((await dayTrips()).body.data.find((trip) => trip.extra).prices, { adult: '50', child: '32.50' });
+    });
+
+    it('fewer seats than are booked is allowed, with a warning', async () => {
+        const swim = await addSwim();
+        await t.insertBooking({ date: DAY, timeslot: swim.timeslot, adults: 6 });
+        const res = await edit(swim, { capacity: '4' });
+        assert.match(res.body.data, /6 seats are already booked, more than the 4 you set, so nobody else can book it\.$/);
+    });
+
+    it('a new time or harbour emails everyone on it, like Change trip details', async () => {
+        const swim = await addSwim();
+        await t.insertBooking({ date: DAY, timeslot: swim.timeslot, firstName: 'Ann', email: 'ann@example.test' });
+        mocks.reset();
+        const res = await edit(swim, { startTime: '17:00', harbour: 'maseline' });
+        assert.match(res.body.data, /saved\. It now leaves at 5pm from the Maseline Harbour\. 1 customer emailed\.$/);
+        assert.equal(mocks.sent('ann@example.test')[0].subject, `Your Swim trip on ${t.short(DAY)} has moved to 5pm, from the Maseline Harbour`);
+        assert.match(mocks.sent(t.OWNER)[0].subject, /^Trip changed: the Swim trip \(4:30pm\) on /);
+    });
+
+    it('with "don\'t email customers", a move only sends the owner\'s summary', async () => {
+        const swim = await addSwim();
+        await t.insertBooking({ date: DAY, timeslot: swim.timeslot, email: 'ann@example.test' });
+        mocks.reset();
+        const res = await edit(swim, { startTime: '17:00', notifyCustomers: false });
+        assert.match(res.body.data, /1 booking on it, not emailed \(as you chose\)\.$/);
+        assert.equal(mocks.sent('ann@example.test').length, 0);
+    });
+
+    it('a trip that has started can\'t move, but its name can still be fixed', async () => {
+        const Availability = require('../models/availability');
+        const past = t.day(-1);
+        await Availability.create({ date: past, timeslot: 'xabc123', extra: true, name: 'Swim trp', startTime: '16:30', hours: 1.5, capacity: 8, prices: { adult: 4500, child: 3000 } });
+        const body = { ...SWIM, date: past, timeslot: 'xabc123' };
+        assert.match((await post('/bookings/edit-trip', { ...body, startTime: '17:00' })).body.data, /has already started/);
+        assert.equal((await post('/bookings/edit-trip', body)).body.ok, true);
+        assert.equal((await Availability.findOne({ timeslot: 'xabc123' })).name, 'Swim trip');
+    });
+});
+
 describe('deleting an extra trip', () => {
     it('is refused while anyone is booked on it', async () => {
         const swim = await addSwim();

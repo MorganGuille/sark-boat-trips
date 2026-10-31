@@ -10,6 +10,8 @@ const { toPence } = require('../utils/prices');
 const { HARBOURS, USUAL_HARBOUR, usualStart, timeLabel, isValidStart, newExtraTimeslot, describeTrip, getTrip, findTrip, getTripsForDay, withTrips } = require('../utils/trips');
 const { HOURS } = require('../emails/calendar');
 const { trySend } = require('../utils/mailer');
+const { getAvailability } = require('../utils/availability');
+const { readPrices } = require('../utils/prices');
 const emails = require('../emails');
 
 // A trip can be moved to any time in this range, on the same day
@@ -54,7 +56,7 @@ const dayTrips = async (req, res) => {
             harbourChanged: trip.harbourChanged,
             extra: trip.extra,
             // An extra trip's own details; prices in pounds, as the booking page shows them
-            ...(trip.extra && { name: trip.name, note: trip.note, hours: trip.hours, prices: { adult: pounds(trip.prices.adult), child: pounds(trip.prices.child) } }),
+            ...(trip.extra && { name: trip.name, note: trip.note, hours: trip.hours, capacity: trip.capacity, prices: { adult: pounds(trip.prices.adult), child: pounds(trip.prices.child) } }),
         })),
     });
 };
@@ -70,6 +72,28 @@ const problemWith = ({ date, timeslot, startTime, harbour, note }) => {
     if (typeof harbour !== 'string' || !Object.hasOwn(HARBOURS, harbour)) return 'Please choose a harbour.';
     if (note !== undefined && (typeof note !== 'string' || note.length > MAX_NOTE)) return `The note can be up to ${MAX_NOTE} characters.`;
     return null;
+};
+
+// After a trip has moved to another time or harbour (saved already): everyone on it gets the new
+// details (unless the owner already told them), and the owner one summary. Returns what to tell the owner.
+const tellAboutMove = async ({ date, timeslot, before, after, note, notify }) => {
+    // Trips last HOURS.trip: warn (but allow it) if this one now runs into another
+    const clash = (await getTripsForDay(date)).find((other) => other.timeslot !== timeslot &&
+        Math.abs(other.startsAt.getTime() - after.startsAt.getTime()) < HOURS.trip * 3600000);
+    const warning = clash ? `It now overlaps the ${clash.named} (trips last ${HOURS.trip} hours).` : '';
+
+    const bookings = await withTrips(await Bookings.find({ date, timeslot, status: { $ne: 'cancelled' } }));
+    const { emailed, notEmailed } = notify
+        ? await emailEveryone(bookings, (booking) => emails.tripChangedEmail(booking, { before, note }))
+        : { emailed: 0, notEmailed: [] };
+    await trySend(emails.tripChangedOwnerEmail({ trip: after, before, note, bookings, notEmailed, notified: notify, warning }));
+
+    const told = !bookings.length
+        ? 'There are no bookings on it.'
+        : notify
+            ? `${emailed} customer${emailed === 1 ? '' : 's'} emailed${notEmailed.length ? `, ${notEmailed.length} not emailed (see your email)` : ''}.`
+            : `${bookings.length} booking${bookings.length === 1 ? '' : 's'} on it, not emailed (as you chose).`;
+    return { told, warning };
 };
 
 // POST /bookings/change-trip { date, timeslot, startTime: '15:00', harbour: 'creux' | 'maseline', note, notifyCustomers }
@@ -103,22 +127,7 @@ const changeTrip = async (req, res) => {
         { upsert: true }
     );
 
-    // Trips last HOURS.trip: warn (but allow it) if this one now runs into the other
-    const clash = (await getTripsForDay(date)).find((other) => other.timeslot !== timeslot &&
-        Math.abs(other.startsAt.getTime() - after.startsAt.getTime()) < HOURS.trip * 3600000);
-    const warning = clash ? `It now overlaps the ${clash.named} (trips last ${HOURS.trip} hours).` : '';
-
-    const bookings = await withTrips(await Bookings.find({ date, timeslot, status: { $ne: 'cancelled' } }));
-    const { emailed, notEmailed } = notify
-        ? await emailEveryone(bookings, (booking) => emails.tripChangedEmail(booking, { before, note }))
-        : { emailed: 0, notEmailed: [] };
-    await trySend(emails.tripChangedOwnerEmail({ trip: after, before, note, bookings, notEmailed, notified: notify, warning }));
-
-    const told = !bookings.length
-        ? 'There are no bookings on it.'
-        : notify
-            ? `${emailed} customer${emailed === 1 ? '' : 's'} emailed${notEmailed.length ? `, ${notEmailed.length} not emailed (see your email)` : ''}.`
-            : `${bookings.length} booking${bookings.length === 1 ? '' : 's'} on it, not emailed (as you chose).`;
+    const { told, warning } = await tellAboutMove({ date, timeslot, before, after, note, notify });
     res.send({
         ok: true,
         data: `The ${before.named} on ${showDay(date)} now leaves at ${after.time} from the ${after.harbour.name}. ${told}${warning ? ` ${warning}` : ''}`,
@@ -150,40 +159,106 @@ const messageTrip = async (req, res) => {
 // POST /bookings/add-trip { date, name, note, startTime, harbour, hours, capacity, adultPrice, childPrice }:
 // an extra trip on one day (a swim trip, a sunset trip) with its own seats, length and prices (pounds,
 // as typed). Customers can book it online straight away, by the seat (never as a charter).
-const addTrip = async (req, res) => {
-    const { date, name, note = '', startTime, harbour = USUAL_HARBOUR, hours, capacity, adultPrice, childPrice } = req.body;
-    if (!isDay(date)) return res.status(400).send({ ok: false, data: 'Please choose a valid date.' });
-    if (typeof name !== 'string' || !name.trim() || name.trim().length > MAX_NAME) return res.status(400).send({ ok: false, data: `Please give the trip a name (up to ${MAX_NAME} characters), e.g. Swim trip.` });
-    if (typeof note !== 'string' || note.length > MAX_TRIP_NOTE) return res.status(400).send({ ok: false, data: `The note can be up to ${MAX_TRIP_NOTE} characters.` });
-    const badTime = timeProblem(startTime);
-    if (badTime) return res.status(400).send({ ok: false, data: badTime });
-    if (typeof harbour !== 'string' || !Object.hasOwn(HARBOURS, harbour)) return res.status(400).send({ ok: false, data: 'Please choose a harbour.' });
+// An extra trip's details as the owner typed them (add and edit): { problem } or { trip } ready to save
+const extraTripDetails = ({ date, name, note = '', startTime, harbour = USUAL_HARBOUR, hours, capacity, adultPrice, childPrice }) => {
+    const refuse = (problem) => ({ problem });
+    if (!isDay(date)) return refuse('Please choose a valid date.');
+    if (typeof name !== 'string' || !name.trim() || name.trim().length > MAX_NAME) return refuse(`Please give the trip a name (up to ${MAX_NAME} characters), e.g. Swim trip.`);
+    if (typeof note !== 'string' || note.length > MAX_TRIP_NOTE) return refuse(`The note can be up to ${MAX_TRIP_NOTE} characters.`);
+    if (timeProblem(startTime)) return refuse(timeProblem(startTime));
+    if (typeof harbour !== 'string' || !Object.hasOwn(HARBOURS, harbour)) return refuse('Please choose a harbour.');
     const length = Number(hours);
     if ((typeof hours !== 'string' && typeof hours !== 'number') || !Number.isFinite(length) || length < MIN_HOURS || length > MAX_HOURS || (length * 4) % 1) {
-        return res.status(400).send({ ok: false, data: `Please give the trip's length in hours, from ${MIN_HOURS} to ${MAX_HOURS} (e.g. 1.5).` });
+        return refuse(`Please give the trip's length in hours, from ${MIN_HOURS} to ${MAX_HOURS} (e.g. 1.5).`);
     }
     const seats = Number(capacity);
     if ((typeof capacity !== 'string' && typeof capacity !== 'number') || !/^\d+$/.test(String(capacity).trim()) || seats < 1 || seats > MAX_CAPACITY) {
-        return res.status(400).send({ ok: false, data: `Please give the number of seats, from 1 to ${MAX_CAPACITY}.` });
+        return refuse(`Please give the number of seats, from 1 to ${MAX_CAPACITY}.`);
     }
     const adult = toPence(adultPrice);
     const child = toPence(childPrice);
-    if (adult === null || child === null) return res.status(400).send({ ok: false, data: 'Please enter the adult and child prices in pounds, e.g. 45 or 32.50.' });
+    if (adult === null || child === null) return refuse('Please enter the adult and child prices in pounds, e.g. 45 or 32.50.');
+    return { trip: { name: name.trim(), note: note.trim(), startTime, harbour, hours: length, capacity: seats, prices: { adult, child } } };
+};
 
-    const trip = describeTrip(date, 'x000000', { extra: true, name: name.trim(), startTime, harbour });
+// How a trip's details are saved on its Availability row (the usual harbour and an empty note are left out)
+const rowUpdate = (trip) => ({
+    $set: { name: trip.name, startTime: trip.startTime, hours: trip.hours, capacity: trip.capacity, prices: trip.prices,
+        ...(trip.note && { note: trip.note }), ...(trip.harbour !== USUAL_HARBOUR && { harbour: trip.harbour }) },
+    ...((!trip.note || trip.harbour === USUAL_HARBOUR) && { $unset: { ...(!trip.note && { note: '' }), ...(trip.harbour === USUAL_HARBOUR && { harbour: '' }) } }),
+});
+
+const addTrip = async (req, res) => {
+    const { date } = req.body;
+    const { problem, trip: details } = extraTripDetails(req.body);
+    if (problem) return res.status(400).send({ ok: false, data: problem });
+    const { hours: length, capacity: seats, prices: { adult, child } } = details;
+
+    const trip = describeTrip(date, 'x000000', { extra: true, ...details });
     if (trip.startsAt <= new Date()) return res.send({ ok: false, data: `${trip.time} on ${showDay(date)} has already passed. Please choose a later time.` });
 
-    const row = await Availability.create({
-        date, timeslot: newExtraTimeslot(), extra: true, name: name.trim(), note: note.trim() || undefined, startTime,
-        ...(harbour !== USUAL_HARBOUR && { harbour }), hours: length, capacity: seats, prices: { adult, child },
-    });
-    const added = describeTrip(date, row.timeslot, row);
+    const timeslot = newExtraTimeslot();
+    await Availability.updateOne({ date, timeslot }, { ...rowUpdate(details), $setOnInsert: { extra: true } }, { upsert: true });
+    const added = await getTrip(date, timeslot);
     const clash = (await getTripsForDay(date)).find((other) => other.timeslot !== added.timeslot &&
         Math.abs(other.startsAt.getTime() - added.startsAt.getTime()) < Math.max(HOURS.trip, length) * 3600000);
     res.send({
         ok: true,
         data: `${added.name} added on ${showDay(date)} at ${added.time} from the ${added.harbour.name}: ${seats} seats, ${length} hours, £${pounds(adult)} adults, £${pounds(child)} children. Customers can book it now.${clash ? ` It overlaps the ${clash.named}.` : ''}`,
     });
+};
+
+// Payment states whose amount is settled: a price change no longer applies to them
+const SETTLED = ['paid', 'paid_in_person', 'charging'];
+
+// POST /bookings/edit-trip { date, timeslot, ...the same details as add-trip, notifyCustomers }: changes an
+// extra trip. A new price applies to everyone booked on it who hasn't paid yet (owner's decision, 1 Nov
+// 2026). A new time or harbour emails everyone on it, as "Change trip details" does (unless the owner
+// already told them); fixing the name, note, length or seats emails nobody.
+const editTrip = async (req, res) => {
+    const { date, timeslot } = req.body;
+    if (!isDay(date) || !isTimeslot(timeslot)) return res.status(400).send({ ok: false, data: 'Please choose which trip.' });
+    const before = await findTrip(date, timeslot);
+    if (!before?.extra) return res.status(400).send({ ok: false, data: 'Only an extra trip can be edited.' });
+    const { problem, trip: details } = extraTripDetails(req.body);
+    if (problem) return res.status(400).send({ ok: false, data: problem });
+    const notify = req.body.notifyCustomers !== false && req.body.notifyCustomers !== 'false';
+
+    const row = await Availability.findOne({ date, timeslot });
+    const moved = details.startTime !== before.startTime || details.harbour !== before.harbour.key;
+    const repriced = details.prices.adult !== before.prices.adult || details.prices.child !== before.prices.child;
+    const changed = moved || repriced || details.name !== before.name || details.note !== before.note ||
+        details.hours !== before.hours || details.capacity !== row.capacity;
+    if (!changed) return res.send({ ok: false, data: 'Nothing to change.' });
+
+    const now = new Date();
+    const after = describeTrip(date, timeslot, { extra: true, ...details });
+    if (moved && before.startsAt <= now) return res.send({ ok: false, data: `The ${before.named} has already started, so its time and harbour can't be changed.` });
+    if (moved && after.startsAt <= now) return res.send({ ok: false, data: `${after.time} on ${showDay(date)} has already passed. Please choose a later time.` });
+
+    // Saved first; the new prices, then the emails, follow
+    await Availability.updateOne({ date, timeslot }, rowUpdate(details));
+    const parts = [`${after.label} on ${showDay(date)} saved.`];
+
+    if (repriced) {
+        const current = await readPrices();
+        const toUpdate = await Bookings.find({ date, timeslot, paymentStatus: { $nin: SETTLED } });
+        for (const booking of toUpdate) {
+            const charter = booking.prices?.charter ?? current?.charter ?? 0;
+            await Bookings.updateOne({ _id: booking._id }, { $set: { prices: { ...details.prices, charter } } });
+        }
+        const active = toUpdate.filter((b) => b.status !== 'cancelled').length;
+        if (active) parts.push(`${active} booking${active === 1 ? '' : 's'} on it now pa${active === 1 ? 'ys' : 'y'} the new price.`);
+    }
+
+    const left = await getAvailability(date, timeslot);
+    if (left < 0) parts.push(`${details.capacity - left} seats are already booked, more than the ${details.capacity} you set, so nobody else can book it.`);
+
+    if (moved) {
+        const { told, warning } = await tellAboutMove({ date, timeslot, before, after, note: '', notify });
+        parts.push(`It now leaves at ${after.time} from the ${after.harbour.name}. ${told}${warning ? ` ${warning}` : ''}`);
+    }
+    res.send({ ok: true, data: parts.join(' ') });
 };
 
 // POST /bookings/remove-trip { date, timeslot }: deletes an extra trip. Not while anyone is booked on
@@ -204,4 +279,4 @@ const removeTrip = async (req, res) => {
     res.send({ ok: true, data: `${trip.label} on ${showDay(date)} deleted. Customers can no longer see it.` });
 };
 
-module.exports = { dayTrips, changeTrip, messageTrip, addTrip, removeTrip, EARLIEST, LATEST };
+module.exports = { dayTrips, changeTrip, messageTrip, addTrip, editTrip, removeTrip, EARLIEST, LATEST };
