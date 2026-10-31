@@ -12,7 +12,8 @@ const { describeTrip } = require('../utils/trips');
 
 const pounds = (pence) => `£${(pence / 100).toFixed(2).replace(/\.00$/, '')}`;
 const isCharter = (booking) => booking.charter === 'true';
-const what = (booking) => (isCharter(booking) ? 'private charter' : 'boat trip');
+// What the booking is: 'private charter', 'boat trip', or an extra trip's own name ('Swim trip')
+const what = (booking) => (isCharter(booking) ? 'private charter' : tripOf(booking).extra ? tripOf(booking).name : 'boat trip');
 const nameOf = (booking) => [booking.firstName, booking.lastName].filter(Boolean).join(' ') || '(no name)';
 const people = (booking) => `${seatsFor(booking)} ${seatsFor(booking) === 1 ? 'person' : 'people'}`;
 const dear = (booking) => `Dear ${booking.firstName || 'guest'},`;
@@ -38,6 +39,7 @@ const dashboardButton = () => ({ button: { text: 'Open the dashboard', link: set
 
 const tripDetails = (booking, extraRows = []) => ({
     details: [
+        ...(tripOf(booking).extra ? [['Trip', tripOf(booking).name]] : []),
         ['Date', longDay(booking.date)],
         ['Time', at(booking)],
         ['Meeting point', { link: harbourOf(booking).map, text: `${harbourOf(booking).name}, Sark` }],
@@ -46,10 +48,12 @@ const tripDetails = (booking, extraRows = []) => ({
     ],
 });
 
-// Where to be. On a day the trip leaves from another harbour, that is said first, in bold.
+// Where to be. On a day the trip leaves from another harbour, that is said first, in bold. An extra
+// trip's own note (e.g. 'Bring swimwear and a towel') follows.
 const beThere = (booking) => [
     ...(tripOf(booking).harbourChanged ? [[{ bold: `Please note: this trip leaves from the ${harbourOf(booking).name}, not the Creux Harbour.` }]] : []),
     `Please be at the ${harbourOf(booking).name} shortly before ${at(booking)}. Bring weather appropriate clothing, and any snacks and drinks you'd like.`,
+    ...(tripOf(booking).note ? [tripOf(booking).note] : []),
 ];
 const WEATHER = "Sometimes the weather means we have to change the time of a trip. If that happens, we'll contact you.";
 
@@ -208,6 +212,7 @@ const when = (booking) => `${at(booking)} ${shortDay(booking.date)}`;
 const ownerDetails = (booking, extraRows = []) => ({
     details: [
         ['Name', nameOf(booking)],
+        ...(tripOf(booking).extra ? [['Trip', tripOf(booking).name]] : []),
         ['When', `${longDay(booking.date)} at ${at(booking)}${tripOf(booking).timeChanged ? ` (moved from ${booking.timeslot})` : ''}`],
         ...(tripOf(booking).harbourChanged ? [['Harbour', harbourOf(booking).name]] : []),
         ['Party', partyText(booking)],
@@ -290,10 +295,10 @@ const tripChangedOwnerEmail = ({ trip, before, note, bookings, notEmailed, notif
     const line = (b) => `${nameOf(b)}, ${partyText(b)}${b.phone ? `, phone ${b.phone}` : ''}`;
     const now = [trip.time, ...(trip.harbour.key !== before.harbour.key ? [`from the ${trip.harbour.name}`] : [])].join(', ');
     const count = `${bookings.length} booking${bookings.length === 1 ? '' : 's'}`;
-    return ownerEmail(`Trip changed: the ${before.time} on ${shortDay(trip.date)} is now ${now} (${count})`, {
+    return ownerEmail(`Trip changed: the ${before.label} on ${shortDay(trip.date)} is now ${now} (${count})`, {
         heading: 'Trip changed',
         blocks: [
-            `The ${before.time} trip on ${longDay(trip.date)} now starts at ${trip.time} and leaves from the ${trip.harbour.name}.`,
+            `The ${before.named} on ${longDay(trip.date)} now starts at ${trip.time} and leaves from the ${trip.harbour.name}.`,
             ...(warning ? [[{ bold: warning }]] : []),
             ...(note ? [`Your note to customers: "${note}"`] : []),
             notified
@@ -310,10 +315,10 @@ const tripChangedOwnerEmail = ({ trip, before, note, bookings, notEmailed, notif
 const tripMessageOwnerEmail = ({ trip, message, bookings, notEmailed }) => {
     const line = (b) => `${nameOf(b)}, ${partyText(b)}${b.phone ? `, phone ${b.phone}` : ''}`;
     const sent = bookings.length - notEmailed.length;
-    return ownerEmail(`Message sent: ${trip.time} ${shortDay(trip.date)}, ${sent} customer${sent === 1 ? '' : 's'}`, {
+    return ownerEmail(`Message sent: ${trip.label} ${shortDay(trip.date)}, ${sent} customer${sent === 1 ? '' : 's'}`, {
         heading: 'Message sent',
         blocks: [
-            `You sent this message to everyone on the ${trip.time} trip on ${longDay(trip.date)}:`,
+            `You sent this message to everyone on the ${trip.named} on ${longDay(trip.date)}:`,
             ...ownerParagraphs(message).map((paragraph) => [{ bold: paragraph }]),
             `Sent to ${sent} of ${bookings.length} booking${bookings.length === 1 ? '' : 's'}:`,
             ...(sent ? [{ list: bookings.filter((b) => !notEmailed.includes(b)).map(line) }] : []),
@@ -324,13 +329,13 @@ const tripMessageOwnerEmail = ({ trip, message, bookings, notEmailed }) => {
 };
 
 // The owner cancelled a whole trip (controllers/bookings.js cancelTrip)
-const tripCancelledOwnerEmail = ({ date, time, reasonText, cancelled, notEmailed, toRefund }) => {
+const tripCancelledOwnerEmail = ({ date, time, named = `${time} trip`, reasonText, cancelled, notEmailed, toRefund }) => {
     const count = `${cancelled.length} booking${cancelled.length === 1 ? '' : 's'}`;
     const line = (b) => `${nameOf(b)}, ${partyText(b)}${b.phone ? `, phone ${b.phone}` : ''}`;
     return ownerEmail(`Trip cancelled: ${time} ${shortDay(date)}, ${count}`, {
         heading: 'Trip cancelled',
         blocks: [
-            `You cancelled the ${time} trip on ${longDay(date)}${reasonText}. It is closed to new bookings (reopen it from the Availability tab).`,
+            `You cancelled the ${named} on ${longDay(date)}${reasonText}. It is closed to new bookings (reopen it from the Availability tab).`,
             `${count} cancelled. Nobody's saved card will be charged.`,
             ...(cancelled.length ? [{ list: cancelled.map(line) }] : []),
             ...(notEmailed.length ? [[{ bold: 'NOT EMAILED (no address, or the email failed), please contact them:' }], { list: notEmailed.map(line) }] : []),

@@ -55,6 +55,7 @@ function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate, refreshKe
                     newAvailability[formattedDate] = {
                         '11am': availabilityData[index]['11am'],
                         '2pm': availabilityData[index]['2pm'],
+                        extras: availabilityData[index].extras || [], // { timeslot, spaces } of each extra trip
                     };
                 } else {
                     newAvailability[formattedDate] = null;
@@ -76,6 +77,8 @@ function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate, refreshKe
     }, [date, refreshKey]);
 
     const day = toDay(date);
+    // Extra trips are sold by the seat, so the charter page leaves them out
+    const charterPage = currentLoc.pathname === '/charters';
     useEffect(() => {
         let current = true;
         getDayTrips(day)
@@ -83,18 +86,33 @@ function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate, refreshKe
             .catch(() => { if (current) setTrips(USUAL_TRIPS); });
         return () => { current = false; };
     }, [day, refreshKey]);
-    // A moved trip shows its new time with the usual one crossed out underneath, like a departures board.
-    // The harbour isn't shown here (no room, and the two harbours are 100m apart): the booking form says it.
-    const tripLabel = (slot) => {
-        const usual = USUAL_TRIPS.find((t) => t.timeslot === slot);
-        const trip = trips.find((t) => t.timeslot === slot) || usual;
+    // A moved trip shows its new time with the usual one crossed out underneath, like a departures board,
+    // and an extra trip its name underneath. The harbour isn't shown here (no room, and the two harbours
+    // are 100m apart): the booking form says it.
+    const tripLabel = (trip) => {
+        if (trip.extra) {
+            return (
+                <span className='tripTime'>
+                    <span>{clock(trip.startTime)}:</span>
+                    <span className='tripName'>{trip.name}</span>
+                </span>
+            );
+        }
         if (!trip.timeChanged) return <span>{clock(trip.startTime)}: </span>;
+        const usual = USUAL_TRIPS.find((t) => t.timeslot === trip.timeslot);
         return (
             <span className='tripTime'>
                 <span className='movedTime'>{clock(trip.startTime)}:</span>
                 <s className='usualTime'><span className='sr-only'>moved from </span>{clock(usual.startTime)}</s>
             </span>
         );
+    };
+    const shownTrips = trips.filter((trip) => !(charterPage && trip.extra));
+    // Seats left on one of the chosen day's trips (undefined while loading)
+    const spacesOn = (trip) => {
+        const dayAvailability = availability[day];
+        if (!dayAvailability) return undefined;
+        return trip.extra ? dayAvailability.extras?.find((x) => x.timeslot === trip.timeslot)?.spaces : dayAvailability[trip.timeslot];
     };
 
     const handleDateChange = (date) => {
@@ -110,8 +128,9 @@ function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate, refreshKe
 
             const available11am = tileAvailability['11am'];
             const available2pm = tileAvailability['2pm'];
+            const extras = charterPage ? [] : tileAvailability.extras || [];
 
-            if (available11am === 0 && available2pm === 0) return 'fully-booked';
+            if (available11am === 0 && available2pm === 0 && extras.every((x) => x.spaces <= 0)) return 'fully-booked';
             if (available11am < 12 || available2pm < 12) return 'partially-booked';
             return 'available';
         }
@@ -126,6 +145,7 @@ function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate, refreshKe
                 return (
                     <span className="sr-only">
                         {tileAvailability['11am']} spaces at 11am, {tileAvailability['2pm']} spaces at 2pm.
+                        {!charterPage && tileAvailability.extras?.length ? ` ${tileAvailability.extras.length} extra trip${tileAvailability.extras.length === 1 ? '' : 's'}.` : ''}
                     </span>
                 );
             }
@@ -133,8 +153,6 @@ function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate, refreshKe
         return null;
     };
 
-    const color11am = () => availability[toDay(date)]?.['11am'] > 6 ? 'green' : 'darkred';
-    const color2pm = () => availability[toDay(date)]?.['2pm'] > 6 ? 'green' : 'darkred';
 
     return (
         <section className="calendar-container" aria-label="Trip Availability Calendar">
@@ -163,22 +181,19 @@ function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate, refreshKe
                 aria-atomic="true"
             >
                 <p>Availability for : {date.toDateString()}:</p>
-                <div>
-                    {tripLabel('11am')}
-                    <span style={{ color: color11am() }}>
-                        {!availability[toDay(date)] && availability[toDay(date)] !== 0
-                            ? <span className='loader' aria-label="Loading spaces"></span>
-                            : `${availability[toDay(date)]?.['11am']} spaces available`}
-                    </span>
-                </div>
-                <div>
-                    {tripLabel('2pm')}
-                    <span style={{ color: color2pm() }}>
-                        {!availability[toDay(date)] && availability[toDay(date)] !== 0
-                            ? <span className='loader' aria-label="Loading spaces"></span>
-                            : `${availability[toDay(date)]?.['2pm']} spaces available`}
-                    </span>
-                </div>
+                {shownTrips.map((trip) => {
+                    const spaces = spacesOn(trip);
+                    return (
+                        <div key={trip.timeslot}>
+                            {tripLabel(trip)}
+                            <span style={{ color: spaces > 6 ? 'green' : 'darkred' }}>
+                                {spaces === undefined
+                                    ? <span className='loader' aria-label="Loading spaces"></span>
+                                    : `${spaces} spaces available`}
+                            </span>
+                        </div>
+                    );
+                })}
             </div>
         </section>
     );

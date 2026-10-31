@@ -4,10 +4,10 @@ const Availability = require('../models/availability');
 const { sendEmail, trySend } = require('../utils/mailer');
 const { getAvailability, isSlotEmpty } = require('../utils/availability');
 const { isDay, showDay } = require('../utils/dates');
-const { readPrices, bookingValue } = require('../utils/prices');
+const { readPrices, bookingValue, pricesFor } = require('../utils/prices');
 const { seatsFor, partyText } = require('../utils/party');
 const emails = require('../emails');
-const { withTrip, withTrips, getTrip } = require('../utils/trips');
+const { withTrip, withTrips, getTrip, findTrip, getTripsForDay, tripsFor, tripOfBooking } = require('../utils/trips');
 const { isMonth, monthRange, buildReport, toCsv } = require('../utils/report');
 const { validatePublicBooking, validateAdminBooking, validateAvailabilitySetting } = require('../utils/validateBooking');
 
@@ -19,6 +19,10 @@ const updateAvailability = async (req, res) => {
     if (problem) {
         return res.status(400).send({ ok: false, data: problem });
     }
+    const trip = await findTrip(date, timeslot);
+    if (!trip) {
+        return res.status(400).send({ ok: false, data: 'That trip is not running on that day.' });
+    }
 
     try {
         let availability = await Availability.findOneAndUpdate(
@@ -27,7 +31,7 @@ const updateAvailability = async (req, res) => {
             { upsert: true, new: true }
         );
 
-        res.send({ ok: true, data: `Sucessfully updated availability, there are now ${availability.capacity} seats available at ${availability.timeslot}` });
+        res.send({ ok: true, data: `Sucessfully updated availability, there are now ${availability.capacity} seats on the ${trip.named}` });
     } catch (error) {
         console.error("Error updating availability:", error);
         res.status(500).send({ ok: false, data: "An error occurred while updating availability." });
@@ -39,8 +43,22 @@ const isBlank = (value) => value == null || String(value).trim() === '';
 
 const bookingName = (booking) => [booking.firstName, booking.lastName].filter(Boolean).join(' ') || 'this booking';
 
-// What each booking is worth (pence, or null if no prices are known), so the dashboard can show what to collect
-const withAmountDue = (bookings, prices) => bookings.map((b) => ({ ...b.toObject(), amountDue: bookingValue(b, prices) }));
+// What each booking is worth (pence, or null if no prices are known), so the dashboard can show what to
+// collect, and its trip's time and name that day (tripLabel: '3pm', 'Swim trip (4:30pm)'; tripStart:
+// '16:30', for putting the day's trips in order)
+const withAmountDue = async (bookings, prices) => {
+    const trips = await tripsFor(bookings);
+    return bookings.map((b) => {
+        const trip = tripOfBooking(trips, b);
+        return { ...b.toObject(), amountDue: bookingValue(b, prices), tripLabel: trip?.label || b.timeslot, tripStart: trip?.startTime || '' };
+    });
+};
+
+// How dashboard messages name a booking's trip: '11am', or 'Swim trip (4:30pm)' for an extra trip
+const labelOf = async (booking) => (await getTrip(booking.date, booking.timeslot)).label;
+
+// An extra trip is only sold by the seat (owner's decision)
+const NO_EXTRA_CHARTER = "Extra trips can't be booked as a private charter. Choose the 11am or 2pm trip.";
 
 const pounds = (pence) => `£${(pence / 100).toFixed(2).replace(/\.00$/, '')}`;
 
@@ -60,23 +78,26 @@ const adminAddBooking = async (req, res) => {
     }
 
     try {
+        const trip = await findTrip(date, timeslot);
+        if (!trip) return res.status(400).send({ ok: false, data: 'That trip is not running on that day.' });
+        if (trip.extra && charter === 'true') return res.status(400).send({ ok: false, data: NO_EXTRA_CHARTER });
         const availability = await getAvailability(date, timeslot);
         if (availability < adults + children + infants) {
-            return res.send({ ok: false, data: `No spaces available at ${timeslot} on ${showDay(date)}!` });
+            return res.send({ ok: false, data: `No spaces available at ${trip.label} on ${showDay(date)}!` });
         }
 
         // validateBeforeSave is off because the model requires the customer details
         const saved = await new Bookings({
             date, timeslot, firstName, lastName, phone, email, adults, children, infants, accommodation, message, charter,
-            prices: (await readPrices()) || undefined,
+            prices: pricesFor(trip, await readPrices()) || undefined,
         }).save({ validateBeforeSave: false });
 
         const who = [firstName, lastName].filter(Boolean).join(' ') || 'the booking';
         if (email) {
             const sent = await trySend(emails.confirmationEmail(await withTrip(saved)));
-            return res.send({ ok: true, data: `Booking for ${who} on ${showDay(date)} at ${timeslot} saved${sent ? ' and confirmation email sent' : ', but the confirmation email could not be sent'}` });
+            return res.send({ ok: true, data: `Booking for ${who} on ${showDay(date)} at ${trip.label} saved${sent ? ' and confirmation email sent' : ', but the confirmation email could not be sent'}` });
         }
-        res.send({ ok: true, data: `Booking for ${who} on ${showDay(date)} at ${timeslot} saved (no email address, so no confirmation was sent)` });
+        res.send({ ok: true, data: `Booking for ${who} on ${showDay(date)} at ${trip.label} saved (no email address, so no confirmation was sent)` });
     } catch (error) {
         console.error(error);
         res.status(500).send({ ok: false, data: "An error occurred saving the booking." });
@@ -103,14 +124,15 @@ const cancelBooking = async (req, res) => {
 
 
         const who = bookingName(cancelledBooking);
+        const at = forEmail.trip.label;
         try {
             if (cancelledBooking.email) await sendEmail(mailOptionsClient);
             await sendEmail(mailOptionsAdmin);
         } catch (emailError) {
             // The booking is already cancelled, so report that and flag the email problem
-            return res.send({ ok: true, data: `Booking for ${who} on ${showDay(cancelledBooking.date)} at ${cancelledBooking.timeslot} cancelled, but the email could not be sent` });
+            return res.send({ ok: true, data: `Booking for ${who} on ${showDay(cancelledBooking.date)} at ${at} cancelled, but the email could not be sent` });
         }
-        res.send({ ok: true, data: `Booking for ${who} on ${showDay(cancelledBooking.date)} at ${cancelledBooking.timeslot} cancelled${cancelledBooking.email ? ' and email sent' : ''}` });
+        res.send({ ok: true, data: `Booking for ${who} on ${showDay(cancelledBooking.date)} at ${at} cancelled${cancelledBooking.email ? ' and email sent' : ''}` });
 
     } catch (error) {
         console.error("Error cancelling booking:", error);
@@ -127,13 +149,18 @@ const restoreBooking = async (req, res) => {
             return res.status(404).send({ ok: false, data: "No cancelled booking found with that ID." });
         }
 
+        const trip = await findTrip(booking.date, booking.timeslot);
+        if (!trip) {
+            return res.send({ ok: false, data: `Can't restore: the trip this booking was on (${await labelOf(booking)}) no longer runs on ${showDay(booking.date)}. Make a new booking instead.` });
+        }
+        const at = trip.label;
         if (booking.charter === 'true' && !(await isSlotEmpty(booking.date, booking.timeslot))) {
-            return res.send({ ok: false, data: `Can't restore this charter: the ${booking.timeslot} trip on ${showDay(booking.date)} already has other bookings (or is closed).` });
+            return res.send({ ok: false, data: `Can't restore this charter: the ${trip.named} on ${showDay(booking.date)} already has other bookings (or is closed).` });
         }
 
         const availability = await getAvailability(booking.date, booking.timeslot);
         if (availability < seatsFor(booking)) {
-            return res.send({ ok: false, data: `Can't restore: only ${availability} spaces left at ${booking.timeslot} on ${showDay(booking.date)}.` });
+            return res.send({ ok: false, data: `Can't restore: only ${availability} spaces left at ${at} on ${showDay(booking.date)}.` });
         }
 
         booking.status = 'active';
@@ -143,14 +170,14 @@ const restoreBooking = async (req, res) => {
 
         const who = bookingName(booking);
         if (!booking.email) {
-            return res.send({ ok: true, data: `Booking for ${who} on ${showDay(booking.date)} at ${booking.timeslot} restored (no email address, so no confirmation was sent)` });
+            return res.send({ ok: true, data: `Booking for ${who} on ${showDay(booking.date)} at ${at} restored (no email address, so no confirmation was sent)` });
         }
         try {
             await sendEmail(emails.confirmationEmail(await withTrip(booking), bookingValue(booking, await readPrices())));
         } catch (emailError) {
-            return res.send({ ok: true, data: `Booking for ${who} on ${showDay(booking.date)} at ${booking.timeslot} restored, but the confirmation email could not be sent` });
+            return res.send({ ok: true, data: `Booking for ${who} on ${showDay(booking.date)} at ${at} restored, but the confirmation email could not be sent` });
         }
-        res.send({ ok: true, data: `Booking for ${who} on ${showDay(booking.date)} at ${booking.timeslot} restored and confirmation email sent` });
+        res.send({ ok: true, data: `Booking for ${who} on ${showDay(booking.date)} at ${at} restored and confirmation email sent` });
     } catch (error) {
         console.error("Error restoring booking:", error);
         res.status(500).send({ ok: false, data: "An error occurred. Please try again later." });
@@ -166,7 +193,7 @@ const permanentlyDeleteBooking = async (req, res) => {
         if (!deleted) {
             return res.status(404).send({ ok: false, data: "Only cancelled bookings can be permanently deleted." });
         }
-        res.send({ ok: true, data: `Booking for ${bookingName(deleted)} on ${showDay(deleted.date)} at ${deleted.timeslot} permanently deleted` });
+        res.send({ ok: true, data: `Booking for ${bookingName(deleted)} on ${showDay(deleted.date)} at ${await labelOf(deleted)} permanently deleted` });
     } catch (error) {
         console.error("Error permanently deleting booking:", error);
         res.status(500).send({ ok: false, data: "An error occurred. Please try again later." });
@@ -181,7 +208,7 @@ const checkDate = async (req, res) => {
     try {
 
         let bookings = await Bookings.find({ date: date, ...statusFilter(req) })
-        res.send({ ok: true, data: withAmountDue(bookings, await readPrices()) })
+        res.send({ ok: true, data: await withAmountDue(bookings, await readPrices()) })
     }
     catch (error) {
         res.send({ ok: false, data: "check console for errors" })
@@ -203,11 +230,13 @@ const checkMonthAvail = async (req, res) => {
         const availabilityData = await Promise.all(
             dates.map(async (date) => {
                 try {
-                    const availability = {
+                    // The usual trips by name, and the extra trips that day (seats left on each)
+                    const extras = (await getTripsForDay(date)).filter((trip) => trip.extra);
+                    return {
                         '11am': await getAvailability(date, '11am'),
                         '2pm': await getAvailability(date, '2pm'),
-                    }
-                    return availability
+                        ...(extras.length && { extras: await Promise.all(extras.map(async (trip) => ({ timeslot: trip.timeslot, spaces: await getAvailability(date, trip.timeslot) }))) }),
+                    };
                 } catch (error) {
                     console.error(`Error fetching availability for ${showDay(date)}:`, error);
                     return null;
@@ -227,7 +256,7 @@ const search = async (req, res) => {
     let search = req.params.search;
     try {
         let bookings = await Bookings.find({ lastName: { $regex: search, $options: 'i' }, ...statusFilter(req) });
-        res.send({ ok: true, data: withAmountDue(bookings, await readPrices()) });
+        res.send({ ok: true, data: await withAmountDue(bookings, await readPrices()) });
     } catch (error) {
         console.error("Error searching bookings:", error);
         res.status(500).send({ ok: false, data: "An error occurred. Please try again later." });
@@ -273,12 +302,21 @@ const updateBooking = async (req, res) => {
         return res.send({ ok: true, data: 'No changes to save.' });
     }
 
+    const moved = booking.date !== before.date || booking.timeslot !== before.timeslot;
+    const newTrip = await findTrip(booking.date, booking.timeslot);
+    if (moved && !newTrip) {
+        return res.status(400).send({ ok: false, data: `Can't make that change: that trip is not running on ${showDay(booking.date)}.` });
+    }
+    if (booking.charter === 'true' && newTrip?.extra) {
+        return res.status(400).send({ ok: false, data: NO_EXTRA_CHARTER });
+    }
+
     // Moving a booking, adding people, or making it a charter must still fit. (Taking people away
     // or editing contact details never needs room, so a trip that is already over-full can still be edited.)
     const needsRoom = booking.date !== before.date || booking.timeslot !== before.timeslot ||
         seatsFor(booking) > before.seats || (booking.charter === 'true' && before.charter !== 'true');
     if (needsRoom) {
-        const trip = `the ${booking.timeslot} trip on ${showDay(booking.date)}`;
+        const trip = `the ${newTrip?.named || `${booking.timeslot} trip`} on ${showDay(booking.date)}`;
         if (booking.charter === 'true') {
             if (!(await isSlotEmpty(booking.date, booking.timeslot, booking._id))) {
                 return res.send({ ok: false, data: `Can't make that change: ${trip} already has other bookings (or is closed), and a charter needs the whole trip.` });
@@ -289,6 +327,13 @@ const updateBooking = async (req, res) => {
                 return res.send({ ok: false, data: `Can't make that change: ${trip} has only ${Math.max(left, 0)} space${left === 1 ? '' : 's'} left. Raise the trip's capacity first if you want to fit more people in.` });
             }
         }
+    }
+
+    // Moved onto or off an extra trip: it costs what the new trip costs (owner's decision). Between the
+    // usual trips it keeps the prices it was booked at.
+    if (moved) {
+        const oldTrip = await getTrip(before.date, before.timeslot);
+        if (oldTrip.extra || newTrip.extra) booking.prices = pricesFor(newTrip, await readPrices()) || undefined;
     }
 
     // Moved to another day: it gets a reminder the evening before the new day
@@ -351,7 +396,7 @@ const markPaid = async (req, res) => {
         const now = booking.paymentStatus === 'charging' ? 'is being charged right now' : 'is already paid';
         return res.status(409).send({ ok: false, data: `This booking ${now}.` });
     }
-    res.send({ ok: true, data: `${bookingName(updated)} on ${showDay(updated.date)} at ${updated.timeslot} marked as paid in person${amount !== null ? ` (${pounds(amount)})` : ''}` });
+    res.send({ ok: true, data: `${bookingName(updated)} on ${showDay(updated.date)} at ${await labelOf(updated)} marked as paid in person${amount !== null ? ` (${pounds(amount)})` : ''}` });
 };
 
 // Undoes "Mark paid" (a mis-tap). A booking with a saved card goes back to being charged at the trip time.
@@ -371,7 +416,7 @@ const markUnpaid = async (req, res) => {
         { new: true }
     );
     if (!updated) return res.status(409).send({ ok: false, data: 'This booking changed in the meantime. Try again.' });
-    res.send({ ok: true, data: `${bookingName(updated)} on ${showDay(updated.date)} at ${updated.timeslot} is ${back === 'card_saved' ? 'back to being charged to the saved card at the trip time' : 'marked as unpaid again'}` });
+    res.send({ ok: true, data: `${bookingName(updated)} on ${showDay(updated.date)} at ${await labelOf(updated)} is ${back === 'card_saved' ? 'back to being charged to the saved card at the trip time' : 'marked as unpaid again'}` });
 };
 
 // Why the owner cancelled a whole trip, as the customer reads it
@@ -385,6 +430,8 @@ const cancelTrip = async (req, res) => {
     const problem = validateAvailabilitySetting({ date, timeslot, capacity: '0' });
     if (problem) return res.status(400).send({ ok: false, data: problem });
     if (typeof reason !== 'string' || !Object.hasOwn(TRIP_REASONS, reason)) return res.status(400).send({ ok: false, data: 'Please choose a reason.' });
+    const tripNow = await findTrip(date, timeslot);
+    if (!tripNow) return res.status(400).send({ ok: false, data: 'That trip is not running on that day.' });
 
     // Close it first, so nobody can book it while the bookings are being cancelled
     await Availability.findOneAndUpdate({ date, timeslot }, { capacity: 0 }, { upsert: true });
@@ -411,8 +458,8 @@ const cancelTrip = async (req, res) => {
     }
     const toRefund = cancelled.filter((b) => ['paid', 'paid_in_person', 'charging'].includes(b.paymentStatus));
 
-    const trip = `the ${timeslot} trip on ${showDay(date)}`;
-    await trySend(emails.tripCancelledOwnerEmail({ date, time: (await getTrip(date, timeslot)).time, reasonText: TRIP_REASONS[reason], cancelled, notEmailed, toRefund }));
+    const trip = `the ${tripNow.named} on ${showDay(date)}`;
+    await trySend(emails.tripCancelledOwnerEmail({ date, time: tripNow.label, named: tripNow.named, reasonText: TRIP_REASONS[reason], cancelled, notEmailed, toRefund }));
 
     const parts = [`${cancelled.length} booking${cancelled.length === 1 ? '' : 's'} cancelled`, `${emailed} customer${emailed === 1 ? '' : 's'} emailed`];
     if (notEmailed.length) parts.push(`${notEmailed.length} not emailed (see your email)`);

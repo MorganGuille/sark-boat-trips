@@ -8,6 +8,7 @@ import ReportPanel from '../components/dashboard/reportPanel'
 import CancelTripForm from '../components/dashboard/cancelTripForm'
 import ChangeTripForm from '../components/dashboard/changeTripForm'
 import MessageTripForm from '../components/dashboard/messageTripForm'
+import AddTripForm from '../components/dashboard/addTripForm'
 import LoginForm from '../components/dashboard/loginForm'
 import BookingsTable from '../components/dashboard/bookingsTable'
 import AvailabilityForm from '../components/dashboard/availabilityForm'
@@ -25,16 +26,15 @@ const TABS = [
     { id: 'bookings', label: 'Bookings' },
     { id: 'new', label: 'New booking' },
     { id: 'availability', label: 'Availability' },
+    { id: 'extra', label: 'Extra trips' },
     { id: 'notes', label: 'Notes' },
     { id: 'report', label: 'Report' },
 ]
 
-const TIMESLOTS = ['11am', '2pm']
-
 const sortBookings = (bookings) =>
     [...bookings].sort((a, b) =>
         (a.date || '').localeCompare(b.date || '') || // YYYY-MM-DD text is already in date order
-        TIMESLOTS.indexOf(a.timeslot) - TIMESLOTS.indexOf(b.timeslot) ||
+        (a.tripStart || '').localeCompare(b.tripStart || '') || // then by the trip's time that day ('16:30')
         (a.status === 'cancelled') - (b.status === 'cancelled') ||
         (a.lastName || '').localeCompare(b.lastName || ''))
 
@@ -177,7 +177,7 @@ function Dashboard() {
 
     const describe = (booking) => {
         const who = [booking.firstName, booking.lastName].filter(Boolean).join(' ') || 'this booking'
-        return `${who} on ${showDay(booking.date)} at ${booking.timeslot}`
+        return `${who} on ${showDay(booking.date)} at ${booking.tripLabel || booking.timeslot}`
     }
 
     const cancelBooking = (booking) => {
@@ -336,7 +336,7 @@ function Dashboard() {
 
                             {!searching && movedTrips.length ? (
                                 <p className='tripMoved' role='note'>
-                                    {movedTrips.map((trip) => `The ${trip.timeslot} trip leaves at ${trip.time} from the ${trip.harbour} today`).join('. ')}.
+                                    {movedTrips.map((trip) => `The ${trip.extra ? trip.name : `${trip.timeslot} trip`} leaves at ${trip.time} from the ${trip.harbour} today`).join('. ')}.
                                 </p>
                             ) : null}
 
@@ -365,7 +365,7 @@ function Dashboard() {
                                     <ChangeTripForm key={`${selectedDate}|${trips.map((trip) => trip.startTime + trip.harbourKey).join()}`}
                                         selectedDate={selectedDate} trips={trips} bookings={bookings} onResult={showNotice} onDone={refreshBookings} />
                                     <MessageTripForm selectedDate={selectedDate} trips={trips} bookings={bookings} onResult={showNotice} onDone={refreshBookings} />
-                                    <CancelTripForm selectedDate={selectedDate} bookings={bookings} onResult={showNotice} onDone={refreshBookings} />
+                                    <CancelTripForm selectedDate={selectedDate} trips={trips} bookings={bookings} onResult={showNotice} onDone={refreshBookings} />
                                 </>
                             ) : null}
                         </>) : null}
@@ -375,7 +375,13 @@ function Dashboard() {
                         ) : null}
 
                         {tab === 'availability' ? (
-                            <AvailabilityForm selectedDate={selectedDate} onResult={showNotice} onDone={refreshBookings} />
+                            <AvailabilityForm selectedDate={selectedDate} trips={trips} onResult={showNotice} onDone={refreshBookings} />
+                        ) : null}
+
+                        {tab === 'extra' ? (
+                            // bookings is null while searching: the day's bookings aren't loaded then
+                            <AddTripForm key={`${selectedDate}|${prices?.adult}|${prices?.child}`} selectedDate={selectedDate} trips={trips}
+                                bookings={searching ? null : bookings} prices={prices} onResult={showNotice} onDone={refreshBookings} />
                         ) : null}
 
                         {tab === 'report' ? (

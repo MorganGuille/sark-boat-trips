@@ -40,10 +40,11 @@ const calendarFile = (booking, now = new Date()) => {
     const start = trip.startsAt;
     if (!start || Number.isNaN(start.getTime())) return null;
     const charter = booking.charter === 'true';
-    const end = new Date(start.getTime() + HOURS[charter ? 'charter' : 'trip'] * 3600000);
+    // an extra trip lasts as long as the owner said when adding it
+    const end = new Date(start.getTime() + (trip.extra ? trip.hours : HOURS[charter ? 'charter' : 'trip']) * 3600000);
     const domain = settings.mail.from.split('@')[1] || 'sarkboattrips.com';
-    const summary = charter ? 'Sark Boat Trips: private charter' : `Sark Boat Trips: boat trip (${partyText(booking)})`;
-    const description = `Please be at the ${trip.harbour.name} shortly before ${trip.time}. Questions? Call ${PHONE} or email ${settings.mail.from}.`;
+    const summary = charter ? 'Sark Boat Trips: private charter' : `Sark Boat Trips: ${trip.extra ? trip.name : 'boat trip'} (${partyText(booking)})`;
+    const description = `Please be at the ${trip.harbour.name} shortly before ${trip.time}.${trip.note ? ` ${trip.note}` : ''} Questions? Call ${PHONE} or email ${settings.mail.from}.`;
 
     const lines = [
         'BEGIN:VCALENDAR',

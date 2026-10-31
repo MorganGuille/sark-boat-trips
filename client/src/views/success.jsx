@@ -53,7 +53,7 @@ function Success() {
                                 <strong>{response.name}</strong>, thank you so much for booking {response.charter ? 'your charter' : 'with us'}!
                             </p>
                             <p>
-                                Your {response.charter ? 'charter' : 'trip'} is booked for <strong>{response.time || response.timeslot} on {showDay(response.date)}</strong>,
+                                Your {response.charter ? 'charter' : response.tripName || 'trip'} is booked for <strong>{response.time || response.timeslot} on {showDay(response.date)}</strong>,
                                 and we&apos;ve emailed you the details.
                             </p>
                             <p>

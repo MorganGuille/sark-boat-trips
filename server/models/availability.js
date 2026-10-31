@@ -21,6 +21,15 @@ const availabilitySchema = new mongoose.Schema({
     // it leaves from ('maseline'). Missing: the usual time, from the Creux Harbour.
     startTime: { type: String },
     harbour: { type: String },
+    // An extra trip the owner added for this day (a swim trip, a sunset trip: utils/trips.js). Its
+    // timeslot is a made-up name ('x3fa9c1') that its bookings store; startTime, harbour and capacity
+    // are always set. removed: deleted after its bookings were cancelled (kept so they still read right).
+    extra: { type: Boolean },
+    name: { type: String },
+    note: { type: String },
+    hours: { type: Number },
+    prices: { adult: { type: Number }, child: { type: Number } }, // pence
+    removed: { type: Boolean },
 });
 
 module.exports = mongoose.model('Availability', availabilitySchema);

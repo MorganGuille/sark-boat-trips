@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { messageTrip } from '../../services.jsx/trips.jsx'
+import { messageTrip, tripName } from '../../services.jsx/trips.jsx'
 import { prettyDate } from '../../utils/dates.js'
 
 // Emails the owner's own message to everyone booked on one trip ("bring a jacket, it's choppy").
@@ -13,15 +13,15 @@ function MessageTripForm({ selectedDate, trips, bookings, onResult, onDone }) {
     const trip = trips.find((t) => t.timeslot === timeslot) || trips[0]
     if (!trip) return null
     const activeOn = (slot) => bookings.filter((b) => b.status !== 'cancelled' && b.timeslot === slot)
-    const active = activeOn(timeslot)
+    const active = activeOn(trip.timeslot)
     const withEmail = active.filter((b) => b.email).length
 
     const submit = async () => {
         const missing = active.length - withEmail
-        if (!window.confirm(`Send this message to everyone on the ${trip.time} trip on ${prettyDate(selectedDate)}?\n\n${withEmail} customer${withEmail === 1 ? '' : 's'} will be emailed.${missing ? ` ${missing} ha${missing === 1 ? 's' : 've'} no email address.` : ''}`)) return
+        if (!window.confirm(`Send this message to everyone on the ${tripName(trip)} on ${prettyDate(selectedDate)}?\n\n${withEmail} customer${withEmail === 1 ? '' : 's'} will be emailed.${missing ? ` ${missing} ha${missing === 1 ? 's' : 've'} no email address.` : ''}`)) return
         setBusy(true)
         try {
-            const res = await messageTrip({ date: selectedDate, timeslot, message })
+            const res = await messageTrip({ date: selectedDate, timeslot: trip.timeslot, message })
             onResult(res.data, res.ok === false ? 'error' : 'success')
             if (res.ok !== false) {
                 setMessage('')
@@ -45,10 +45,10 @@ function MessageTripForm({ selectedDate, trips, bookings, onResult, onDone }) {
             </p>
             <label>
                 Trip
-                <select value={timeslot} onChange={(e) => setTimeslot(e.target.value)}>
+                <select value={trip.timeslot} onChange={(e) => setTimeslot(e.target.value)}>
                     {trips.map((t) => {
                         const count = activeOn(t.timeslot).length
-                        return <option key={t.timeslot} value={t.timeslot}>{t.time} trip ({count} booking{count === 1 ? '' : 's'})</option>
+                        return <option key={t.timeslot} value={t.timeslot}>{tripName(t)} ({count} booking{count === 1 ? '' : 's'})</option>
                     })}
                 </select>
             </label>
@@ -59,7 +59,7 @@ function MessageTripForm({ selectedDate, trips, bookings, onResult, onDone }) {
             </label>
             <div>
                 <button className='btn btnSmall' type='button' onClick={submit} disabled={busy || !message.trim() || !active.length}>
-                    {busy ? 'Sending…' : active.length ? `Send to ${trip.time} trip` : 'Nobody booked on this trip'}
+                    {busy ? 'Sending…' : active.length ? `Send to ${tripName(trip)}` : 'Nobody booked on this trip'}
                 </button>
             </div>
         </section>

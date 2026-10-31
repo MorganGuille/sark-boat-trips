@@ -7,6 +7,7 @@ import { authAxios } from '../services.jsx/auth.jsx'
 import { showDay } from '../utils/dates.js'
 import { FREE_CANCEL_HOURS } from '../utils/policy.js'
 import { getDayTrips, USUAL_TRIPS } from '../services.jsx/trips.jsx'
+import { formatPounds } from '../utils/money.js'
 
 
 // booking / onResult / onDone are only passed by the dashboard: booking switches the form
@@ -43,7 +44,10 @@ function BookingForm({ selectedDate, booking, onResult, onDone }) {
             .catch(() => { if (current) setTrips(USUAL_TRIPS) })
         return () => { current = false }
     }, [tripsDate])
-    const chosenTrip = trips.find((trip) => trip.timeslot === timeslot)
+    // Extra trips (a swim trip, a sunset trip) are sold by the seat, never as a charter
+    const offered = trips.filter((trip) => !(checkPageCharters() && trip.extra))
+    // The chosen trip, or the first one if it isn't running on this day
+    const chosenTrip = offered.find((trip) => trip.timeslot === timeslot) || offered[0]
 
 
     const addBooking = async (e) => {
@@ -226,15 +230,22 @@ function BookingForm({ selectedDate, booking, onResult, onDone }) {
                             <label htmlFor="timeslot">
                                 Preferred time <strong>*</strong>
                             </label>
-                            <select id="timeslot" name="timeslot" value={timeslot} onChange={(e) => setTimeslot(e.target.value)} required={fieldsRequired}>
-                                {trips.map((trip) => (
+                            <select id="timeslot" name="timeslot" value={chosenTrip?.timeslot ?? ''} onChange={(e) => setTimeslot(e.target.value)} required={fieldsRequired}>
+                                {offered.map((trip) => (
                                     <option key={trip.timeslot} value={trip.timeslot}>
-                                        {trip.time}{trip.timeChanged ? ` (moved from ${trip.timeslot})` : ''}
+                                        {trip.time}{trip.extra ? ` ${trip.name}` : ''}{trip.timeChanged ? ` (moved from ${trip.timeslot})` : ''}
                                     </option>
                                 ))}
                             </select>
+                            {chosenTrip?.extra ? (
+                                <p className='tripNote extraTripNote'>
+                                    <strong>{chosenTrip.name}</strong>: {formatPounds(Number(chosenTrip.prices.adult))} per adult,{' '}
+                                    {formatPounds(Number(chosenTrip.prices.child))} per child (infants free), about {chosenTrip.hours} hour{Number(chosenTrip.hours) === 1 ? '' : 's'}.
+                                    {chosenTrip.note ? <><br />{chosenTrip.note}</> : null}
+                                </p>
+                            ) : null}
                             {chosenTrip?.harbourChanged ? (
-                                <p className='tripNote'>On this day the {chosenTrip.time} trip leaves from the <strong>{chosenTrip.harbour}</strong>, not the Creux Harbour.</p>
+                                <p className='tripNote'>On this day the {chosenTrip.extra ? chosenTrip.name : `${chosenTrip.time} trip`} leaves from the <strong>{chosenTrip.harbour}</strong>, not the Creux Harbour.</p>
                             ) : null}
                         </div>
 

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { changeTrip } from '../../services.jsx/trips.jsx'
+import { changeTrip, tripName } from '../../services.jsx/trips.jsx'
 import { prettyDate } from '../../utils/dates.js'
 
 const HARBOURS = [
@@ -30,7 +30,7 @@ function ChangeTripForm({ selectedDate, trips, bookings, onResult, onDone }) {
     }
 
     if (!trip) return null
-    const active = bookings.filter((b) => b.status !== 'cancelled' && b.timeslot === timeslot)
+    const active = bookings.filter((b) => b.status !== 'cancelled' && b.timeslot === trip.timeslot)
     const unchanged = startTime === trip.startTime && harbour === trip.harbourKey
     const harbourName = HARBOURS.find((h) => h.key === harbour)?.name
 
@@ -40,10 +40,10 @@ function ChangeTripForm({ selectedDate, trips, bookings, onResult, onDone }) {
             : notify
                 ? `${active.length} booking${active.length === 1 ? '' : 's'} will be emailed the new details.`
                 : `${active.length} booking${active.length === 1 ? '' : 's'} will NOT be emailed (you've told them yourself).`
-        if (!window.confirm(`Move the ${trip.time} trip on ${prettyDate(selectedDate)} to ${startTime} from the ${harbourName}?\n\n${told}`)) return
+        if (!window.confirm(`Move the ${tripName(trip)} on ${prettyDate(selectedDate)} to ${startTime} from the ${harbourName}?\n\n${told}`)) return
         setBusy(true)
         try {
-            const res = await changeTrip({ date: selectedDate, timeslot, startTime, harbour, note, notifyCustomers: notify })
+            const res = await changeTrip({ date: selectedDate, timeslot: trip.timeslot, startTime, harbour, note, notifyCustomers: notify })
             onResult(res.data, res.ok === false ? 'error' : 'success')
             if (res.ok !== false) {
                 setNote('')
@@ -68,10 +68,10 @@ function ChangeTripForm({ selectedDate, trips, bookings, onResult, onDone }) {
             <div className='changeTripRow'>
                 <label>
                     Trip
-                    <select value={timeslot} onChange={(e) => chooseTrip(e.target.value)}>
+                    <select value={trip.timeslot} onChange={(e) => chooseTrip(e.target.value)}>
                         {trips.map((t) => {
                             const count = bookings.filter((b) => b.status !== 'cancelled' && b.timeslot === t.timeslot).length
-                            return <option key={t.timeslot} value={t.timeslot}>{t.time}{t.timeChanged ? ` (usually ${t.timeslot})` : ''} trip ({count} booking{count === 1 ? '' : 's'})</option>
+                            return <option key={t.timeslot} value={t.timeslot}>{t.extra ? t.label : `${t.time}${t.timeChanged ? ` (usually ${t.timeslot})` : ''} trip`} ({count} booking{count === 1 ? '' : 's'})</option>
                         })}
                     </select>
                 </label>

@@ -49,6 +49,7 @@ function Bookings() {
                             <strong>Infants</strong> (3 and under): free
                         </p>
                         <p><strong>Private Charter</strong>: {formatPounds(prices.charter)}</p>
+                        <p>Special trips (like a swim or sunset trip) have their own price, shown when you choose them.</p>
                         <p>Pay by card when your trip starts. Free cancellation up to {FREE_CANCEL_HOURS.trip} hours before ({FREE_CANCEL_HOURS.charter} hours for charters).</p>
                     </div>
                 ) : null}

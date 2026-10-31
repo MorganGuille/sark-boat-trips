@@ -126,6 +126,7 @@
 
 .calendarDisplay {
     position: relative; /* keeps the visually hidden "moved from" text inside the box */
+    padding-bottom: 0.4em;
     width: 350px;
     background-color: white;
     margin-top: 1em;
@@ -171,6 +172,11 @@
 .movedTime {
     color: #b45309;
     font-weight: 700;
+}
+
+.calendarDisplay .tripName {
+    color: #1d4ed8;
+    font-size: 0.8em;
 }
 
 .usualTime {

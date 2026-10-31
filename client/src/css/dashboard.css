@@ -823,3 +823,66 @@ input {
         font-size: 0.9rem;
     }
 }
+
+/* The Extra trips tab: the day's extra trips, each with a Delete button, then the form to add one */
+.addTrip {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.addTrip h2,
+.addTrip h3,
+.addTrip p {
+    margin: 0;
+}
+
+.addTrip h3 {
+    margin-top: 0.5rem;
+    font-size: 1rem;
+}
+
+
+.extraTrips {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.extraTrips li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.4rem 0.6rem;
+    background: white;
+    border: 1px solid #c9d8e6;
+    border-radius: 0.4rem;
+}
+
+/* The Extra trips box: short boxes for the numbers, so the whole trip fits on one or two lines */
+.dashboard .addTrip input[type='number'] {
+    width: 6.5rem;
+}
+
+.dashboard .addTrip input[type='text'] {
+    width: 12rem;
+}
+
+/* An extra trip's name under its time in the bookings table */
+.tripNameCell {
+    color: #1d4ed8;
+    font-size: 0.85em;
+}
+
+/* On a phone the six tabs wrap onto two lines, so Notes and Report aren't hidden off the edge */
+@media (max-width: 600px) {
+    .dashTabs {
+        flex-wrap: wrap;
+        overflow-x: visible;
+    }
+}

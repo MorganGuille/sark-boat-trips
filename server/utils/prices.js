@@ -35,4 +35,11 @@ const bookingValue = (booking, current) => {
     return (Number(booking.adults) || 0) * prices.adult + (Number(booking.children) || 0) * prices.child;
 };
 
-module.exports = { toPence, readPrices, hasPrices, bookingValue };
+// The prices a new booking on this trip saves (booking.prices): an extra trip's own adult and child
+// prices (it is never a charter), otherwise today's prices (null if they aren't set).
+const pricesFor = (trip, current) => {
+    if (!trip?.extra) return current;
+    return { adult: trip.prices.adult, child: trip.prices.child, charter: current?.charter ?? 0 };
+};
+
+module.exports = { toPence, readPrices, hasPrices, bookingValue, pricesFor };

@@ -5,13 +5,13 @@ const Bookings = require('../models/bookings');
 const { getAvailability, isSlotEmpty } = require('../utils/availability');
 const { validatePublicBooking } = require('../utils/validateBooking');
 const { showDay, longDay } = require('../utils/dates');
-const { readPrices, bookingValue } = require('../utils/prices');
+const { readPrices, bookingValue, pricesFor } = require('../utils/prices');
 const { settings } = require('../utils/settings');
 const { trySend } = require('../utils/mailer');
 const { seatsFor } = require('../utils/party');
 const { cancelRule } = require('../utils/policy');
 const emails = require('../emails');
-const { withTrip, getTrip } = require('../utils/trips');
+const { withTrip, getTrip, findTrip } = require('../utils/trips');
 
 const stripe = require('../utils/stripe');
 
@@ -52,7 +52,8 @@ const hasRoom = async (booking) => booking.charter === 'true'
     ? isSlotEmpty(booking.date, booking.timeslot)
     : (await getAvailability(booking.date, booking.timeslot)) >= seatsFor(booking);
 
-const what = (booking) => (booking.charter === 'true' ? 'charter' : 'trip');
+// What the customer reads: 'charter', 'trip', or an extra trip's name ('Swim trip')
+const what = (booking, trip) => (booking.charter === 'true' ? 'charter' : trip?.extra ? trip.name : 'trip');
 
 // "Visa •••• 4242 (expires 08/28)", shown on the dashboard
 const describeCard = (paymentMethod) => {
@@ -82,12 +83,15 @@ const startCheckout = (kind) => async (req, res) => {
     }
 
     const booking = fromMetadata(toMetadata(details, kind));
+    const trip = await getTrip(booking.date, booking.timeslot); // the owner may have moved it that day, or added it
+    if (trip.extra && kind === 'charter') {
+        return res.status(400).json({ ok: false, data: "That trip can't be booked as a private charter. Please choose another time." });
+    }
     if (!(await hasRoom(booking))) {
-        return res.send({ ok: false, data: `No spaces available at ${booking.timeslot} on ${showDay(booking.date)}!` });
+        return res.send({ ok: false, data: `No spaces available at ${trip.label} on ${showDay(booking.date)}!` });
     }
 
-    const amount = bookingValue(booking, prices);
-    const trip = await getTrip(booking.date, booking.timeslot); // the owner may have moved it that day
+    const amount = bookingValue(booking, pricesFor(trip, prices));
     try {
         const customer = await stripe.customers.create({
             email: booking.email, name: `${booking.firstName} ${booking.lastName}`, phone: booking.phone,
@@ -100,10 +104,10 @@ const startCheckout = (kind) => async (req, res) => {
             cancel_url: `${settings.publicUrl}/canceled`,
             metadata: toMetadata(details, kind),
             ...(settings.termsConsent && { consent_collection: { terms_of_service: 'required' } }),
-            setup_intent_data: { description: `Sark Boat Trips ${what(booking)} ${trip.time} ${showDay(booking.date)}` },
+            setup_intent_data: { description: `Sark Boat Trips ${what(booking, trip)} ${trip.time} ${showDay(booking.date)}` },
             custom_text: {
                 submit: {
-                    message: `Your card won't be charged now. ${pounds(amount)} will be charged at ${trip.time} on ${longDay(booking.date)}, when your ${what(booking)} starts${trip.harbourChanged ? ` (it leaves from the ${trip.harbour.name})` : ''}. ${cancelRule(booking.charter === 'true')} If we cancel because of the weather, you won't be charged.`,
+                    message: `Your card won't be charged now. ${pounds(amount)} will be charged at ${trip.time} on ${longDay(booking.date)}, when your ${what(booking, trip)} starts${trip.harbourChanged ? ` (it leaves from the ${trip.harbour.name})` : ''}. ${cancelRule(booking.charter === 'true')} If we cancel because of the weather, you won't be charged.`,
                 },
             },
         });
@@ -129,8 +133,10 @@ const fulfillCheckoutSession = async (session) => {
     // Someone may have taken the last places while this customer was entering their card. Nothing
     // has been charged, so the trip is never overbooked: the booking is kept as cancelled, with the
     // reason, so the owner can see it and restore it if room frees up.
-    const room = await hasRoom(details);
-    const prices = await readPrices();
+    // An extra trip the owner deleted meanwhile has no room either
+    const trip = await findTrip(details.date, details.timeslot);
+    const room = Boolean(trip) && await hasRoom(details);
+    const prices = pricesFor(trip, await readPrices());
 
     let booking;
     try {
@@ -236,6 +242,7 @@ const verifyPayment = async (req, res) => {
         date: booking.date,
         timeslot: booking.timeslot,
         time: trip.time, // the trip's time that day, which the owner may have changed
+        tripName: trip.extra ? trip.name : null, // an extra trip's name ('Swim trip')
         harbour: trip.harbour.name,
         charter: booking.charter === 'true',
         amount: bookingValue(booking, null),

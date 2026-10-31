@@ -131,3 +131,10 @@ form textarea {
     line-height: 1.4;
     max-width: 32rem;
 }
+
+/* An extra trip's price, length and note, under the trip list */
+.extraTripNote {
+    border-left-color: #1d4ed8;
+    background: #eef4ff;
+    color: #13254d;
+}

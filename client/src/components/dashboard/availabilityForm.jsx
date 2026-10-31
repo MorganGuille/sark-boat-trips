@@ -3,7 +3,8 @@ import { authAxios } from '../../services.jsx/auth.jsx'
 import { URL } from '../../../config.js'
 import { prettyDate } from '../../utils/dates.js'
 
-function AvailabilityForm({ selectedDate, onResult, onDone }) {
+// trips: the day's trips (the usual two and any extra ones)
+function AvailabilityForm({ selectedDate, trips, onResult, onDone }) {
 
     const [timeslot, setTimeslot] = useState('11am')
     const [capacity, setCapacity] = useState('12')
@@ -34,8 +35,7 @@ function AvailabilityForm({ selectedDate, onResult, onDone }) {
             <div className='fieldRow'>
                 <label htmlFor='availTimeslot'>Trip</label>
                 <select id='availTimeslot' value={timeslot} onChange={(e) => setTimeslot(e.target.value)}>
-                    <option value='11am'>11am</option>
-                    <option value='2pm'>2pm</option>
+                    {trips.map((trip) => <option key={trip.timeslot} value={trip.timeslot}>{trip.label}</option>)}
                 </select>
             </div>
             <div className='fieldRow'>

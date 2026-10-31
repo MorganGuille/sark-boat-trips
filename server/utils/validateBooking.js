@@ -19,7 +19,9 @@ const REQUIRED = ['date', 'timeslot', 'firstName', 'lastName', 'phone', 'email']
 const blank = (value) => value == null || String(value).trim() === '';
 // Only real strings and numbers count: String(['15-06-2033']) looks like a valid date, but a list isn't one
 const isWhole = (value) => (typeof value === 'string' || typeof value === 'number') && /^\d+$/.test(String(value).trim());
-const isTimeslot = (value) => typeof value === 'string' && Object.hasOwn(TIMESLOTS, value);
+// A usual trip ('11am', '2pm') or the made-up name of an extra trip ('x3fa9c1', utils/trips.js). Whether
+// that extra trip exists on the day is checked against the database (findTrip).
+const isTimeslot = (value) => typeof value === 'string' && (Object.hasOwn(TIMESLOTS, value) || /^x[0-9a-f]{6}$/.test(value));
 
 const prettyDay = (number) =>
     new Date(Date.UTC(Math.floor(number / 10000), (Math.floor(number / 100) % 100) - 1, number % 100))
@@ -124,9 +126,11 @@ const validatePublicBooking = async (body, now = new Date()) => {
     if (!isTimeslot(body.timeslot)) return 'Please choose a valid trip time.';
     if (dayNumber(body.date) === null) return 'Please choose a valid date.';
 
-    // The trip may have been moved to another time that day (loaded here, not at the top: utils/trips.js uses this file)
-    const { startTime } = await require('./trips').getTrip(body.date, body.timeslot);
-    return whenProblem(body.date, body.timeslot, now, startTime) || seasonProblem(body.date, await loadSeason());
+    // The trip may have been moved to another time that day, or be an extra trip (loaded here, not at
+    // the top: utils/trips.js uses this file)
+    const trip = await require('./trips').findTrip(body.date, body.timeslot);
+    if (!trip) return 'That trip is no longer running. Please choose another.';
+    return whenProblem(body.date, body.timeslot, now, trip.startTime) || seasonProblem(body.date, await loadSeason());
 };
 
 // Checks a booking entered on the dashboard. Details may be missing and past dates are fine, but
@@ -150,5 +154,5 @@ const validateAvailabilitySetting = ({ date, timeslot, capacity }) => {
 module.exports = {
     validatePublicBooking, validateAdminBooking, validateAvailabilitySetting,
     // exported so the date and time rules can be tested with a fixed clock
-    TIMESLOTS, dayNumber, guernseyNow, guernseyToday, tripStartsAt, whenProblem, seasonProblem, partyProblem, BOOKING_CUTOFF_MINUTES,
+    TIMESLOTS, isTimeslot, MAX_CAPACITY, dayNumber, guernseyNow, guernseyToday, tripStartsAt, whenProblem, seasonProblem, partyProblem, BOOKING_CUTOFF_MINUTES,
 };

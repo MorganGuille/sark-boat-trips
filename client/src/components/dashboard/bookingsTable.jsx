@@ -15,9 +15,10 @@ function BookingsTable({ bookings, showDate, trips = [], onEdit, onCancel, onRes
     // The day's trip may have moved: show its time that day (not in search results, which span days)
     const timeCell = (booking) => {
         const trip = !showDate && trips.find((t) => t.timeslot === booking.timeslot)
+        if (trip?.extra) return <><strong>{trip.time}</strong><br /><span className='tripNameCell'>{trip.name}</span></>
         return trip?.timeChanged
             ? <><strong className='movedTime'>{trip.time}</strong><br /><s className='usualTime'><span className='sr-only'>moved from </span>{booking.timeslot}</s></>
-            : booking.timeslot
+            : booking.tripLabel || booking.timeslot // search results, or a trip no longer running that day
     }
 
     const guests = (booking) => {

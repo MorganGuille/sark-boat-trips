@@ -2,13 +2,12 @@ import { useState } from 'react'
 import { authAxios } from '../../services.jsx/auth.jsx'
 import { URL } from '../../../config.js'
 import { prettyDate } from '../../utils/dates.js'
-
-const TIMESLOTS = ['11am', '2pm']
+import { tripName } from '../../services.jsx/trips.jsx'
 const seats = (b) => (Number(b.adults) || 0) + (Number(b.children) || 0) + (Number(b.infants) || 0)
 
 // For a weather day: cancels every booking on one trip, emails everyone, charges nobody, and closes
-// the trip to new bookings. bookings: the day's bookings as shown on the Bookings tab.
-function CancelTripForm({ selectedDate, bookings, onResult, onDone }) {
+// the trip to new bookings. trips: the day's trips; bookings: the day's bookings as shown on the Bookings tab.
+function CancelTripForm({ selectedDate, trips, bookings, onResult, onDone }) {
 
     const [timeslot, setTimeslot] = useState('11am')
     const [reason, setReason] = useState('weather')
@@ -16,16 +15,17 @@ function CancelTripForm({ selectedDate, bookings, onResult, onDone }) {
 
     const activeOn = (slot) => bookings.filter((b) => b.status !== 'cancelled' && b.timeslot === slot)
     const active = activeOn(timeslot)
+    const trip = trips.find((t) => t.timeslot === timeslot) || trips[0]
     const people = active.reduce((sum, b) => sum + seats(b), 0)
 
     const submit = async () => {
         const who = active.length
             ? `${active.length} booking${active.length === 1 ? '' : 's'} (${people} ${people === 1 ? 'person' : 'people'}) will be cancelled and emailed. Nobody's card will be charged.`
             : 'There are no bookings on it.'
-        if (!window.confirm(`Cancel the ${timeslot} trip on ${prettyDate(selectedDate)}?\n\n${who}\nThe trip will be closed to new bookings (you can reopen it from the Availability tab).`)) return
+        if (!window.confirm(`Cancel the ${tripName(trip)} on ${prettyDate(selectedDate)}?\n\n${who}\nThe trip will be closed to new bookings (you can reopen it from the Availability tab).`)) return
         setBusy(true)
         try {
-            const res = await authAxios.post(`${URL}/bookings/cancel-trip`, { date: selectedDate, timeslot, reason })
+            const res = await authAxios.post(`${URL}/bookings/cancel-trip`, { date: selectedDate, timeslot: trip.timeslot, reason })
             onResult(res.data.data, res.data.ok === false ? 'error' : 'success')
             onDone()
         } catch (error) {
@@ -46,10 +46,10 @@ function CancelTripForm({ selectedDate, bookings, onResult, onDone }) {
             </p>
             <div className='cancelTripRow'>
                 <label className='sr-only' htmlFor='cancelTripTime'>Trip</label>
-                <select id='cancelTripTime' value={timeslot} onChange={(e) => setTimeslot(e.target.value)}>
-                    {TIMESLOTS.map((slot) => {
-                        const count = activeOn(slot).length
-                        return <option key={slot} value={slot}>{slot} trip ({count} booking{count === 1 ? '' : 's'})</option>
+                <select id='cancelTripTime' value={trip?.timeslot} onChange={(e) => setTimeslot(e.target.value)}>
+                    {trips.map((t) => {
+                        const count = activeOn(t.timeslot).length
+                        return <option key={t.timeslot} value={t.timeslot}>{tripName(t)} ({count} booking{count === 1 ? '' : 's'})</option>
                     })}
                 </select>
                 <label className='sr-only' htmlFor='cancelTripReason'>Reason</label>
@@ -58,7 +58,7 @@ function CancelTripForm({ selectedDate, bookings, onResult, onDone }) {
                     <option value='other'>Other reason</option>
                 </select>
                 <button className='btn btnSmall btnDanger' type='button' onClick={submit} disabled={busy}>
-                    {busy ? 'Cancelling…' : `Cancel ${timeslot} trip`}
+                    {busy ? 'Cancelling…' : `Cancel ${tripName(trip)}`}
                 </button>
             </div>
         </section>

@@ -4,6 +4,12 @@
 // harbour), next to its seats. Bookings keep their timeslot ('11am' or '2pm'), which names the trip; its
 // actual time and harbour always come from here: the card charge, the booking cutoff, every email, the
 // calendar file and the booking page all ask getTrip / withTrips.
+//
+// The owner can also add extra trips to a day (a swim trip, a sunset trip), each with its own name,
+// time, harbour, seats, length and adult and child prices. An extra trip is an Availability row with
+// extra: true and a made-up timeslot ('x3fa9c1') that its bookings store, so seat counting, prices
+// saved on bookings and everything above work for it unchanged.
+const crypto = require('crypto');
 const Availability = require('../models/availability');
 const { TIMESLOTS, tripStartsAt } = require('./validateBooking');
 
@@ -21,34 +27,62 @@ const timeLabel = (startTime) => {
     return `${((hour + 11) % 12) + 1}${minute ? `:${String(minute).padStart(2, '0')}` : ''}${hour >= 12 ? 'pm' : 'am'}`;
 };
 
+const isUsual = (timeslot) => typeof timeslot === 'string' && Object.hasOwn(TIMESLOTS, timeslot);
+const isValidStart = (startTime) => typeof startTime === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(startTime);
+
+// A name for a new extra trip, unique enough for one day
+const newExtraTimeslot = () => `x${crypto.randomBytes(3).toString('hex')}`;
+
 // One trip as everything else needs it. row: its Availability row, if there is one.
-// A booking with an unknown timeslot (very old data) gets its timeslot as the time and no start moment.
+// A booking with an unknown timeslot (very old data, or a trip that no longer exists) gets its
+// timeslot as the time and no start moment.
 const describeTrip = (date, timeslot, row) => {
     const harbourKey = Object.hasOwn(HARBOURS, row?.harbour || '') ? row.harbour : USUAL_HARBOUR;
     const harbour = { key: harbourKey, ...HARBOURS[harbourKey] };
-    if (!Object.hasOwn(TIMESLOTS, timeslot || '')) {
-        return { date, timeslot, startTime: null, time: timeslot, startsAt: null, timeChanged: false, harbour, harbourChanged: false };
+    const extra = Boolean(row?.extra) && isValidStart(row.startTime);
+    if (!isUsual(timeslot) && !extra) {
+        return { date, timeslot, startTime: null, time: timeslot, label: timeslot, named: `${timeslot} trip`, startsAt: null, timeChanged: false, harbour, harbourChanged: false, extra: false };
     }
     const startTime = row?.startTime || usualStart(timeslot);
+    const time = timeLabel(startTime);
     return {
         date,
         timeslot,
         startTime, // '15:00'
-        time: timeLabel(startTime), // '3pm', what people read
+        time, // '3pm', what people read
+        label: extra ? `${row.name} (${time})` : time, // how the dashboard names it: '3pm', 'Swim trip (4:30pm)'
+        named: extra ? `${row.name} (${time})` : `${time} trip`, // in a sentence: 'the 3pm trip', 'the Swim trip (4:30pm)'
         startsAt: /^\d{4}-\d{2}-\d{2}$/.test(date || '') ? tripStartsAt(date, timeslot, startTime) : null, // a Date
-        timeChanged: startTime !== usualStart(timeslot),
-        usualTime: timeslot,
+        timeChanged: !extra && startTime !== usualStart(timeslot),
+        usualTime: extra ? null : timeslot,
         harbour, // { key, name, map }
         harbourChanged: harbourKey !== USUAL_HARBOUR,
+        extra,
+        ...(extra && {
+            name: row.name, // 'Swim trip'
+            note: row.note || '', // 'Bring swimwear and a towel'
+            hours: row.hours, // how long it lasts
+            prices: { adult: row.prices?.adult, child: row.prices?.child }, // pence
+            removed: Boolean(row.removed),
+        }),
     };
 };
 
 const getTrip = async (date, timeslot) => describeTrip(date, timeslot, await Availability.findOne({ date, timeslot }));
 
-// The usual trips of one day, as they are that day
+// A trip that exists that day (a usual one, or an extra one that hasn't been removed), or null
+const findTrip = async (date, timeslot) => {
+    if (typeof timeslot !== 'string' || !timeslot) return null;
+    const trip = await getTrip(date, timeslot);
+    return isUsual(timeslot) || (trip.extra && !trip.removed) ? trip : null;
+};
+
+// The trips of one day as they are that day: the usual two and any extra ones, in time order
 const getTripsForDay = async (date) => {
     const rows = await Availability.find({ date });
-    return Object.keys(TIMESLOTS).map((slot) => describeTrip(date, slot, rows.find((r) => r.timeslot === slot)));
+    const usual = Object.keys(TIMESLOTS).map((slot) => describeTrip(date, slot, rows.find((r) => r.timeslot === slot)));
+    const extras = rows.filter((r) => r.extra && !r.removed).map((r) => describeTrip(date, r.timeslot, r)).filter((t) => t.extra);
+    return [...usual, ...extras].sort((a, b) => a.startTime.localeCompare(b.startTime));
 };
 
 const key = (date, timeslot) => `${date}|${timeslot}`;
@@ -74,4 +108,4 @@ const withTrips = async (bookings) => {
 };
 const withTrip = async (booking) => (await withTrips([booking]))[0];
 
-module.exports = { HARBOURS, USUAL_HARBOUR, usualStart, timeLabel, describeTrip, getTrip, getTripsForDay, tripsFor, tripOfBooking, withTrips, withTrip };
+module.exports = { HARBOURS, USUAL_HARBOUR, usualStart, timeLabel, isUsual, isValidStart, newExtraTimeslot, describeTrip, getTrip, findTrip, getTripsForDay, tripsFor, tripOfBooking, withTrips, withTrip };
