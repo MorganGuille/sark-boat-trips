@@ -183,7 +183,7 @@ describe('seats', () => {
         assert.deepEqual(await t.seatsLeft(app, t.day(11)), { '11am': 12, '2pm': 12 }, 'other days are untouched');
     });
     it('capacity settings must make sense', async () => {
-        for (const body of [{ date: '2033-02-31', timeslot: '11am', capacity: '5' }, { date: t.day(10), timeslot: 'x', capacity: '5' }, ...['-1', 'abc', '', '1000', '2.5'].map((capacity) => ({ date: t.day(10), timeslot: '11am', capacity }))]) {
+        for (const body of [{ date: '2033-02-31', timeslot: '11am', capacity: '5' }, { date: t.day(10), timeslot: 'x', capacity: '5' }, ...['-1', 'abc', '', '13', '1000', '2.5'].map((capacity) => ({ date: t.day(10), timeslot: '11am', capacity }))]) {
             assert.equal((await t.call(app, 'post', '/bookings/updateavailability', { token, body })).status, 400, JSON.stringify(body));
         }
     });

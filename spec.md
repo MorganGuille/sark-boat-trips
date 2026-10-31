@@ -41,7 +41,6 @@ Written after reading the whole codebase and testing the booking and dashboard f
 | P2-2 | Owner | Trip tools: change a trip's time for one day, close a trip, notify everyone on it (cancel a whole trip **DONE**; change time and harbour, message everyone, and extra trips, **DONE** on the `trip-tools` branch) | M–L |
 | P2-3 | Owner | Month overview and better search | M |
 | P2-4 | Owner | Card saved at booking, charged at the trip time; payment status (see `paymentsspec.md`) (**DONE**) | L |
-| P2-5 | Owner | Deliberate overbooking override | S |
 | P2-6 | Customer | Manage-my-booking link (self-service change and cancel) | M |
 | P2-7 | Customer | Reminder email the day before (**DONE**) | S–M |
 | P2-8 | Customer | Booking form polish (price total, closed days, keep data on error) | M |
@@ -172,7 +171,7 @@ Written after reading the whole codebase and testing the booking and dashboard f
 
 ### P1-4 `[Server]` Editing a booking ignores availability and always emails the customer
 - **Status: DONE** (24 Oct 2026, not yet deployed).
-  - **Edits must fit.** Moving a booking to another date or trip, adding people, or making it a charter checks the destination first, ignoring the booking itself. If it doesn't fit, nothing is saved and the dashboard says "the 11am trip on 15-07-2026 has only 4 spaces left. Raise the trip's capacity first if you want to fit more people in." Taking people away or editing contact details never needs room, so an already over-full trip can still be edited. A deliberate overbooking override is still P2-5.
+  - **Edits must fit.** Moving a booking to another date or trip, adding people, or making it a charter checks the destination first, ignoring the booking itself. If it doesn't fit, nothing is saved and the dashboard says "the 11am trip on 15-07-2026 has only 4 spaces left. Raise the trip's capacity first if you want to fit more people in." Taking people away or editing contact details never needs room, so an already over-full trip can still be edited. There is no overbooking override, by design: the boat can never legally take more than 12 (owner, 1 Nov 2026; the old P2-5 was dropped).
   - **"Email the customer about this change"** checkbox on the edit form, ticked by default. Unticked, the change is saved and the customer isn't emailed (the owner still gets a copy). It says so in the confirmation, and notes when there is no email address on file. Older callers that don't send the flag still email the customer.
   - **Details can be cleared.** An empty value now clears a name, phone, email, accommodation or message. A field that isn't sent is left alone, and the date, trip time and booking type can't be blanked. A blank adults box leaves the number alone so the seats aren't freed by accident; a blank children box means none.
   - A booking ID that doesn't exist (or is malformed) gets a clean 404 before anything else happens. Saving with no changes says so and sends no emails. The emails read sensibly for bookings with missing details (no "undefined"), and the customer's email shows the new date and time.
@@ -301,9 +300,6 @@ Bookings and guests per day and slot on the calendar, an "upcoming bookings" lis
 #### P2-4 `[Owner]` Card saved at booking, charged at the trip time
 Decided with the owner on 26 Oct 2026 and written up in **`paymentsspec.md`**: every online booking saves a card on Stripe's hosted page (nothing charged), the card is charged automatically at the trip's start time, the owner cancels in the dashboard first for weather so nothing is ever refunded, a failed charge just shows the booking as Unpaid, and the £80 charter deposit goes away. Open: how the timer runs (recommended: a timer inside the app). Builds on P2-1's prices. Still wanted alongside it: a note on each booking, and a "cancel everything on this trip" button (P2-2) so a weather call is one tap.
 - **Status: DONE** (30 Oct 2026, merged into `version2`), in five steps plus the trip-wide cancel; details and what was checked against real Stripe test mode are in `paymentsspec.md`.
-
-#### P2-5 `[Owner]` Deliberate overbooking override
-The dashboard add form currently refuses a booking if the trip is full. Add an explicit "add anyway" confirmation for when you know you can take extra people.
 
 #### P2-13 `[Owner]` Customer data tools
 One place to find everything held for an email address, export it, and erase it (permanent delete already exists per booking). Update the privacy policy's retention paragraph to state that cancelled bookings are kept until a customer asks for removal, which is current practice.

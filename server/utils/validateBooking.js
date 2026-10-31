@@ -5,7 +5,7 @@ const { dayNumber } = require('./dates');
 // the trip, even on a day when the owner has moved it to another time (utils/trips.js).
 const TIMESLOTS = { '11am': 11, '2pm': 14 };
 const MAX_PER_FIELD = 12; // adults, children and infants, each
-const MAX_CAPACITY = 100;
+const MAX_CAPACITY = 12; // the boat's legal limit: no trip, usual or extra, can ever have more seats
 const BOOKING_CUTOFF_MINUTES = 60; // customers can book online until this long before the trip starts
 const TIMEZONE = 'Europe/Guernsey'; // the server runs in UTC, but trips and cutoffs are in local time
 

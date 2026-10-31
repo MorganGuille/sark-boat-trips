@@ -140,7 +140,7 @@ function AddTripForm({ selectedDate, trips, bookings, prices, onResult, onDone }
                 </label>
                 <label>
                     Seats
-                    <input type='number' value={form.capacity} min='1' max='100' onChange={set('capacity')} />
+                    <input type='number' value={form.capacity} min='1' max='12' onChange={set('capacity')} />
                 </label>
                 <label>
                     Adult price (£)

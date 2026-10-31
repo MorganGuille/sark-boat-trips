@@ -40,7 +40,7 @@ function AvailabilityForm({ selectedDate, trips, onResult, onDone }) {
             </div>
             <div className='fieldRow'>
                 <label htmlFor='availCapacity'>Capacity (seats)</label>
-                <input id='availCapacity' type='number' min='0' value={capacity} onChange={(e) => setCapacity(e.target.value)} required />
+                <input id='availCapacity' type='number' min='0' max='12' value={capacity} onChange={(e) => setCapacity(e.target.value)} required />
             </div>
             <button className='btn' type='submit' disabled={busy}>{busy ? 'Saving…' : 'Update availability'}</button>
         </form>

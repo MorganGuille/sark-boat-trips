@@ -23,6 +23,7 @@ const addSwimTrip = async (page) => {
     await box.getByLabel('Name').fill('Swim trip');
     await box.getByLabel('Time').fill('16:30');
     await box.getByLabel('Length (hours)').fill('1.5');
+    await expect(box.getByLabel('Seats')).toHaveAttribute('max', '12'); // the boat's legal limit
     await box.getByLabel('Seats').fill('8');
     await box.getByLabel('Adult price (£)').fill('45');
     await box.getByLabel('Child price (£)').fill('30');

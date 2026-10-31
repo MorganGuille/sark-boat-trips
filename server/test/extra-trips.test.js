@@ -46,6 +46,7 @@ describe('adding an extra trip', () => {
         ['a length that is not in quarter hours', { hours: '1.3' }, /length in hours/],
         ['no seats', { capacity: '0' }, /number of seats/],
         ['half a seat', { capacity: '7.5' }, /number of seats/],
+        ['more seats than the boat can legally take', { capacity: '13' }, /from 1 to 12/],
         ['a price that is not a price', { adultPrice: 'forty' }, /adult and child prices/],
         ['no child price', { childPrice: '' }, /adult and child prices/],
         ['a list instead of a name', { name: ['Swim trip'] }, /give the trip a name/],
@@ -235,6 +236,9 @@ describe('editing an extra trip', () => {
         const res = await edit(swim, { capacity: '0' });
         assert.equal(res.status, 400);
         assert.match(res.body.data, /number of seats/);
+        const tooMany = await edit(swim, { capacity: '13' });
+        assert.equal(tooMany.status, 400);
+        assert.match(tooMany.body.data, /from 1 to 12/);
     });
 
     it('says so when nothing changed', async () => {

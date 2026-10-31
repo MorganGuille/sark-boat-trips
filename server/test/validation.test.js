@@ -111,14 +111,15 @@ describe('dashboard bookings', () => {
 
 describe('availability settings', () => {
     const setting = (date, timeslot, capacity) => v.validateAvailabilitySetting({ date, timeslot, capacity });
-    it('accepts a capacity from 0 (closed) to 100', () => {
+    it('accepts a capacity from 0 (closed) to 12 (the legal limit)', () => {
         assert.equal(setting('2033-06-15', '11am', '8'), null);
         assert.equal(setting('2033-06-15', '2pm', '0'), null);
+        assert.equal(setting('2033-06-15', '2pm', '12'), null);
     });
     it('rejects a bad date, trip time or capacity', () => {
         assert.notEqual(setting('x', '11am', '8'), null);
         assert.notEqual(setting('2033-06-15', 'x', '8'), null);
-        for (const c of ['-1', 'abc', '', '1.5', '101']) assert.notEqual(setting('2033-06-15', '11am', c), null, c);
+        for (const c of ['-1', 'abc', '', '1.5', '13', '101']) assert.notEqual(setting('2033-06-15', '11am', c), null, c);
     });
 });
 
