@@ -1,6 +1,7 @@
 // Trip tools (spec P2-2). The day's trips as they are that day (public: the booking page and the
-// dashboard show them), and moving one trip to another time and/or harbour for that day (dashboard only).
-// The owner usually phones the customers first, so the email is the written confirmation.
+// dashboard show them), moving one trip to another time and/or harbour for that day, and sending
+// everyone on a trip a message (dashboard only). The owner usually phones the customers first, so a
+// change email is the written confirmation.
 const Bookings = require('../models/bookings');
 const Availability = require('../models/availability');
 const { isDay, showDay } = require('../utils/dates');
@@ -14,6 +15,19 @@ const emails = require('../emails');
 const EARLIEST = '07:00';
 const LATEST = '20:00';
 const MAX_NOTE = 500;
+const MAX_MESSAGE = 1000;
+
+// Emails everyone on a trip (bookings with .trip, from withTrips). Saved changes come first: a failed
+// email is reported, never undone. Returns how many were emailed and the bookings that weren't.
+const emailEveryone = async (bookings, buildEmail) => {
+    const notEmailed = [];
+    let emailed = 0;
+    for (const booking of bookings) {
+        if (booking.email && await trySend(buildEmail(booking))) emailed++;
+        else notEmailed.push(booking);
+    }
+    return { emailed, notEmailed };
+};
 
 const dayTrips = async (req, res) => {
     const { date } = req.params;
@@ -78,14 +92,9 @@ const changeTrip = async (req, res) => {
     const warning = clash ? `It now overlaps the ${clash.time} trip (trips last ${HOURS.trip} hours).` : '';
 
     const bookings = await withTrips(await Bookings.find({ date, timeslot, status: { $ne: 'cancelled' } }));
-    const notEmailed = [];
-    let emailed = 0;
-    if (notify) {
-        for (const booking of bookings) {
-            if (booking.email && await trySend(emails.tripChangedEmail(booking, { before, note }))) emailed++;
-            else notEmailed.push(booking);
-        }
-    }
+    const { emailed, notEmailed } = notify
+        ? await emailEveryone(bookings, (booking) => emails.tripChangedEmail(booking, { before, note }))
+        : { emailed: 0, notEmailed: [] };
     await trySend(emails.tripChangedOwnerEmail({ trip: after, before, note, bookings, notEmailed, notified: notify, warning }));
 
     const told = !bookings.length
@@ -99,4 +108,26 @@ const changeTrip = async (req, res) => {
     });
 };
 
-module.exports = { dayTrips, changeTrip, EARLIEST, LATEST };
+// POST /bookings/message-trip { date, timeslot, message }: the owner's message to everyone booked on
+// one trip (not cancelled bookings). Any day, past ones too (a thank-you after the trip).
+const messageTrip = async (req, res) => {
+    const { date, timeslot, message } = req.body;
+    if (!isDay(date)) return res.status(400).send({ ok: false, data: 'Please choose a valid date.' });
+    if (typeof timeslot !== 'string' || !Object.hasOwn(TIMESLOTS, timeslot)) return res.status(400).send({ ok: false, data: 'Please choose which trip.' });
+    if (typeof message !== 'string' || !message.trim()) return res.status(400).send({ ok: false, data: 'Please write the message.' });
+    if (message.length > MAX_MESSAGE) return res.status(400).send({ ok: false, data: `The message can be up to ${MAX_MESSAGE} characters.` });
+
+    const trip = await getTrip(date, timeslot);
+    const bookings = await withTrips(await Bookings.find({ date, timeslot, status: { $ne: 'cancelled' } }));
+    if (!bookings.length) return res.send({ ok: false, data: `Nobody is booked on the ${trip.time} trip on ${showDay(date)}, so there is no one to message.` });
+
+    const { emailed, notEmailed } = await emailEveryone(bookings, (booking) => emails.tripMessageEmail(booking, message.trim()));
+    await trySend(emails.tripMessageOwnerEmail({ trip, message: message.trim(), bookings, notEmailed }));
+
+    res.send({
+        ok: true,
+        data: `Message sent to ${emailed} customer${emailed === 1 ? '' : 's'} on the ${trip.time} trip on ${showDay(date)}.${notEmailed.length ? ` ${notEmailed.length} not emailed (no address, or the email failed): see your email.` : ''}`,
+    });
+};
+
+module.exports = { dayTrips, changeTrip, messageTrip, EARLIEST, LATEST };

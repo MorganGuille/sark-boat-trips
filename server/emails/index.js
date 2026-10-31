@@ -170,6 +170,23 @@ const tripChangedEmail = (booking, { before, note = '' }) => {
     }, [ics]);
 };
 
+// The owner's own message to everyone on a trip (controllers/trips.js), e.g. "bring a jacket, it's
+// choppy". Each line the owner typed becomes its own paragraph.
+const ownerParagraphs = (message) => message.split(/\n+/).map((line) => line.trim()).filter(Boolean);
+
+const tripMessageEmail = (booking, message) =>
+    customerEmail(booking, `A message about your ${what(booking)} on ${shortDay(booking.date)} at ${at(booking)}`, {
+        heading: 'A message about your trip',
+        preheader: ownerParagraphs(message)[0],
+        blocks: [
+            dear(booking),
+            ...ownerParagraphs(message),
+            `Your booking:`,
+            tripDetails(booking),
+            'If you have any questions, just reply to this email or give us a call.',
+        ],
+    });
+
 // The trip filled up while the customer was on Stripe's page (controllers/checkout.js)
 const tripFullEmail = (booking) =>
     customerEmail(booking, `Sorry, the ${what(booking)} on ${shortDay(booking.date)} at ${at(booking)} is full`, {
@@ -289,6 +306,23 @@ const tripChangedOwnerEmail = ({ trip, before, note, bookings, notEmailed, notif
     });
 };
 
+// The owner messaged everyone on a trip: one summary of what was sent and to whom
+const tripMessageOwnerEmail = ({ trip, message, bookings, notEmailed }) => {
+    const line = (b) => `${nameOf(b)}, ${partyText(b)}${b.phone ? `, phone ${b.phone}` : ''}`;
+    const sent = bookings.length - notEmailed.length;
+    return ownerEmail(`Message sent: ${trip.time} ${shortDay(trip.date)}, ${sent} customer${sent === 1 ? '' : 's'}`, {
+        heading: 'Message sent',
+        blocks: [
+            `You sent this message to everyone on the ${trip.time} trip on ${longDay(trip.date)}:`,
+            ...ownerParagraphs(message).map((paragraph) => [{ bold: paragraph }]),
+            `Sent to ${sent} of ${bookings.length} booking${bookings.length === 1 ? '' : 's'}:`,
+            ...(sent ? [{ list: bookings.filter((b) => !notEmailed.includes(b)).map(line) }] : []),
+            ...(notEmailed.length ? [[{ bold: 'NOT EMAILED (no address, or the email failed), please contact them:' }], { list: notEmailed.map(line) }] : []),
+            dashboardButton(),
+        ],
+    });
+};
+
 // The owner cancelled a whole trip (controllers/bookings.js cancelTrip)
 const tripCancelledOwnerEmail = ({ date, time, reasonText, cancelled, notEmailed, toRefund }) => {
     const count = `${cancelled.length} booking${cancelled.length === 1 ? '' : 's'}`;
@@ -307,6 +341,6 @@ const tripCancelledOwnerEmail = ({ date, time, reasonText, cancelled, notEmailed
 };
 
 module.exports = {
-    confirmationEmail, updatedEmail, cancellationEmail, reminderEmail, tripChangedEmail, tripFullEmail,
-    newBookingOwnerEmail, updatedOwnerEmail, cancelledOwnerEmail, tripFullOwnerEmail, failedChargesEmail, tripCancelledOwnerEmail, tripChangedOwnerEmail,
+    confirmationEmail, updatedEmail, cancellationEmail, reminderEmail, tripChangedEmail, tripMessageEmail, tripFullEmail,
+    newBookingOwnerEmail, updatedOwnerEmail, cancelledOwnerEmail, tripFullOwnerEmail, failedChargesEmail, tripCancelledOwnerEmail, tripChangedOwnerEmail, tripMessageOwnerEmail,
 };

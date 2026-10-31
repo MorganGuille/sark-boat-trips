@@ -215,3 +215,82 @@ describe('everything follows the trip\'s new time and harbour', () => {
         assert.equal(mocks.sent('ann@example.test')[0].subject, `Your boat trip on ${t.short(DAY)} at 3pm has been cancelled`);
     });
 });
+
+describe('messaging everyone on a trip', () => {
+    const message = (body, { auth = true } = {}) => t.call(app, 'post', '/bookings/message-trip', { token: auth ? token : undefined, body: { date: DAY, timeslot: '2pm', message: 'Bring a jacket, it is choppy!', ...body } });
+
+    it('is for the owner only', async () => {
+        assert.equal((await message({}, { auth: false })).status, 401);
+    });
+
+    for (const [name, body, text] of [
+        ['an empty message', { message: '   ' }, /write the message/],
+        ['a message that is far too long', { message: 'x'.repeat(1001) }, /up to 1000/],
+        ['a list instead of a message', { message: ['hi'] }, /write the message/],
+        ['a trip that does not exist', { timeslot: '5pm' }, /which trip/],
+        ['a date that is not a date', { date: '14-05-2027' }, /valid date/],
+    ]) {
+        it(`refuses ${name}`, async () => {
+            const res = await message(body);
+            assert.equal(res.status, 400);
+            assert.match(res.body.data, text);
+        });
+    }
+
+    it('says so, and sends nothing, when nobody is booked on the trip', async () => {
+        await t.insertBooking({ date: DAY, timeslot: '2pm', firstName: 'Gone', email: 'gone@example.test', status: 'cancelled' });
+        const res = await message({});
+        assert.equal(res.body.ok, false);
+        assert.match(res.body.data, /Nobody is booked on the 2pm trip/);
+        assert.equal(mocks.mails.length, 0);
+    });
+
+    it('everyone on the trip gets the message, each line as a paragraph, with their booking underneath', async () => {
+        await card({ firstName: 'Ann', email: 'ann@example.test', adults: 2, children: 1 });
+        await card({ firstName: 'Cee', email: 'cee@example.test', charter: 'true' });
+        await card({ firstName: 'Gone', email: 'gone@example.test', status: 'cancelled' });
+        await t.insertBooking({ date: DAY, timeslot: '11am', firstName: 'Morning', email: 'morning@example.test' });
+        const res = await message({ message: 'Bring a jacket, it is choppy!\nSee you <soon> & thanks.' });
+        assert.equal(res.body.ok, true);
+        assert.match(res.body.data, /^Message sent to 2 customers on the 2pm trip on /);
+
+        assert.deepEqual(toCustomers().map((m) => m.to).sort(), ['ann@example.test', 'cee@example.test'], 'not the cancelled booking, not the other trip');
+        const mail = mocks.sent('ann@example.test')[0];
+        assert.equal(mail.subject, `A message about your boat trip on ${t.short(DAY)} at 2pm`);
+        assert.match(mail.text, /^A message about your trip\n\nDear Ann,\n\nBring a jacket, it is choppy!\n\nSee you <soon> & thanks\.\n\nYour booking:\n\nDate: /);
+        assert.match(mail.text, /Party: 2 adults and 1 child\n/);
+        assert.ok(mail.html.includes('See you &lt;soon&gt; &amp; thanks.'), 'escaped in the HTML');
+        assert.equal(mail.attachments.some((a) => a.filename.endsWith('.ics')), false, 'no calendar file: nothing changed');
+        assert.match(mocks.sent('cee@example.test')[0].subject, /^A message about your private charter on /);
+    });
+
+    it('on a moved trip, the booking underneath shows its time and harbour that day', async () => {
+        await card({ firstName: 'Ann', email: 'ann@example.test' });
+        await change({ startTime: '15:00', harbour: 'maseline', notifyCustomers: false });
+        mocks.reset();
+        await message({});
+        const mail = mocks.sent('ann@example.test')[0];
+        assert.equal(mail.subject, `A message about your boat trip on ${t.short(DAY)} at 3pm`);
+        assert.match(mail.text, /Time: 3pm\nMeeting point: Maseline Harbour, Sark/);
+    });
+
+    it('the owner gets one summary: the message, who got it, and who could not be emailed', async () => {
+        await card({ firstName: 'Ann', lastName: 'Smith', email: 'ann@example.test', phone: '0711' });
+        await card({ firstName: 'NoMail', email: '' });
+        await card({ firstName: 'Bounce', email: 'bounce@example.test' });
+        mocks.failTo.add('bounce@example.test');
+        const res = await message({ message: 'Bring a jacket' });
+        assert.match(res.body.data, /Message sent to 1 customer on the 2pm trip on .*\. 2 not emailed \(no address, or the email failed\): see your email\./);
+        const owner = mocks.sent(t.OWNER);
+        assert.equal(owner.length, 1);
+        assert.equal(owner[0].subject, `Message sent: 2pm ${t.short(DAY)}, 1 customer`);
+        assert.match(owner[0].text, /You sent this message to everyone on the 2pm trip on .*:\n\nBring a jacket\n\nSent to 1 of 3 bookings:\n\n- Ann Smith, 2 adults, phone 0711\n\nNOT EMAILED[\s\S]*NoMail[\s\S]*Bounce/);
+    });
+
+    it('works after the trip too (a thank-you)', async () => {
+        await t.insertBooking({ date: t.day(-2), timeslot: '11am', firstName: 'Ann', email: 'ann@example.test' });
+        const res = await message({ date: t.day(-2), timeslot: '11am', message: 'Thank you for coming out with us!' });
+        assert.equal(res.body.ok, true);
+        assert.equal(mocks.sent('ann@example.test').length, 1);
+    });
+});

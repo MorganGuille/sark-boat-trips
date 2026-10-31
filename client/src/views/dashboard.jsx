@@ -7,6 +7,7 @@ import PricesForm from '../components/pricesForm'
 import ReportPanel from '../components/dashboard/reportPanel'
 import CancelTripForm from '../components/dashboard/cancelTripForm'
 import ChangeTripForm from '../components/dashboard/changeTripForm'
+import MessageTripForm from '../components/dashboard/messageTripForm'
 import LoginForm from '../components/dashboard/loginForm'
 import BookingsTable from '../components/dashboard/bookingsTable'
 import AvailabilityForm from '../components/dashboard/availabilityForm'
@@ -363,6 +364,7 @@ function Dashboard() {
                                 <>
                                     <ChangeTripForm key={`${selectedDate}|${trips.map((trip) => trip.startTime + trip.harbourKey).join()}`}
                                         selectedDate={selectedDate} trips={trips} bookings={bookings} onResult={showNotice} onDone={refreshBookings} />
+                                    <MessageTripForm selectedDate={selectedDate} trips={trips} bookings={bookings} onResult={showNotice} onDone={refreshBookings} />
                                     <CancelTripForm selectedDate={selectedDate} bookings={bookings} onResult={showNotice} onDone={refreshBookings} />
                                 </>
                             ) : null}

@@ -16,6 +16,12 @@ export const changeTrip = async (change) => {
     return res.data;
 };
 
+// Dashboard: email everyone booked on one trip. { date, timeslot, message }
+export const messageTrip = async (body) => {
+    const res = await authAxios.post(`${URL}/bookings/message-trip`, body);
+    return res.data;
+};
+
 // The usual trips, for when the day's trips can't be loaded
 export const USUAL_TRIPS = [
     { timeslot: '11am', time: '11am', startTime: '11:00', timeChanged: false, harbour: 'Creux Harbour', harbourKey: 'creux', harbourChanged: false },

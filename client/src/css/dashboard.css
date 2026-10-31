@@ -451,6 +451,44 @@ input {
     padding: 0.4rem;
 }
 
+/* Message everyone on a trip (Bookings tab, under the day's list) */
+.messageTrip {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-top: 1.5rem;
+    padding: 1rem;
+    border: 1px solid #c9d8e6;
+    border-radius: 0.5rem;
+    background: #f5f9fc;
+}
+
+.messageTrip h3 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.messageTrip label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.messageTrip select {
+    align-self: flex-start;
+}
+
+.messageTrip textarea {
+    width: 100%;
+    max-width: 36rem;
+    box-sizing: border-box;
+    font: inherit;
+    font-weight: normal;
+    padding: 0.4rem;
+}
+
 /* Cancel a whole trip (Bookings tab, under the day's list) */
 .cancelTrip {
     display: flex;

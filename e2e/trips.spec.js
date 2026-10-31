@@ -58,3 +58,25 @@ test('a customer booking that day sees the trip\'s new time, and that it leaves 
     await page.selectOption('#timeslot', '2pm');
     await expect(page.locator('.tripNote')).toContainText('leaves from the Maseline Harbour, not the Creux Harbour');
 });
+
+test('the owner messages everyone on a trip from the dashboard', async ({ page, request }) => {
+    await h.logIn(page);
+    const day = await h.pickDate(page, 5);
+    await request.post('/__test/insert-booking', { data: { date: day, timeslot: '2pm', firstName: 'Ann', email: 'ann@example.test' } });
+    await request.post('/__test/insert-booking', { data: { date: day, timeslot: '2pm', firstName: 'Bob', email: 'bob@example.test' } });
+    await page.reload();
+    await h.pickDate(page, 5);
+
+    const box = page.locator('section.messageTrip');
+    await expect(box.getByRole('button', { name: 'Nobody booked on this trip' })).toBeDisabled(); // the 11am trip is empty
+    await box.getByRole('combobox', { name: 'Trip' }).selectOption('2pm');
+    await expect(box.getByRole('button', { name: 'Send to 2pm trip' })).toBeDisabled(); // no message yet
+    await box.getByRole('textbox', { name: 'Message' }).fill("It's choppy today, please bring a warm jacket.");
+    await box.getByRole('button', { name: 'Send to 2pm trip' }).click(); // the "are you sure?" box is accepted
+
+    await notice(page, 'Message sent to 2 customers on the 2pm trip on');
+    await expect(box.getByRole('textbox', { name: 'Message' })).toHaveValue('');
+    const sent = (await h.mails(request)).filter((m) => /^A message about your boat trip/.test(m.subject));
+    expect(sent.map((m) => m.to).sort()).toEqual(['ann@example.test', 'bob@example.test']);
+    expect(sent[0].text).toContain("It's choppy today, please bring a warm jacket.");
+});
