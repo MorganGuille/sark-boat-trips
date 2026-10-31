@@ -3,10 +3,11 @@ const express = require('express'),
     requireAuth = require('../middleware/requireAuth.js'),
     asyncHandler = require('../middleware/asyncHandler.js'),
     honeypot = require('../middleware/honeypot.js'),
-    { bookingByIp, bookingByEmail, availabilityByIp } = require('../middleware/rateLimiters.js'),
+    { bookingByIp, bookingByEmail, availabilityByIp, manageViewByIp, manageChangeByIp, manageMessageByBooking } = require('../middleware/rateLimiters.js'),
     controller = require('../controllers/bookings.js'),
     checkout = require('../controllers/checkout.js'),
-    trips = require('../controllers/trips.js');
+    trips = require('../controllers/trips.js'),
+    manage = require('../controllers/manage.js');
 
 // Public: used by the booking page. Sends the customer to Stripe to save a card; the booking is
 // made once the card is saved (controllers/checkout.js).
@@ -16,6 +17,13 @@ router.post('/checkout', bookingByIp, bookingByEmail,
 router.post('/monthAvailability', availabilityByIp, asyncHandler(controller.checkMonthAvail))
 // Public: the day's trips as they are that day (the owner may have moved one), for the booking page
 router.get('/trips/:date', availabilityByIp, asyncHandler(trips.dayTrips))
+
+// Public: the customer's own booking, from the link in their emails. The long random code in the
+// address is what lets them in (controllers/manage.js).
+router.get('/manage/:token', manageViewByIp, asyncHandler(manage.view))
+router.post('/manage/:token/cancel', manageChangeByIp, asyncHandler(manage.cancel))
+router.post('/manage/:token/party', manageChangeByIp, asyncHandler(manage.changeParty))
+router.post('/manage/:token/message', manageChangeByIp, manageMessageByBooking, asyncHandler(manage.message))
 
 // Dashboard only
 router.post('/admin-add', requireAuth, asyncHandler(controller.adminAddBooking))

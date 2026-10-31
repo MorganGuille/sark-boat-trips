@@ -115,7 +115,8 @@ describe('the emails when a trip moves', () => {
         assert.match(mail.text, /Because of the tide, sorry for the change & thank you!/);
         assert.ok(mail.html.includes('sorry for the change &amp; thank you!'), 'the note is escaped in the HTML');
         assert.match(mail.text, /Time: 3pm\n/);
-        assert.match(mail.text, /If you can't make the new time, let us know and we'll cancel your booking free of charge\./);
+        assert.match(mail.text, /If you can't make the new time, you can cancel free of charge with the button below/);
+        assert.match(mail.text, /Manage your booking: http:\/\/localhost:5173\/manage\/[A-Za-z0-9_-]{32}\n/);
         assert.match(unfold(ics(mail)), /DTSTART:\d{8}T1[45]0000Z/, 'the calendar entry moves to 3pm (14:00 or 15:00 UTC)');
     });
 

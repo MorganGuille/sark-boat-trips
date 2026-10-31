@@ -16,7 +16,7 @@ Written after reading the whole codebase and testing the booking and dashboard f
 
 **Done in the sandbox (`version2`), not yet deployed:** P0-1 to P0-5, P1-1 to P1-10 (error reporting in P1-9 was skipped by the owner), P2-1 (prices and the monthly CSV report), P3-2 (lint), P2-4 in full (merged from the `payments` branch on 30 Oct; see `paymentsspec.md`: payment status with Mark paid / Undo paid, a card saved on Stripe's page for every online booking, charged automatically at the trip time, infants, the cancellation rules on `/terms` and `/privacy`, and **Cancel a whole trip**, part of P2-2), P2-10 plus the email part of P2-11 (the site sends from `info@sarkboattrips.com` through Zoho; addresses come from settings), and P2-7 (the reminder email at 6pm the evening before).
 
-**Next:** merge the `trip-tools` branch (P2-2: change a trip's time and harbour, message everyone on a trip, extra trips) into `version2`, then customer self-cancel (P2-6). Go-live steps are in `CLAUDE.md`. Anything marked DONE only counts once it is deployed.
+**Next:** merge the `trip-tools` branch (P2-2: change a trip's time and harbour, message everyone on a trip, extra trips) into `version2`, then customer self-cancel (P2-6, built on the `manage-booking` branch). Go-live steps are in `CLAUDE.md`. Anything marked DONE only counts once it is deployed.
 
 ## Summary
 
@@ -41,7 +41,7 @@ Written after reading the whole codebase and testing the booking and dashboard f
 | P2-2 | Owner | Trip tools: change a trip's time for one day, close a trip, notify everyone on it (cancel a whole trip **DONE**; change time and harbour, message everyone, and extra trips, **DONE** on the `trip-tools` branch) | M–L |
 | P2-3 | Owner | Month overview and better search | M |
 | P2-4 | Owner | Card saved at booking, charged at the trip time; payment status (see `paymentsspec.md`) (**DONE**) | L |
-| P2-6 | Customer | Manage-my-booking link (self-service change and cancel) | M |
+| P2-6 | Customer | Manage-my-booking link (self-service change and cancel): DONE | M |
 | P2-7 | Customer | Reminder email the day before (**DONE**) | S–M |
 | P2-8 | Customer | Booking form polish (price total, closed days, keep data on error) | M |
 | P2-9 | Client | Each public route prerendered separately, plus sitemap and noindex | M |
@@ -307,6 +307,7 @@ One place to find everything held for an email address, export it, and erase it 
 ### Customer side
 
 #### P2-6 `[Customer]` Manage-my-booking link
+- **Done** (1 Nov 2026, `manage-booking` branch, not yet deployed). Owner's decisions: up to the free-cancellation deadline (24 hours, 48 for charters; until the trip starts if the owner moved its time) customers can **cancel** and **add or remove people** (adding needs the seats); a different day or time is a **message** to the owner; after the deadline the page shows the contact details only; a paid booking can't be changed online; phone bookings with an email get the link too; every change emails the owner. Every booking has a short reference (`SBT-7K3F9Q`) shown in emails and on the dashboard (searchable). The terms now point to the link. See CLAUDE.md ("Manage my booking"). Tests: `manage.test.js`, `e2e/manage.spec.js`.
 A signed link in the confirmation email where the customer can view their booking and cancel it (up to a cutoff you choose) or request a change. It cuts down on phone calls and emails.
 
 The "your trip time has changed" email from P2-2 should include this link, so a customer who can't make the new time can cancel straight from the email. (Until this exists, that email just asks them to reply or contact you.)

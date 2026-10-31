@@ -73,7 +73,7 @@ const installMocks = () => {
             sendMail: async (options) => {
                 const toOwner = options.to === OWNER;
                 const fail = mocks.mailMode === 'all' || (mocks.mailMode === 'client' && !toOwner) || (mocks.mailMode === 'admin' && toOwner) || mocks.failTo.has(options.to);
-                mocks.mails.push({ from: options.from, to: options.to, subject: options.subject, html: options.html || '', text: options.text || '', attachments: options.attachments || [], result: fail ? 'failed' : 'sent' });
+                mocks.mails.push({ from: options.from, to: options.to, replyTo: options.replyTo, subject: options.subject, html: options.html || '', text: options.text || '', attachments: options.attachments || [], result: fail ? 'failed' : 'sent' });
                 if (fail) throw new Error('fake mail failure');
                 return { messageId: 'fake' };
             },

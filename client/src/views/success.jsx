@@ -62,8 +62,9 @@ function Success() {
                                 your {response.charter ? 'charter' : 'trip'} starts. If we cancel because of the weather, you won&apos;t be charged.
                             </p>
                             <p>
-                                Need to cancel? Let us know at least {response.charter ? FREE_CANCEL_HOURS.charter : FREE_CANCEL_HOURS.trip} hours
-                                before and you won&apos;t be charged. <a href='/terms'>Terms and conditions</a>
+                                Need to change the number of people, or cancel? Use the <strong>Manage your booking</strong> button in your
+                                confirmation email, up to {response.charter ? FREE_CANCEL_HOURS.charter : FREE_CANCEL_HOURS.trip} hours
+                                before, and you won&apos;t be charged for a cancellation. <a href='/terms'>Terms and conditions</a>
                             </p>
 
                             <section aria-label="Next steps" style={{ marginTop: '20px' }}>

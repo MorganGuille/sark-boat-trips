@@ -11,6 +11,7 @@ import Charters from './views/charters';
 import Dashboard from "./views/dashboard";
 import Success from "./views/success";
 import Canceled from "./views/canceled";
+import ManageBooking from "./views/manageBooking";
 import TermsPage from "./views/termsPage";
 import PrivacyPage from "./views/privacyPage";
 import NotFound from "./views/notfound";
@@ -43,6 +44,7 @@ function App() {
           <Route path='/dashboard' element={<Dashboard />} />
           <Route path='/success' element={<Success />} />
           <Route path='/canceled' element={<Canceled />} />
+          <Route path='/manage/:token' element={<ManageBooking />} />
           <Route path='/terms' element={<TermsPage />} />
           <Route path='/privacy' element={<PrivacyPage />} />
           <Route path='*' element={<NotFound />} />

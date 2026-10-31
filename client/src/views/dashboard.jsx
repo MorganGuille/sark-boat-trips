@@ -325,8 +325,8 @@ function Dashboard() {
                                     Show cancelled
                                 </label>
                                 <form className='searchForm' onSubmit={search} role='search'>
-                                    <label className='sr-only' htmlFor='lastNameSearch'>Search by last name</label>
-                                    <input id='lastNameSearch' type='search' placeholder='Search by last name'
+                                    <label className='sr-only' htmlFor='lastNameSearch'>Search by last name or booking reference</label>
+                                    <input id='lastNameSearch' type='search' placeholder='Last name or reference'
                                         value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                                     <button type='submit' className='btn btnSmall'>Search</button>
                                     {searching ? <button type='button' className='btn btnSmall btnGhost' onClick={clearSearch}>Back to day</button> : null}

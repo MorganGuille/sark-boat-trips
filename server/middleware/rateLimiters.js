@@ -34,6 +34,16 @@ module.exports = {
   // The calendar asks for one month at a time, so this is generous
   availabilityByIp: limiter({ windowMs: MINUTE, limit: 60, message: "Too many requests. Please wait a moment and try again." }),
 
+  // Manage my booking: opening the page, and the changes and messages (each one emails the owner)
+  manageViewByIp: limiter({ windowMs: MINUTE, limit: 30, message: "Too many requests. Please wait a moment and try again." }),
+  manageChangeByIp: limiter({ windowMs: 15 * MINUTE, limit: 10, message: "Too many changes. Please wait a few minutes and try again, or contact us." }),
+  manageMessageByBooking: limiter({
+    windowMs: 60 * MINUTE,
+    limit: 5,
+    message: "You've sent us several messages already. Please wait an hour, or email or phone us.",
+    keyGenerator: (req) => `manage:${String(req.params.token).slice(0, 40)}`,
+  }),
+
   // Each call asks Stripe about a payment, and the success page makes one
   verifyPaymentByIp: limiter({ windowMs: 15 * MINUTE, limit: 30, message: "Too many requests. Please wait a few minutes and try again." }),
 };

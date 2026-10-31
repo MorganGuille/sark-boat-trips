@@ -262,7 +262,9 @@ const checkMonthAvail = async (req, res) => {
 const search = async (req, res) => {
     let search = req.params.search;
     try {
-        let bookings = await Bookings.find({ lastName: { $regex: search, $options: 'i' }, ...statusFilter(req) });
+        // A surname, or a booking reference the customer reads out (SBT-7K3F9Q, with or without the SBT-)
+        const reference = String(search).trim().toUpperCase().replace(/^(SBT-?)?/, 'SBT-');
+        let bookings = await Bookings.find({ $or: [{ lastName: { $regex: search, $options: 'i' } }, { reference }], ...statusFilter(req) });
         res.send({ ok: true, data: await withAmountDue(bookings, await readPrices()) });
     } catch (error) {
         console.error("Error searching bookings:", error);

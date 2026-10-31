@@ -59,6 +59,7 @@ function BookingsTable({ bookings, showDate, trips = [], onEdit, onCancel, onRes
                                 {[booking.firstName, booking.lastName].filter(Boolean).join(' ') || '(no name)'}
                                 {booking.charter === 'true' ? <span className='badge'>Charter</span> : null}
                                 {isCancelled ? <span className='badge badgeCancelled'>Cancelled</span> : null}
+                                {booking.reference ? <span className='bookingRef'>{booking.reference}</span> : null}
                             </td>
                             <td>{guests(booking)}</td>
                             <td>

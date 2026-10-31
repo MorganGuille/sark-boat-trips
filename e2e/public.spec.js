@@ -40,7 +40,7 @@ test('a customer saves a card on Stripe\'s page, comes back to a confirmation, a
     await expect(page.locator('main')).toContainText('Visa •••• 4242');
     await expect(page.locator('main')).toContainText('nothing has been taken yet');
     await expect(page.locator('main')).toContainText('£80 will be charged when your trip starts');
-    await expect(page.locator('main')).toContainText('Let us know at least 24 hours before');
+    await expect(page.locator('main')).toContainText('Use the Manage your booking button in your confirmation email, up to 24 hours before');
 
     const saved = await h.savedBookings(request);
     expect(saved).toHaveLength(1);

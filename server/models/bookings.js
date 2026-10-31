@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { newManageToken, newReference } = require("../utils/bookingCodes");
 
 const bookingsSchema = new mongoose.Schema({
     // A day as 'YYYY-MM-DD' (see utils/dates.js)
@@ -84,11 +85,22 @@ const bookingsSchema = new mongoose.Schema({
     // The reminder email the evening before the trip (utils/reminders.js)
     reminderSentAt: { type: Date },
     reminderAttempts: { type: Number },
+    // The customer's "manage my booking" link and the short reference they quote (utils/bookingCodes.js)
+    manageToken: { type: String, index: true },
+    reference: { type: String, index: true },
     // Set on paid charters. The unique index means one Stripe payment can only ever create one booking
     stripeSessionId: {
         type: String,
         unique: true,
         sparse: true,
+    }
+});
+
+// Every new booking gets its codes, however it is made (online, dashboard)
+bookingsSchema.pre('save', function () {
+    if (this.isNew && !this.manageToken) {
+        this.manageToken = newManageToken();
+        this.reference = newReference();
     }
 });
 

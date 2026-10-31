@@ -9,6 +9,7 @@ const { longDay, shortDay } = require('../utils/dates');
 const { partyText, seatsFor } = require('../utils/party');
 const { cancelRule } = require('../utils/policy');
 const { describeTrip } = require('../utils/trips');
+const { manageUrl } = require('../utils/manage');
 
 const pounds = (pence) => `£${(pence / 100).toFixed(2).replace(/\.00$/, '')}`;
 const isCharter = (booking) => booking.charter === 'true';
@@ -35,6 +36,11 @@ const ownerEmail = (subject, content) => {
 
 const dashboardButton = () => ({ button: { text: 'Open the dashboard', link: settings.dashboardUrl } });
 
+// The customer's own "manage my booking" page (utils/manage.js), with a line saying what it is for.
+// Nothing if the booking has no link yet (withTrips gives every booking one before emailing).
+const manageButton = (booking, line) => (manageUrl(booking) ? [line, { button: { text: 'Manage your booking', link: manageUrl(booking) } }] : []);
+const MANAGE_LINE = 'To change the number of people, cancel, or send us a message, use the button below.';
+
 // ---------------------------------------------------------------- customer emails
 
 const tripDetails = (booking, extraRows = []) => ({
@@ -45,6 +51,7 @@ const tripDetails = (booking, extraRows = []) => ({
         ['Meeting point', { link: harbourOf(booking).map, text: `${harbourOf(booking).name}, Sark` }],
         ['Party', partyText(booking)],
         ...extraRows,
+        ...(booking.reference ? [['Booking reference', booking.reference]] : []),
     ],
 });
 
@@ -85,12 +92,14 @@ const confirmationEmail = (booking, amount = null) => {
                 : 'If you need to cancel, please let us know as soon as possible.',
             WEATHER,
             ...(ics ? ['To add the trip to your calendar, open the calendar file attached to this email.'] : []),
+            ...manageButton(booking, MANAGE_LINE),
             'If you have any questions, just reply to this email or give us a call.',
         ],
     }, [ics]);
 };
 
-const updatedEmail = (booking) => {
+// amount: the new price in pence, when the party size changed (the customer's own change)
+const updatedEmail = (booking, { amount } = {}) => {
     const ics = calendarFile(booking);
     return customerEmail(booking, `Your booking has changed: ${shortDay(booking.date)} at ${at(booking)}`, {
         heading: 'Your booking has been updated',
@@ -98,8 +107,9 @@ const updatedEmail = (booking) => {
         blocks: [
             dear(booking),
             "We've updated your booking. Here are the details as they are now:",
-            tripDetails(booking),
+            tripDetails(booking, amount === undefined ? [] : [paymentRow(booking, amount)]),
             ...(ics ? ['The calendar file attached to this email has the new details.'] : []),
+            ...manageButton(booking, MANAGE_LINE),
             'If anything here looks wrong, please get in touch.',
         ],
     }, [ics]);
@@ -119,7 +129,7 @@ const cancellationEmail = (booking, apology = '') =>
         preheader: cancelPaymentLine(booking.paymentStatus),
         blocks: [
             dear(booking),
-            `Your ${what(booking)} on ${longDay(booking.date)} at ${at(booking)} has been cancelled.`,
+            `Your ${what(booking)} on ${longDay(booking.date)} at ${at(booking)} has been cancelled${booking.reference ? ` (booking reference ${booking.reference})` : ''}.`,
             ...(apology ? [apology] : []),
             cancelPaymentLine(booking.paymentStatus),
             ...(apology ? [] : ['If this is a mistake, please get in touch.']),
@@ -139,6 +149,7 @@ const reminderEmail = (booking) =>
             ...beThere(booking),
             WEATHER,
             'If you can no longer come, please let us know as soon as possible.',
+            ...manageButton(booking, 'To see your booking or send us a message, use the button below.'),
         ],
     });
 
@@ -167,8 +178,13 @@ const tripChangedEmail = (booking, { before, note = '' }) => {
             ...(note.trim() ? [note.trim()] : []),
             tripDetails(booking),
             `Please be at the ${trip.harbour.name} shortly before ${trip.time}.`,
-            ...(timeMoved ? ["If you can't make the new time, let us know and we'll cancel your booking free of charge."] : []),
+            ...(timeMoved
+                ? [manageUrl(booking)
+                    ? "If you can't make the new time, you can cancel free of charge with the button below, or just let us know and we'll do it for you."
+                    : "If you can't make the new time, let us know and we'll cancel your booking free of charge."]
+                : []),
             ...(ics ? ['The calendar file attached to this email has the new details.'] : []),
+            ...manageButton(booking, timeMoved ? '' : MANAGE_LINE).filter(Boolean),
             'If you have any questions, just reply to this email or give us a call.',
         ],
     }, [ics]);
@@ -187,6 +203,7 @@ const tripMessageEmail = (booking, message) =>
             ...ownerParagraphs(message),
             `Your booking:`,
             tripDetails(booking),
+            ...manageButton(booking, MANAGE_LINE),
             'If you have any questions, just reply to this email or give us a call.',
         ],
     });
@@ -221,6 +238,7 @@ const ownerDetails = (booking, extraRows = []) => ({
         ['Email', booking.email || '(none)'],
         ['Staying at', booking.accommodation || '(not given)'],
         ['Message', booking.message || '(none)'],
+        ...(booking.reference ? [['Reference', booking.reference]] : []),
     ],
 });
 
@@ -237,8 +255,13 @@ const newBookingOwnerEmail = (booking, { amount = null, customerEmailFailed = fa
         ],
     });
 
-const updatedOwnerEmail = (booking) =>
-    ownerEmail(`Booking changed: ${nameOf(booking)}, now ${when(booking)}`, {
+// change: set when the customer changed their party size themselves (controllers/manage.js), in words
+const updatedOwnerEmail = (booking, { change } = {}) => change
+    ? ownerEmail(`Party changed by customer: ${nameOf(booking)}, now ${people(booking)}, ${when(booking)}`, {
+        heading: 'The customer changed their booking',
+        blocks: [[{ bold: change }], ownerDetails(booking), dashboardButton()],
+    })
+    : ownerEmail(`Booking changed: ${nameOf(booking)}, now ${when(booking)}`, {
         heading: 'Booking updated',
         blocks: [ownerDetails(booking), dashboardButton()],
     });
@@ -248,10 +271,12 @@ const PAYMENT_FOR_OWNER = {
     paid_in_person: 'PAID IN PERSON: refund it yourself if needed', charging: 'a charge was under way: check Stripe',
 };
 
-const cancelledOwnerEmail = (booking) =>
-    ownerEmail(`Cancelled: ${nameOf(booking)}, ${people(booking)}, ${when(booking)}`, {
-        heading: 'Booking cancelled',
+// byCustomer: they cancelled it themselves, before the free-cancellation deadline (controllers/manage.js)
+const cancelledOwnerEmail = (booking, { byCustomer = false } = {}) =>
+    ownerEmail(`Cancelled${byCustomer ? ' by customer' : ''}: ${nameOf(booking)}, ${people(booking)}, ${when(booking)}`, {
+        heading: byCustomer ? 'The customer cancelled their booking' : 'Booking cancelled',
         blocks: [
+            ...(byCustomer ? ['They cancelled it themselves from the link in their email, before the free-cancellation deadline. Their seats are free again.'] : []),
             ownerDetails(booking, [['Payment', PAYMENT_FOR_OWNER[booking.paymentStatus] || 'unpaid, nothing to refund']]),
             dashboardButton(),
         ],
@@ -267,6 +292,22 @@ const tripFullOwnerEmail = (booking, { customerEmailFailed = false } = {}) =>
             dashboardButton(),
         ],
     });
+
+// The customer sent a message from their manage-my-booking page (e.g. "can we move to the 2pm?").
+// Replying to the email answers them directly.
+const customerMessageOwnerEmail = (booking, message) => ({
+    ...ownerEmail(`Message from ${nameOf(booking)}: ${people(booking)}, ${when(booking)}`, {
+        heading: 'A message from a customer',
+        blocks: [
+            `${nameOf(booking)} sent this from their manage-my-booking page:`,
+            ...ownerParagraphs(message).map((paragraph) => [{ bold: paragraph }]),
+            booking.email ? 'Reply to this email to answer them.' : 'They have no email address on the booking, so phone them to answer.',
+            ownerDetails(booking),
+            dashboardButton(),
+        ],
+    }),
+    ...(booking.email && { replyTo: booking.email }),
+});
 
 // failures: [{ booking, amount, reason }] from utils/charges.js
 const failedChargesEmail = (failures) => {
@@ -347,5 +388,5 @@ const tripCancelledOwnerEmail = ({ date, time, named = `${time} trip`, reasonTex
 
 module.exports = {
     confirmationEmail, updatedEmail, cancellationEmail, reminderEmail, tripChangedEmail, tripMessageEmail, tripFullEmail,
-    newBookingOwnerEmail, updatedOwnerEmail, cancelledOwnerEmail, tripFullOwnerEmail, failedChargesEmail, tripCancelledOwnerEmail, tripChangedOwnerEmail, tripMessageOwnerEmail,
+    newBookingOwnerEmail, updatedOwnerEmail, cancelledOwnerEmail, customerMessageOwnerEmail, tripFullOwnerEmail, failedChargesEmail, tripCancelledOwnerEmail, tripChangedOwnerEmail, tripMessageOwnerEmail,
 };

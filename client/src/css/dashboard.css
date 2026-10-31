@@ -544,6 +544,14 @@ input {
     font-weight: 600;
 }
 
+/* The booking reference customers quote (SBT-7K3F9Q), under the name */
+.bookingRef {
+    display: block;
+    color: #5b6773;
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
 .payCardLabel {
     display: block;
     color: #5b6773;

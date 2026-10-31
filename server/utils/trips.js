@@ -103,7 +103,9 @@ const tripsFor = async (bookings) => {
 const tripOfBooking = (trips, booking) => trips.get(key(booking.date, booking.timeslot));
 
 // The bookings as plain objects with .trip added, ready for the emails (emails/index.js)
+// Every booking also gets its manage-my-booking codes first (utils/manage.js), so customer emails can link to it.
 const withTrips = async (bookings) => {
+    await require('./manage').ensureManageLinks(bookings);
     const trips = await tripsFor(bookings);
     return bookings.map((b) => ({ ...(typeof b.toObject === 'function' ? b.toObject() : b), trip: tripOfBooking(trips, b) }));
 };

@@ -1,0 +1,158 @@
+/* "Manage my booking" (views/manageBooking.jsx). Scoped under .manageBooking. No <form> on the page,
+   because bookingForm.css styles every form on the site. */
+.manageBooking {
+    max-width: 40rem;
+    margin: 0 auto;
+    padding: 6rem 16px 3rem; /* clears the navbar */
+}
+
+.manageBooking h1 {
+    font-size: 2.2rem;
+    margin-bottom: 0.5em;
+}
+
+.manageBooking h2 {
+    font-size: 1.3rem;
+    margin: 0 0 0.6em;
+}
+
+.manageBooking p {
+    margin: 0 0 0.8em;
+}
+
+.manageBooking .muted {
+    color: #5b6b78;
+}
+
+.manageCard {
+    background: #ffffff;
+    border-radius: 0.6em;
+    padding: 1.2em;
+    margin-bottom: 1.2em;
+}
+
+.manageDetails {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 0.4em 1.2em;
+}
+
+.manageDetails dt {
+    color: #5b6b78;
+}
+
+.manageDetails dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.manageNote {
+    margin-top: 0.8em !important;
+    font-style: italic;
+}
+
+.manageDeadline {
+    background: #e7f7f1;
+    border-left: 4px solid #04BF8A;
+    padding: 0.8em 1em;
+    border-radius: 0.3em;
+}
+
+.manageParty {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1em;
+    margin-bottom: 0.8em;
+}
+
+.manageParty label,
+.manageMessage {
+    display: flex;
+    flex-direction: column;
+    font-weight: bold;
+}
+
+.manageParty label span {
+    font-weight: normal;
+    font-size: 0.85em;
+    color: #5b6b78;
+}
+
+.manageParty input {
+    width: 7em;
+    padding: 0.4em;
+    font-size: 1rem;
+    margin: 0.2em 0 0; /* dashboard.css has a global input rule with side margins */
+}
+
+.manageMessage textarea {
+    margin-top: 0.3em;
+    padding: 0.5em;
+    font-size: 1rem;
+    font-weight: normal;
+    resize: vertical;
+}
+
+.manageBooking .btn {
+    margin: 0.5em 0 0;
+    font-size: 1rem;
+}
+
+.manageBooking .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.manageBooking .btnDanger {
+    background-color: #c0392b;
+}
+
+.manageBooking .btnDanger:hover:not(:disabled) {
+    background-color: #962d22;
+}
+
+.manageNotice {
+    padding: 0.8em 1em;
+    border-radius: 0.3em;
+    font-weight: bold;
+}
+
+.manageNotice.success {
+    background: #e7f7f1;
+    color: #0b5e44;
+}
+
+.manageNotice.error {
+    background: #fdecea;
+    color: #8a1f14;
+}
+
+.manageContact {
+    font-style: normal;
+    margin-top: 0.8em;
+}
+
+.manageContact p {
+    margin: 0 0 0.3em;
+}
+
+.manageContact a {
+    white-space: nowrap;
+}
+
+/* On a phone each detail's name goes above it, so the values get the full width */
+@media (max-width: 500px) {
+    .manageDetails {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+
+    .manageDetails dt {
+        font-size: 0.85em;
+        margin-top: 0.5em;
+    }
+
+    .manageParty input {
+        width: 5.5em;
+    }
+}
