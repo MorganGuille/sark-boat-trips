@@ -125,6 +125,7 @@
 }
 
 .calendarDisplay {
+    position: relative; /* keeps the visually hidden "moved from" text inside the box */
     width: 350px;
     background-color: white;
     margin-top: 1em;
@@ -137,13 +138,44 @@
 }
 
 .calendarDisplay div {
+    /* the same two columns on every row, so the times and the spaces line up underneath each other */
     width: 100%;
-    display: flex;
-    justify-content: space-evenly;
+    display: grid;
+    grid-template-columns: 7em 11em;
+    justify-content: center;
+    column-gap: 1em;
+    justify-items: start;
+}
+
+/* times on the left, spaces on the right */
+.calendarDisplay div > :last-child {
+    justify-self: end;
 }
 
 .calendarDisplay span {
     margin: 0.2em;
+}
+
+/* A trip moved for the day: the new time, with the usual one crossed out underneath */
+.calendarDisplay .tripTime {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    line-height: 1.1;
+}
+
+.calendarDisplay .tripTime span {
+    margin: 0;
+}
+
+.movedTime {
+    color: #b45309;
+    font-weight: 700;
+}
+
+.usualTime {
+    color: #6b7280;
+    font-size: 0.8em;
 }
 
 .fully-booked {

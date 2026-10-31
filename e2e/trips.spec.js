@@ -14,7 +14,7 @@ const notice = (page, text) => expect(page.locator('.notice')).toContainText(tex
 test('the owner moves a trip to another time and harbour; the customer is emailed and the day shows it', async ({ page, request }) => {
     await h.logIn(page);
     const day = await h.pickDate(page, 5);
-    await request.post('/__test/insert-booking', { data: { date: day, timeslot: '11am', firstName: 'Ann', email: 'ann@example.test' } });
+    await request.post('/__test/insert-booking', { data: { date: day, timeslot: '11am', firstName: 'Ann', email: 'ann@example.test', adults: 3 } });
     await page.reload();
     await h.pickDate(page, 5);
     await expect(page.locator('tr:has-text("Ann")')).toBeVisible();
@@ -28,8 +28,15 @@ test('the owner moves a trip to another time and harbour; the customer is emaile
 
     await notice(page, 'now leaves at 12:30pm from the Maseline Harbour. 1 customer emailed.');
     await expect(page.locator('.tripMoved')).toContainText('The 11am trip leaves at 12:30pm from the Maseline Harbour today');
-    await expect(page.locator('tr:has-text("Ann") td').first()).toHaveText('12:30pmusually 11am');
-    await expect(page.locator('.calendarDisplay')).toContainText('12:30 PM (moved from 11am): 10 spaces available');
+    // like a departures board: the new time, with the usual one crossed out underneath
+    await expect(page.locator('tr:has-text("Ann") td .movedTime')).toHaveText('12:30pm');
+    await expect(page.locator('tr:has-text("Ann") td s.usualTime')).toHaveText('moved from 11am');
+    await expect(page.locator('.calendarDisplay .movedTime')).toHaveText('12:30 PM:');
+    await expect(page.locator('.calendarDisplay s.usualTime')).toHaveText('moved from 11:00 AM');
+    await expect(page.locator('.calendarDisplay')).toContainText('9 spaces available');
+    // the spaces are right-aligned: "9 spaces" and "12 spaces" end at the same place
+    const right = async (selector) => { const box = await page.locator(selector).boundingBox(); return Math.round(box.x + box.width); };
+    expect(await right('.calendarDisplay div:nth-of-type(1) > span:last-child')).toBe(await right('.calendarDisplay div:nth-of-type(2) > span:last-child'));
     await expect(box.getByRole('combobox', { name: 'Trip', exact: true })).toContainText('12:30pm (usually 11am) trip (1 booking)');
 
     const toAnn = (await h.mails(request)).filter((m) => m.to === 'ann@example.test');
@@ -51,9 +58,15 @@ test('a customer booking that day sees the trip\'s new time, and that it leaves 
     await page.goto('/bookings');
     await h.pickDate(page, 6);
     await expect(page.locator('#timeslot option[value="2pm"]')).toHaveText('3pm (moved from 2pm)');
-    await expect(page.locator('.calendarDisplay')).toContainText('3:00 PM (moved from 2pm): 12 spaces available');
+    await expect(page.locator('.calendarDisplay .movedTime')).toHaveText('3:00 PM:');
+    await expect(page.locator('.calendarDisplay s.usualTime')).toHaveText('moved from 2:00 PM');
     await expect(page.locator('.calendarDisplay')).not.toContainText('Maseline');
     await expect(page.locator('.calendarDisplay')).toContainText('11:00 AM: 12 spaces available');
+    // the moved time lines up with the other trip's time, and its crossed-out time sits under it on the left
+    const left = async (selector) => Math.round((await page.locator(selector).boundingBox()).x);
+    const usualLeft = await left('.calendarDisplay div:nth-of-type(1) > span:first-child');
+    expect(await left('.calendarDisplay .movedTime')).toBe(usualLeft);
+    expect(await left('.calendarDisplay s.usualTime')).toBe(usualLeft);
     await expect(page.locator('.tripNote')).toHaveCount(0); // the 11am trip is chosen, and it hasn't moved
     await page.selectOption('#timeslot', '2pm');
     await expect(page.locator('.tripNote')).toContainText('leaves from the Maseline Harbour, not the Creux Harbour');

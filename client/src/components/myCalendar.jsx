@@ -83,10 +83,18 @@ function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate, refreshKe
             .catch(() => { if (current) setTrips(USUAL_TRIPS); });
         return () => { current = false; };
     }, [day, refreshKey]);
+    // A moved trip shows its new time with the usual one crossed out underneath, like a departures board.
+    // The harbour isn't shown here (no room, and the two harbours are 100m apart): the booking form says it.
     const tripLabel = (slot) => {
-        const trip = trips.find((t) => t.timeslot === slot) || USUAL_TRIPS.find((t) => t.timeslot === slot);
-        // the harbour isn't shown here (no room, and the two harbours are 100m apart): the booking form says it
-        return `${clock(trip.startTime)}${trip.timeChanged ? ` (moved from ${slot})` : ''}: `;
+        const usual = USUAL_TRIPS.find((t) => t.timeslot === slot);
+        const trip = trips.find((t) => t.timeslot === slot) || usual;
+        if (!trip.timeChanged) return <span>{clock(trip.startTime)}: </span>;
+        return (
+            <span className='tripTime'>
+                <span className='movedTime'>{clock(trip.startTime)}:</span>
+                <s className='usualTime'><span className='sr-only'>moved from </span>{clock(usual.startTime)}</s>
+            </span>
+        );
     };
 
     const handleDateChange = (date) => {
@@ -156,7 +164,7 @@ function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate, refreshKe
             >
                 <p>Availability for : {date.toDateString()}:</p>
                 <div>
-                    <span>{tripLabel('11am')}</span>
+                    {tripLabel('11am')}
                     <span style={{ color: color11am() }}>
                         {!availability[toDay(date)] && availability[toDay(date)] !== 0
                             ? <span className='loader' aria-label="Loading spaces"></span>
@@ -164,7 +172,7 @@ function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate, refreshKe
                     </span>
                 </div>
                 <div>
-                    <span>{tripLabel('2pm')}</span>
+                    {tripLabel('2pm')}
                     <span style={{ color: color2pm() }}>
                         {!availability[toDay(date)] && availability[toDay(date)] !== 0
                             ? <span className='loader' aria-label="Loading spaces"></span>
