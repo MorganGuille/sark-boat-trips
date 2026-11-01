@@ -55,6 +55,8 @@ const PROTECTED = [
     ['post', '/bookings/updateavailability', { date: t.day(5), timeslot: '11am', capacity: '5' }],
     ['get', `/bookings/${t.day(5)}`],
     ['get', '/bookings/search/smith'],
+    ['get', '/bookings/search?q=smith'],
+    ['get', '/bookings/upcoming'],
     ['post', '/notes', { date: t.day(5), content: 'hello' }],
     ['get', `/notes/${t.day(5)}`],
     ['delete', '/notes/64b000000000000000000000'],

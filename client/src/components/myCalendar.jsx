@@ -16,9 +16,11 @@ const clock = (startTime) => {
 
 // dayPanel: the box under the calendar listing the chosen day's trips and spaces (the dashboard's;
 // the customer pages show trip cards in the booking form instead). initialDate: the day to start on.
+// value: the chosen day ('YYYY-MM-DD') when it can also be chosen elsewhere (the dashboard's Open day).
 // On the customer pages days before today, or outside the season, can't be picked.
-function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate, refreshKey, dayPanel = true, initialDate }) {
-    const [date, setDate] = useState(() => (initialDate && parseDay(initialDate)) || new Date());
+function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate, refreshKey, dayPanel = true, initialDate, value }) {
+    const [ownDate, setDate] = useState(() => (initialDate && parseDay(initialDate)) || new Date());
+    const date = useMemo(() => (value && parseDay(value)) || ownDate, [value, ownDate]);
     const [availability, setAvailability] = useState({});
     // The chosen day's trips: the owner may have moved one to another time or harbour that day
     const [trips, setTrips] = useState(USUAL_TRIPS);

@@ -8,6 +8,7 @@ import ReportPanel from '../components/dashboard/reportPanel'
 import CancelTripForm from '../components/dashboard/cancelTripForm'
 import ChangeTripForm from '../components/dashboard/changeTripForm'
 import MessageTripForm from '../components/dashboard/messageTripForm'
+import BookingsByDay from '../components/dashboard/bookingsByDay'
 import AddTripForm from '../components/dashboard/addTripForm'
 import LoginForm from '../components/dashboard/loginForm'
 import BookingsTable from '../components/dashboard/bookingsTable'
@@ -39,8 +40,8 @@ const sortBookings = (bookings) =>
         (a.status === 'cancelled') - (b.status === 'cancelled') ||
         (a.lastName || '').localeCompare(b.lastName || ''))
 
-// The search endpoint treats the term as a regex, so match what was typed literally
-const escapeRegex = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+// How far ahead the upcoming list looks (GET /bookings/upcoming?days=...)
+const UPCOMING_CHOICES = [['7', 'Next 7 days'], ['14', 'Next 14 days'], ['30', 'Next 30 days'], ['all', 'All upcoming']]
 
 function Dashboard() {
 
@@ -48,8 +49,13 @@ function Dashboard() {
     const [loginError, setLoginError] = useState('')
     const [selectedDate, setSelectedDate] = useState(() => toDay(new Date()))
     const [tab, setTab] = useState('bookings')
+    // What the Bookings tab shows: the chosen day, the upcoming bookings, or search results (spec P2-3)
     const [view, setView] = useState({ type: 'date' })
+    const [upcomingDays, setUpcomingDays] = useState('7')
     const [searchTerm, setSearchTerm] = useState('')
+    const [searchFrom, setSearchFrom] = useState('')
+    const [searchTo, setSearchTo] = useState('')
+    const [bookingsError, setBookingsError] = useState('')
     const [showCancelled, setShowCancelled] = useState(false)
     const [bookings, setBookings] = useState([])
     const [bookingsStatus, setBookingsStatus] = useState('loading')
@@ -69,18 +75,20 @@ function Dashboard() {
         return () => window.removeEventListener(LOGOUT_EVENT, onLogout)
     }, [])
 
-    // Bookings for the selected day, or search results
+    // Bookings for the selected day, the upcoming list, or search results
     useEffect(() => {
         if (!loggedin) return
         let cancelled = false
 
         const loadBookings = async () => {
             setBookingsStatus('loading')
+            setBookingsError('')
+            const params = showCancelled ? { includeCancelled: true } : {}
+            const [path, extra] = view.type === 'search' ? ['search', { q: view.term || undefined, from: view.from || undefined, to: view.to || undefined }]
+                : view.type === 'upcoming' ? ['upcoming', { days: upcomingDays }]
+                    : [selectedDate, {}]
             try {
-                const path = view.type === 'search'
-                    ? `search/${encodeURIComponent(escapeRegex(view.term))}`
-                    : selectedDate
-                const res = await authAxios.get(`${URL}/bookings/${path}`, { params: showCancelled ? { includeCancelled: true } : {} })
+                const res = await authAxios.get(`${URL}/bookings/${path}`, { params: { ...params, ...extra } })
                 if (cancelled) return
                 setBookings(sortBookings(res.data.data))
                 setBookingsStatus('ready')
@@ -88,13 +96,14 @@ function Dashboard() {
                 if (cancelled) return
                 console.error(error)
                 setBookings([])
+                setBookingsError(error.response?.status === 400 ? error.response.data?.data || '' : '')
                 setBookingsStatus('error')
             }
         }
         loadBookings()
 
         return () => { cancelled = true }
-    }, [loggedin, view, selectedDate, showCancelled, refreshKey])
+    }, [loggedin, view, upcomingDays, selectedDate, showCancelled, refreshKey])
 
     // The selected day's trips: the owner may have moved one to another time or harbour
     useEffect(() => {
@@ -156,12 +165,23 @@ function Dashboard() {
     const search = (e) => {
         e.preventDefault()
         const term = searchTerm.trim()
-        setView(term ? { type: 'search', term } : { type: 'date' })
+        setEditing(null)
+        setView(term || searchFrom || searchTo ? { type: 'search', term, from: searchFrom, to: searchTo } : { type: 'date' })
     }
 
+    // Back to the day picked on the calendar, forgetting the search
     const clearSearch = () => {
         setSearchTerm('')
+        setSearchFrom('')
+        setSearchTo('')
+        setEditing(null)
         setView({ type: 'date' })
+    }
+
+    // Open day, from the upcoming list or search results: that day, with its Edit, Mark paid and Cancel buttons
+    const openDay = (date) => {
+        clearSearch()
+        setSelectedDate(date)
     }
 
     const bookingAction = async (path, booking) => {
@@ -254,6 +274,7 @@ function Dashboard() {
     const cancelledCount = bookings.length - activeBookings.length
     const guestCount = activeBookings.reduce((sum, b) => sum + (Number(b.adults) || 0) + (Number(b.children) || 0) + (Number(b.infants) || 0), 0)
     const searching = view.type === 'search'
+    const dayView = view.type === 'date' // the day's bookings are loaded (not the upcoming list or search results)
 
     return (<>
         <title>Sark Boat Trips | Dashboard</title>
@@ -273,7 +294,7 @@ function Dashboard() {
             <div className='dashGrid'>
                 <aside className='dashSide dashCard' aria-label='Calendar'>
                     <MyCalendar setSelectedDate={setSelectedDate} seasonStartDate={season.start}
-                        seasonEndDate={season.end} refreshKey={refreshKey}
+                        seasonEndDate={season.end} refreshKey={refreshKey} value={selectedDate}
                     />
                 </aside>
 
@@ -304,56 +325,86 @@ function Dashboard() {
                         </>) : null}
 
                         {tab === 'bookings' && !editing ? (<>
+                            <div className='viewSwitch' role='group' aria-label='Show bookings for'>
+                                <button type='button' aria-pressed={dayView} onClick={clearSearch}>Day</button>
+                                <button type='button' aria-pressed={view.type === 'upcoming'}
+                                    onClick={() => { clearSearch(); setView({ type: 'upcoming' }) }}>Upcoming</button>
+                            </div>
                             <div className='panelHead'>
                                 <div>
-                                    <h2>{searching ? `Results for “${view.term}”` : prettyDate(selectedDate)}</h2>
+                                    <h2>{view.type === 'upcoming' ? 'Upcoming bookings'
+                                        : searching ? (view.term ? `Results for “${view.term}”` : 'Bookings by date')
+                                            : prettyDate(selectedDate)}</h2>
                                     <p className='muted'>
-                                        {bookingsStatus === 'ready'
-                                            ? (bookings.length
-                                                ? [
-                                                    activeBookings.length
-                                                        ? `${activeBookings.length} booking${activeBookings.length === 1 ? '' : 's'} · ${guestCount} guest${guestCount === 1 ? '' : 's'}`
-                                                        : 'No active bookings',
-                                                    cancelledCount ? `${cancelledCount} cancelled` : null,
-                                                ].filter(Boolean).join(' · ')
-                                                : 'No bookings')
-                                            : ' '}
+                                        {[
+                                            view.type === 'upcoming' ? 'From today' : null,
+                                            searching && (view.from || view.to)
+                                                ? [view.from ? `from ${prettyDate(view.from)}` : null, view.to ? `to ${prettyDate(view.to)}` : null].filter(Boolean).join(' ')
+                                                : null,
+                                            bookingsStatus === 'ready'
+                                                ? (bookings.length
+                                                    ? [
+                                                        activeBookings.length
+                                                            ? `${activeBookings.length} booking${activeBookings.length === 1 ? '' : 's'} · ${guestCount} guest${guestCount === 1 ? '' : 's'}`
+                                                            : 'No active bookings',
+                                                        cancelledCount ? `${cancelledCount} cancelled` : null,
+                                                    ].filter(Boolean).join(' · ')
+                                                    : 'No bookings')
+                                                : null,
+                                        ].filter(Boolean).join(' · ') || ' '}
                                     </p>
                                 </div>
                                 <div className='bookingsTools'>
-                                <label className='toggle'>
-                                    <input type='checkbox' checked={showCancelled} onChange={(e) => setShowCancelled(e.target.checked)} />
-                                    Show cancelled
-                                </label>
-                                <form className='searchForm' onSubmit={search} role='search'>
-                                    <label className='sr-only' htmlFor='lastNameSearch'>Search by last name or booking reference</label>
-                                    <input id='lastNameSearch' type='search' placeholder='Last name or reference'
-                                        value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-                                    <button type='submit' className='btn btnSmall'>Search</button>
-                                    {searching ? <button type='button' className='btn btnSmall btnGhost' onClick={clearSearch}>Back to day</button> : null}
-                                </form>
+                                    {view.type === 'upcoming' ? (<>
+                                        <label className='sr-only' htmlFor='upcomingDays'>How far ahead</label>
+                                        <select id='upcomingDays' value={upcomingDays} onChange={(e) => setUpcomingDays(e.target.value)}>
+                                            {UPCOMING_CHOICES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                                        </select>
+                                    </>) : null}
+                                    <label className='toggle'>
+                                        <input type='checkbox' checked={showCancelled} onChange={(e) => setShowCancelled(e.target.checked)} />
+                                        Show cancelled
+                                    </label>
                                 </div>
                             </div>
+                            <form className='searchForm' onSubmit={search} role='search'>
+                                <label className='sr-only' htmlFor='bookingSearch'>Search by name, email, phone or booking reference</label>
+                                <input id='bookingSearch' type='search' placeholder='Name, email, phone or reference'
+                                    value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                                <label htmlFor='searchFrom'>From</label>
+                                <input id='searchFrom' type='date' value={searchFrom} max={searchTo || undefined} onChange={(e) => setSearchFrom(e.target.value)} />
+                                <label htmlFor='searchTo'>to</label>
+                                <input id='searchTo' type='date' value={searchTo} min={searchFrom || undefined} onChange={(e) => setSearchTo(e.target.value)} />
+                                <button type='submit' className='btn btnSmall'>Search</button>
+                                {searching ? <button type='button' className='btn btnSmall btnGhost' onClick={clearSearch}>Back to day</button> : null}
+                            </form>
 
-                            {!searching && movedTrips.length ? (
+                            {dayView && movedTrips.length ? (
                                 <p className='tripMoved' role='note'>
                                     {movedTrips.map((trip) => `The ${trip.extra ? trip.name : `${trip.timeslot} trip`} leaves at ${trip.time} from the ${trip.harbour} today`).join('. ')}.
                                 </p>
                             ) : null}
 
                             {bookingsStatus === 'loading' ? <p className='muted' aria-busy='true'>Loading bookings…</p> : null}
-                            {bookingsStatus === 'error' ? <p className='seasonError' role='alert'>Could not load bookings. Try again in a moment.</p> : null}
-                            {bookingsStatus === 'ready' && bookings.length ? (
-                                <BookingsTable bookings={bookings} showDate={searching} trips={trips}
+                            {bookingsStatus === 'error' ? <p className='seasonError' role='alert'>{bookingsError || 'Could not load bookings. Try again in a moment.'}</p> : null}
+                            {bookingsStatus === 'ready' && bookings.length && dayView ? (
+                                <BookingsTable bookings={bookings} trips={trips}
                                     onEdit={setEditing} onCancel={cancelBooking}
                                     onRestore={restoreBooking} onDeletePermanently={deletePermanently}
                                     onMarkPaid={markPaid} onMarkUnpaid={markUnpaid} />
                             ) : null}
+                            {bookingsStatus === 'ready' && bookings.length && !dayView ? (
+                                <BookingsByDay bookings={bookings} onOpenDay={openDay} />
+                            ) : null}
                             {bookingsStatus === 'ready' && !bookings.length ? (
-                                <p className='emptyState'>{searching ? 'No bookings found with that last name.' : 'Nothing booked for this day yet.'}</p>
+                                <p className='emptyState'>
+                                    {view.type === 'upcoming' ? `No bookings in the ${UPCOMING_CHOICES.find(([value]) => value === upcomingDays)[1].toLowerCase().replace('all upcoming', 'future')}.`
+                                        : searching ? 'No bookings found. Try part of a name, an email, a phone number or a reference.'
+                                            : 'Nothing booked for this day yet.'}
+                                </p>
                             ) : null}
 
-                            {!searching && notes.length ? (
+                            {dayView && notes.length ? (
                                 <div className='dayNote'>
                                     <strong>Notes</strong>
                                     <button type='button' className='btnLink' onClick={() => changeTab('notes')}>Manage</button>
@@ -371,16 +422,16 @@ function Dashboard() {
                                     <p className='muted'>These act on the day picked on the calendar.</p>
                                 </div>
                             </div>
-                            {searching ? (
-                                // bookings holds the search results then, not the day's bookings
+                            {!dayView ? (
+                                // bookings holds the upcoming list or search results then, not the day's bookings
                                 <p className='emptyState'>
-                                    Showing search results.{' '}
+                                    Showing {searching ? 'search results' : 'upcoming bookings'}.{' '}
                                     <button type='button' className='btnLink' onClick={clearSearch}>Back to the day</button> to use the trip tools.
                                 </p>
                             ) : null}
-                            {!searching && bookingsStatus === 'loading' ? <p className='muted' aria-busy='true'>Loading the day…</p> : null}
-                            {!searching && bookingsStatus === 'error' ? <p className='seasonError' role='alert'>Could not load the day&apos;s bookings. Try again in a moment.</p> : null}
-                            {!searching && bookingsStatus === 'ready' ? (<>
+                            {dayView && bookingsStatus === 'loading' ? <p className='muted' aria-busy='true'>Loading the day…</p> : null}
+                            {dayView && bookingsStatus === 'error' ? <p className='seasonError' role='alert'>Could not load the day&apos;s bookings. Try again in a moment.</p> : null}
+                            {dayView && bookingsStatus === 'ready' ? (<>
                                 <ChangeTripForm key={`${selectedDate}|${trips.map((trip) => trip.startTime + trip.harbourKey).join()}`}
                                     selectedDate={selectedDate} trips={trips} bookings={bookings} onResult={showNotice} onDone={refreshBookings} />
                                 <MessageTripForm selectedDate={selectedDate} trips={trips} bookings={bookings} onResult={showNotice} onDone={refreshBookings} />
@@ -397,9 +448,9 @@ function Dashboard() {
                         ) : null}
 
                         {tab === 'extra' ? (
-                            // bookings is null while searching: the day's bookings aren't loaded then
+                            // bookings is null in the upcoming list and search results: the day's bookings aren't loaded then
                             <AddTripForm key={`${selectedDate}|${prices?.adult}|${prices?.child}`} selectedDate={selectedDate} trips={trips}
-                                bookings={searching ? null : bookings} prices={prices} onResult={showNotice} onDone={refreshBookings} />
+                                bookings={dayView ? bookings : null} prices={prices} onResult={showNotice} onDone={refreshBookings} />
                         ) : null}
 
                         {tab === 'report' ? (

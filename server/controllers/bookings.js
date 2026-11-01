@@ -9,7 +9,7 @@ const { seatsFor, partyText } = require('../utils/party');
 const emails = require('../emails');
 const { withTrip, withTrips, getTrip, findTrip, getTripsForDay, tripsFor, tripOfBooking } = require('../utils/trips');
 const { isMonth, monthRange, buildReport, toCsv } = require('../utils/report');
-const { validatePublicBooking, validateAdminBooking, validateAvailabilitySetting } = require('../utils/validateBooking');
+const { validatePublicBooking, validateAdminBooking, validateAvailabilitySetting, guernseyToday } = require('../utils/validateBooking');
 
 
 const updateAvailability = async (req, res) => {
@@ -259,17 +259,77 @@ const checkMonthAvail = async (req, res) => {
 };
 
 
-const search = async (req, res) => {
-    let search = req.params.search;
-    try {
-        // A surname, or a booking reference the customer reads out (SBT-7K3F9Q, with or without the SBT-)
-        const reference = String(search).trim().toUpperCase().replace(/^(SBT-?)?/, 'SBT-');
-        let bookings = await Bookings.find({ $or: [{ lastName: { $regex: search, $options: 'i' } }, { reference }], ...statusFilter(req) });
-        res.send({ ok: true, data: await withAmountDue(bookings, await readPrices()) });
-    } catch (error) {
-        console.error("Error searching bookings:", error);
-        res.status(500).send({ ok: false, data: "An error occurred. Please try again later." });
+// ---------- Search and the upcoming list (spec P2-3) ----------
+
+// Matched literally, never as a pattern (what the owner types could otherwise be a slow or broken regex)
+const escapeRegex = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+// Typed like a phone number: only digits, spaces, +, brackets and dashes, with at least 4 digits
+const looksLikePhone = (text) => /^[\d\s+()-]+$/.test(text) && text.replace(/\D/g, '').length >= 4;
+
+// What to look for: a phone number in the phone field whatever its spaces, and with or without +44 or the
+// leading 0 (07700 900123 finds +44 7700 900123); otherwise a booking reference (SBT-7K3F9Q, with or
+// without the SBT-), or every word in the first name, last name or email (Ann Smith, smith@, ann)
+const searchFilter = (text) => {
+    if (looksLikePhone(text)) {
+        const digits = text.replace(/\D/g, '').replace(/^(44|0)/, '');
+        return { phone: { $regex: digits.split('').join('\\D*') } };
     }
+    const reference = text.toUpperCase().replace(/\s/g, '').replace(/^(SBT-?)?/, 'SBT-');
+    const words = text.split(/\s+/).filter(Boolean);
+    const inDetails = words.map((word) => ({
+        $or: ['firstName', 'lastName', 'email'].map((field) => ({ [field]: { $regex: escapeRegex(word), $options: 'i' } })),
+    }));
+    return { $or: [{ reference }, { $and: inDetails }] };
+};
+
+const MAX_RESULTS = 500;
+
+// The bookings found, in date and trip order, as the day view sends them
+const sendList = async (res, filter) => {
+    const bookings = await Bookings.find(filter).sort({ date: 1 }).limit(MAX_RESULTS);
+    const list = await withAmountDue(bookings, await readPrices());
+    list.sort((a, b) => (a.date || '').localeCompare(b.date || '') || (a.tripStart || '').localeCompare(b.tripStart || ''));
+    res.send({ ok: true, data: list, more: bookings.length === MAX_RESULTS });
+};
+
+// GET /bookings/search?q=...&from=YYYY-MM-DD&to=YYYY-MM-DD: either or both; no dates means every booking, past and future
+const search = async (req, res) => {
+    const text = typeof req.query.q === 'string' ? req.query.q.trim().slice(0, 100) : '';
+    const { from, to } = req.query;
+    if (!text && !from && !to) {
+        return res.status(400).send({ ok: false, data: 'Type a name, email, phone or reference, or pick dates.' });
+    }
+    if ((from && !isDay(from)) || (to && !isDay(to))) {
+        return res.status(400).send({ ok: false, data: 'Invalid date.' });
+    }
+    if (from && to && from > to) { // YYYY-MM-DD text sorts in date order
+        return res.status(400).send({ ok: false, data: 'The "from" date is after the "to" date.' });
+    }
+    const dates = from || to ? { date: { ...(from && { $gte: from }), ...(to && { $lte: to }) } } : {};
+    await sendList(res, { ...(text && searchFilter(text)), ...dates, ...statusFilter(req) });
+};
+
+// The old address, /bookings/search/<text>: the same search without dates
+const searchByPath = (req, res) => search({ ...req, query: { ...req.query, q: req.params.search } }, res);
+
+// 'YYYY-MM-DD' plus n days
+const addDays = (day, n) => {
+    const date = new Date(`${day}T00:00:00Z`);
+    date.setUTCDate(date.getUTCDate() + n);
+    return date.toISOString().slice(0, 10);
+};
+
+// GET /bookings/upcoming?days=7|14|30|all: every booking from today (Guernsey time) for that many days, today included
+const UPCOMING_DAYS = ['7', '14', '30', 'all'];
+const upcoming = async (req, res) => {
+    const days = String(req.query.days ?? '7');
+    if (!UPCOMING_DAYS.includes(days)) {
+        return res.status(400).send({ ok: false, data: 'Choose 7, 14 or 30 days, or all.' });
+    }
+    const today = guernseyToday();
+    const date = { $gte: today, ...(days !== 'all' && { $lt: addDays(today, Number(days)) }) };
+    await sendList(res, { date, ...statusFilter(req) });
 };
 
 
@@ -485,5 +545,5 @@ const cancelTrip = async (req, res) => {
     });
 };
 
-module.exports = { cancelTrip, markPaid, markUnpaid, monthlyReport, adminAddBooking, cancelBooking, restoreBooking, permanentlyDeleteBooking, checkDate, checkMonthAvail, search, updateBooking, updateAvailability }
+module.exports = { cancelTrip, markPaid, markUnpaid, monthlyReport, adminAddBooking, cancelBooking, restoreBooking, permanentlyDeleteBooking, checkDate, checkMonthAvail, search, searchByPath, upcoming, updateBooking, updateAvailability }
 

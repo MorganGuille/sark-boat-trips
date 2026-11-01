@@ -377,8 +377,117 @@ input {
     gap: 0.5rem;
 }
 
-.searchForm input {
-    min-width: 14rem;
+.searchForm {
+    margin-bottom: 1rem;
+}
+
+.searchForm input[type='search'] {
+    min-width: 16rem;
+}
+
+.searchForm label {
+    font-size: 0.9rem;
+}
+
+/* ---------- Day / Upcoming switch, and the upcoming and search lists (spec P2-3) ---------- */
+
+.viewSwitch {
+    display: inline-flex;
+    border: 1px solid #cfd6de;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    margin-bottom: 0.9rem;
+}
+
+.dashboard .viewSwitch button {
+    border: 0;
+    border-radius: 0;
+    margin: 0;
+    width: auto;
+    padding: 0.45rem 1.1rem;
+    background: white;
+    color: #213547;
+    font: inherit;
+    font-size: 0.95rem;
+    cursor: pointer;
+}
+
+.dashboard .viewSwitch button[aria-pressed='true'] {
+    background: #213547;
+    color: white;
+}
+
+.dashboard .viewSwitch button:focus-visible {
+    outline: 3px solid #0f7ae5;
+    outline-offset: -3px;
+}
+
+.byDayGroup {
+    border: 1px solid #e1e4e8;
+    border-radius: 0.6rem;
+    margin-bottom: 0.8rem;
+    overflow: hidden;
+}
+
+.byDayHead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.25rem 0.75rem;
+    padding: 0.55rem 0.9rem;
+    background: #f4f6f8;
+}
+
+.byDayHead h3 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.byDayHead .muted {
+    flex: 1;
+    font-size: 0.9rem;
+}
+
+.dashboard .byDayHead .btnLink {
+    margin: 0;
+    font-weight: 600;
+}
+
+.byDayRows {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.byDayRow {
+    display: grid;
+    grid-template-columns: 6rem minmax(9rem, 1.3fr) minmax(8rem, 1fr) 8rem minmax(10rem, 1.3fr);
+    gap: 0.75rem;
+    align-items: start;
+    padding: 0.6rem 0.9rem;
+    border-top: 1px solid #e1e4e8;
+    font-size: 0.95rem;
+}
+
+.byDayTime {
+    font-weight: 600;
+}
+
+.byDayContact {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.byDayRow.cancelledRow {
+    color: #7a8590;
+    background: #f7f7f8;
+}
+
+.byDayRow.cancelledRow .byDayName {
+    text-decoration: line-through;
+    text-decoration-color: #c4c9ce;
 }
 
 .tableWrap {
@@ -1107,5 +1216,41 @@ input {
     .dashHeader .settingValues .btn {
         width: auto;
         margin: 0;
+    }
+}
+
+/* The upcoming and search lists on a phone: each booking stacks, the search boxes fill the width */
+@media (max-width: 600px) {
+    .byDayRow {
+        grid-template-columns: 4.5rem minmax(0, 1fr);
+        gap: 0.2rem 0.75rem;
+    }
+
+    .byDayRow > :not(.byDayTime) {
+        grid-column: 2;
+    }
+
+    .byDayTime {
+        grid-row: 1 / span 4;
+    }
+
+    /* the day's totals on their own line, under the date and Open day */
+    .byDayHead .muted {
+        order: 3;
+        flex-basis: 100%;
+    }
+
+    .dashboard .byDayHead .btnLink {
+        margin-left: auto;
+    }
+
+    .searchForm input[type='search'] {
+        min-width: 0;
+        flex: 1 1 100%;
+    }
+
+    .searchForm input[type='date'] {
+        flex: 1 1 8rem;
+        min-width: 0;
     }
 }

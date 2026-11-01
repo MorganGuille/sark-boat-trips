@@ -114,7 +114,9 @@ test('on a phone the page fits the screen and search engines are told not to lis
 test('the owner sees the reference under the name and can search for it', async ({ page, request }) => {
     await insert(request, { lastName: 'Jones' });
     await h.logIn(page);
-    await page.fill('#lastNameSearch', 'sbt-abc234');
+    await page.fill('#bookingSearch', 'sbt-abc234');
     await page.getByRole('button', { name: 'Search', exact: true }).click();
+    await expect(page.locator('.byDayRow:has-text("Ann Jones") .bookingRef')).toHaveText('SBT-ABC234');
+    await page.getByRole('button', { name: /^Open day/ }).click(); // and under the name in that day's table
     await expect(page.locator('tr:has-text("Ann Jones") .bookingRef')).toHaveText('SBT-ABC234');
 });

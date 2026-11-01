@@ -38,9 +38,12 @@ router.post('/restore', requireAuth, asyncHandler(controller.restoreBooking))
 router.post('/mark-paid', requireAuth, asyncHandler(controller.markPaid))
 router.post('/mark-unpaid', requireAuth, asyncHandler(controller.markUnpaid))
 router.post('/permanently-delete', requireAuth, asyncHandler(controller.permanentlyDeleteBooking))
+// before /:date, which would take "upcoming" and "search" for a date
+router.get('/upcoming', requireAuth, asyncHandler(controller.upcoming))
+router.get('/search', requireAuth, asyncHandler(controller.search))
 router.get('/:date', requireAuth, asyncHandler(controller.checkDate))
 router.get('/report/:month', requireAuth, asyncHandler(controller.monthlyReport))
-router.get('/search/:search', requireAuth, asyncHandler(controller.search))
+router.get('/search/:search', requireAuth, asyncHandler(controller.searchByPath))
 router.post('/update/:id', requireAuth, asyncHandler(controller.updateBooking));
 router.post('/updateavailability', requireAuth, asyncHandler(controller.updateAvailability))
 

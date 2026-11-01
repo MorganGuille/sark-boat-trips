@@ -165,6 +165,72 @@ test('payment: a new booking shows as unpaid with what is owed, can be marked pa
     expect((await h.savedBookings(request))[0].paymentStatus).toBe('unpaid');
 });
 
+// 'YYYY-MM-DD' n days from today, and how the calendar labels that day
+const dayAhead = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+const calendarLabel = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }); };
+
+test('upcoming bookings: the next 7 days grouped by day with totals, further ahead on request, and Open day shows that day', async ({ page, request }) => {
+    const insert = (n, fields) => request.post('/__test/insert-booking', { data: { date: dayAhead(n), timeslot: '11am', email: 'x@example.test', adults: 2, ...fields } });
+    await insert(2, { firstName: 'Ann', lastName: 'Smith', children: 1 });
+    await insert(2, { firstName: 'Bob', lastName: 'Jones', timeslot: '2pm' });
+    await insert(5, { firstName: 'Cara', lastName: 'Le Page' });
+    await insert(10, { firstName: 'Dan', lastName: 'Mauger' });
+    await h.logIn(page);
+    await page.getByRole('button', { name: 'Upcoming', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Upcoming bookings' })).toBeVisible();
+    await expect(page.locator('#upcomingDays')).toHaveValue('7'); // the owner's choice: a week ahead to start with
+
+    const groups = page.locator('.byDayGroup');
+    await expect(groups).toHaveCount(2);
+    await expect(groups.nth(0).locator('.byDayHead')).toContainText('2 bookings · 5 guests');
+    await expect(groups.nth(0).locator('.byDayRow').nth(0)).toContainText('Ann Smith');
+    await expect(groups.nth(0).locator('.byDayRow').nth(1)).toContainText('2pm');
+    await expect(page.locator('.byDayRow', { hasText: 'Dan Mauger' })).toHaveCount(0); // 10 days ahead
+
+    await page.locator('#upcomingDays').selectOption('14');
+    await expect(groups).toHaveCount(3);
+    await expect(page.locator('.byDayRow', { hasText: 'Dan Mauger' })).toBeVisible();
+
+    // Open day: that day's table, with its buttons, and the calendar moves to it
+    await groups.nth(1).getByRole('button', { name: /^Open day/ }).click();
+    await expect(page.locator('tr:has-text("Cara Le Page")').getByRole('button', { name: 'Edit', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Day', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('.react-calendar__tile--active abbr')).toHaveAttribute('aria-label', calendarLabel(5));
+});
+
+test('search finds a booking by email or phone, and lists a range of dates', async ({ page, request }) => {
+    const insert = (n, fields) => request.post('/__test/insert-booking', { data: { date: dayAhead(n), timeslot: '11am', adults: 2, ...fields } });
+    await insert(3, { firstName: 'Ann', lastName: 'Smith', email: 'ann.smith@example.test', phone: '+44 7700 900123' });
+    await insert(8, { firstName: 'Bob', lastName: 'Jones', email: 'bob@example.test', phone: '01481 832000' });
+    await h.logIn(page);
+    const search = async (text) => {
+        await page.fill('#bookingSearch', text);
+        await page.getByRole('button', { name: 'Search', exact: true }).click();
+    };
+
+    await search('07700 900123'); // typed the British way, saved with +44
+    await expect(page.getByRole('heading', { name: 'Results for “07700 900123”' })).toBeVisible();
+    await expect(page.locator('.byDayRow')).toHaveCount(1);
+    await expect(page.locator('.byDayRow')).toContainText('Ann Smith');
+
+    await search('bob@');
+    await expect(page.locator('.byDayRow')).toHaveCount(1);
+    await expect(page.locator('.byDayRow')).toContainText('Bob Jones');
+
+    // nothing typed, just dates: everything in between
+    await page.fill('#bookingSearch', '');
+    await page.fill('#searchFrom', dayAhead(1));
+    await page.fill('#searchTo', dayAhead(5));
+    await page.getByRole('button', { name: 'Search', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Bookings by date' })).toBeVisible();
+    await expect(page.locator('.byDayRow')).toHaveCount(1);
+    await expect(page.locator('.byDayRow')).toContainText('Ann Smith');
+
+    await page.getByRole('button', { name: 'Back to day' }).click();
+    await expect(page.locator('#searchFrom')).toHaveValue('');
+    await expect(page.getByRole('button', { name: 'Day', exact: true })).toHaveAttribute('aria-pressed', 'true');
+});
+
 test('the trip tools have their own tab, so the Bookings tab is just the bookings', async ({ page }) => {
     await h.logIn(page);
     await addBooking(page, { firstName: 'Ann', email: '' });
@@ -179,7 +245,7 @@ test('the trip tools have their own tab, so the Bookings tab is just the booking
 
     // a search replaces the day's bookings, so the tools wait until it is cleared
     await page.click('role=tab[name="Bookings"]');
-    await page.fill('#lastNameSearch', 'Visitor');
+    await page.fill('#bookingSearch', 'Visitor');
     await page.click('form[role=search] button[type=submit]');
     await page.click('role=tab[name="Trip tools"]');
     await expect(page.getByRole('heading', { name: 'Cancel a whole trip' })).toHaveCount(0);

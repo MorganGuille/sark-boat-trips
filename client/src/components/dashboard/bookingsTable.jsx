@@ -1,14 +1,6 @@
 import { showDay } from '../../utils/dates.js'
 import { formatPounds } from '../../utils/money.js'
-
-// How each payment status reads on the dashboard (see paymentsspec.md)
-const PAYMENT = {
-    unpaid: { label: 'Unpaid', className: 'payUnpaid' },
-    card_saved: { label: 'Card saved', className: 'payCard' },
-    charging: { label: 'Charging…', className: 'payCard' },
-    paid: { label: 'Paid online', className: 'payPaid' },
-    paid_in_person: { label: 'Paid in person', className: 'payPaid' },
-}
+import { PAYMENT, partyOf, amountOf, nameOf } from './bookingDetails.js'
 
 function BookingsTable({ bookings, showDate, trips = [], onEdit, onCancel, onRestore, onDeletePermanently, onMarkPaid, onMarkUnpaid }) {
 
@@ -19,14 +11,6 @@ function BookingsTable({ bookings, showDate, trips = [], onEdit, onCancel, onRes
         return trip?.timeChanged
             ? <><strong className='movedTime'>{trip.time}</strong><br /><s className='usualTime'><span className='sr-only'>moved from </span>{booking.timeslot}</s></>
             : booking.tripLabel || booking.timeslot // search results, or a trip no longer running that day
-    }
-
-    const guests = (booking) => {
-        const counts = [['adult', 'adults', booking.adults], ['child', 'children', booking.children], ['infant', 'infants', booking.infants]]
-            .map(([one, many, n]) => [one, many, Number(n) || 0])
-            .filter(([, , n]) => n)
-        if (!counts.length) return '—'
-        return counts.map(([one, many, n]) => `${n} ${n === 1 ? one : many}`).join(', ')
     }
 
     return (
@@ -50,18 +34,18 @@ function BookingsTable({ bookings, showDate, trips = [], onEdit, onCancel, onRes
                         const isCancelled = booking.status === 'cancelled'
                         const payment = PAYMENT[booking.paymentStatus] || PAYMENT.unpaid
                         const status = booking.paymentStatus || 'unpaid'
-                        const amount = status === 'paid' || status === 'paid_in_person' ? booking.amountPaid : booking.amountDue
+                        const amount = amountOf(booking)
                         return (
                         <tr key={booking._id} className={isCancelled ? 'cancelledRow' : undefined}>
                             {showDate ? <td data-label='Date'>{showDay(booking.date)}</td> : null}
                             <td data-label='Time'>{timeCell(booking)}</td>
                             <td data-label='Name' className='nameCell'>
-                                {[booking.firstName, booking.lastName].filter(Boolean).join(' ') || '(no name)'}
+                                {nameOf(booking)}
                                 {booking.charter === 'true' ? <span className='badge'>Charter</span> : null}
                                 {isCancelled ? <span className='badge badgeCancelled'>Cancelled</span> : null}
                                 {booking.reference ? <span className='bookingRef'>{booking.reference}</span> : null}
                             </td>
-                            <td data-label='Party'>{guests(booking)}</td>
+                            <td data-label='Party'>{partyOf(booking)}</td>
                             <td data-label='Payment'>
                                 <span className={`payBadge ${payment.className}`}>{payment.label}</span>
                                 {Number.isFinite(amount) ? <span className='payAmount'>{formatPounds(amount / 100)}</span> : null}

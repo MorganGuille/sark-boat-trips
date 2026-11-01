@@ -72,9 +72,9 @@ test('a parent with a toddler: the infant box is free, takes a seat, and shows o
 
     // on the dashboard (which opens on today, so find the booking by name)
     await h.logIn(page);
-    await page.fill('#lastNameSearch', 'Smith');
+    await page.fill('#bookingSearch', 'Smith');
     await page.click('form[role=search] button[type=submit]');
-    await expect(page.locator('tr:has-text("Parent")')).toContainText('1 adult, 1 infant');
+    await expect(page.locator('.byDayRow:has-text("Parent")')).toContainText('1 adult, 1 infant');
 });
 
 test('a booking the server refuses shows the reason and keeps what the customer typed', async ({ page, request }) => {
