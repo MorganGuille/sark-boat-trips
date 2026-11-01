@@ -4,7 +4,9 @@ import Bookings from '../components/bookings'
 import { FREE_CANCEL_HOURS } from '../utils/policy.js'
 import VideoPlayer from '../components/videoPlayer'
 
-import { NavLink } from 'react-router'
+import { Link } from 'react-router'
+import usePrices from '../hooks/usePrices'
+import { formatPounds } from '../utils/money.js'
 
 import gallery1 from '../assets/images/gallery1.webp'
 import gallery2 from '../assets/images/gallery2.webp'
@@ -40,6 +42,10 @@ function Home() {
         gallery10,
         gallery11,
     ]
+
+    // The charter price the owner set on the dashboard (none until it is set or while it loads)
+    const { prices } = usePrices()
+    const charterPrice = prices?.charter ? formatPounds(prices.charter) : null
 
     return (<>
         <title>Sark Boat Trips</title>
@@ -98,20 +104,22 @@ function Home() {
                 </div>
             </section >
             <Slideshow images={images} />
-            <section id='charters' className="charters centered-section" aria-labelledby="charters-heading">
-                <div id="charters-heading" className="content">
-                    <h2>CHARTERS</h2>
-                    <h3>Did you know we do charters?</h3>
-                    <p>If you are a larger group and/or would just like the boat to yourself we can arrange a charter
-                        tour!
-                        We can do specific tours such as; a tour to see the sea birds of L’Etac, an early morning
-                        / late evening cruise.</p>
-                    <p> Or perhaps you fancy a trip around to one of Sark’s secluded bays. We can provide
-                        SUP’s, snorkeling gear and even a packed lunch.</p>
-                    <p>For more information and ideas for a charter to suit you, please click below.</p>
-                    <NavLink to={'/charters'}><button className='btn'>Discover more and book yours</button></NavLink>
+            {/* Charters (owner's choices, 1 Nov 2026): the basics up front, the price from the dashboard */}
+            <section id='charters' className="charters chartersIntro" aria-labelledby="charters-heading">
+                <img src={charters} alt='A charter group inside a sea cave' loading='lazy' width='1920' height='1280' />
+                <div>
+                    <p className='eyebrow'>Private charters</p>
+                    <h2 id="charters-heading">Have the boat to yourselves</h2>
+                    <p className='lead'>For a family, a group of friends or a special occasion: a secluded bay, the seabird
+                        colonies, or an evening cruise. Paddleboards and snorkelling gear are included, and we can arrange
+                        a packed lunch.</p>
+                    <ul className='factChips' aria-label='Charter at a glance'>
+                        <li>Up to 12 people</li>
+                        <li>About 3 hours</li>
+                        {charterPrice ? <li>{charterPrice} for the boat</li> : null}
+                    </ul>
+                    <Link to='/charters' className='goldButton'>Charter ideas and booking →</Link>
                 </div>
-                <img src={charters} alt='Charter trip inside a sea cave' loading='lazy' />
             </section>
             <section id='sarkIsland' className="sarkIsland centered-section" aria-labelledby="island-heading">
                 <h2 id="island-heading">SARK ISLAND</h2>
@@ -158,12 +166,12 @@ function Home() {
                         </a>
                     </div>
                     <div>
-                        <img src={sarkMap} alt='Map of Sark Island' loading='lazy' />
+                        <img src={sarkMap} alt='Map of Sark Island' loading='lazy' width='335' height='350' />
                     </div>
                 </div>
 
                 <div className="grid1">
-                    <div><img src={suesbnb} alt='Sue&apos;s BnB' loading='lazy' /></div>
+                    <div><img src={suesbnb} alt='Sue&apos;s BnB' loading='lazy' width='1920' height='1280' /></div>
                     <div>
                         <h2>SUE&apos;S BNB</h2>
                         <p>We also offer 4* accommodation on the island at Sue’s BnB,</p>

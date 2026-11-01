@@ -4,7 +4,7 @@ import { URL } from '../../config.js'
 import { showDay } from '../utils/dates.js'
 import { formatPounds } from '../utils/money.js'
 import { FREE_CANCEL_HOURS } from '../utils/policy.js'
-import { CONTACT_EMAIL } from '../utils/contact.js'
+import { CONTACT_EMAIL, CONTACT_PHONE, WHATSAPP_LINK } from '../utils/contact.js'
 import { forgetBookingDetails } from '../utils/rememberBooking.js'
 
 function Success() {
@@ -83,7 +83,7 @@ function Success() {
                                         Email: <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
                                     </p>
                                     <p>
-                                        WhatsApp: <a href="https://wa.me/447911764246">+44 7911 764 246</a>
+                                        WhatsApp: <a href={WHATSAPP_LINK}>{CONTACT_PHONE}</a>
                                     </p>
                                 </address>
                             </section>
@@ -100,7 +100,7 @@ function Success() {
                                     Email: <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
                                 </p>
                                 <p>
-                                    WhatsApp: <a href="https://wa.me/447911764246">+44 7911 764 246</a>
+                                    WhatsApp: <a href={WHATSAPP_LINK}>{CONTACT_PHONE}</a>
                                 </p>
                             </address>
                         </>

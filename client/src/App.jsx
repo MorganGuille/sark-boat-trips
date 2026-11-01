@@ -3,7 +3,6 @@ import { Routes, Route, useLocation } from "react-router";
 import './App.css';
 
 import Navbar from './components/navbar';
-import MobileNav from './components/mobilenav';
 
 import Home from './views/home';
 import Bookings from './components/bookings';
@@ -39,7 +38,6 @@ function App() {
 
       <Wrapper>
         <Navbar />
-        <MobileNav />
         <Routes>
           <Route path='/' element={<Home />} />
           <Route path='/bookings' element={<Bookings />} />

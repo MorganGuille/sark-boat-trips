@@ -126,6 +126,22 @@ test('on phones and tablets the booking steps line up: "1 Choose a day" starts w
     }
 });
 
+test('the hero fills the screen and keeps its size as the address bar slides away (with dvh it changed size and the page jumped)', async ({ page }) => {
+    await page.goto('/');
+    const hero = await page.evaluate(() => {
+        // the height the stylesheet asks for (the emulator can't slide a real address bar away, so check the unit)
+        let asked = null;
+        for (const sheet of document.styleSheets) {
+            let rules;
+            try { rules = sheet.cssRules; } catch { continue; }
+            for (const rule of rules) if (rule.selectorText === '.hero-banner') asked = rule.style.getPropertyValue('height');
+        }
+        return { asked, height: document.querySelector('.hero-banner').getBoundingClientRect().height, screen: window.innerHeight };
+    });
+    expect(hero.asked, 'the steady screen height, not dvh').toBe('100svh');
+    expect(Math.abs(hero.height - hero.screen), 'the hero fills the screen').toBeLessThan(2);
+});
+
 test('the review links are rows one under another on a phone, inside the screen and easy to tap', async ({ page }) => {
     await page.goto('/');
     const reviews = page.locator('#reviews');
@@ -144,28 +160,63 @@ test('the review links are rows one under another on a phone, inside the screen 
     }
 });
 
-test('from any page, the menu goes to the home page sections (they were dead links off the home page)', async ({ page }) => {
+test('from any page, the menu goes to the home page sections, and closes when a link is tapped (it used to stay open over the page)', async ({ page }) => {
     await page.goto('/terms');
+    const menu = page.locator('#mobile-menu');
+    await expect(menu).toBeHidden();
     await page.getByRole('button', { name: 'Open menu' }).click();
-    const tour = page.locator('#mobile-menu-links').getByRole('link', { name: 'THE TOUR' });
+    await expect(menu).toBeVisible();
+    const tour = menu.getByRole('link', { name: 'The tour' });
     await expect(tour).toHaveAttribute('href', '/#theTour');
     await tour.click();
     await expect(page).toHaveURL(/\/#theTour$/);
+    await expect(menu).toBeHidden();
     await expect(page.locator('#theTour')).toBeInViewport();
+
+    // on the home page too, where the links only scroll the page
+    await page.getByRole('button', { name: 'Open menu' }).click();
+    await menu.getByRole('link', { name: 'Reviews' }).click();
+    await expect(menu).toBeHidden();
+    await expect(page.locator('#reviews')).toBeInViewport();
 });
 
-test('the terms pop-up fills a phone screen and has a Close button', async ({ page }) => {
+test('the phone header: Book is one tap away, and the menu has big rows, Book a trip, the phone number and a close button', async ({ page }) => {
+    await page.goto('/terms');
+    const book = page.locator('.headerBar').getByRole('link', { name: 'Book', exact: true });
+    await expect(book).toHaveAttribute('href', '/bookings');
+    const box = await book.boundingBox();
+    expect(box.x + box.width, 'Book is on the screen').toBeLessThanOrEqual(WIDTH);
+
+    await page.getByRole('button', { name: 'Open menu' }).click();
+    const menu = page.locator('#mobile-menu');
+    for (const name of ['The tour', 'Charters', 'Sark Island', 'Reviews']) {
+        const row = await menu.getByRole('link', { name, exact: true }).boundingBox();
+        expect(row.height, `${name} is easy to tap`).toBeGreaterThanOrEqual(44);
+    }
+    await expect(menu.getByRole('link', { name: 'Book a trip' })).toHaveAttribute('href', '/bookings');
+    await expect(menu.getByRole('link', { name: '+44 7911 764 246' })).toHaveAttribute('href', 'tel:+447911764246');
+    // the close button has focus, and Escape closes the menu and goes back to the menu button
+    await expect(page.getByRole('button', { name: 'Close menu' })).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(menu).toBeHidden();
+    await page.getByRole('button', { name: 'Open menu' }).click();
+    await page.getByRole('button', { name: 'Close menu' }).click();
+    await expect(menu).toBeHidden();
+    await expect(page.getByRole('button', { name: 'Open menu' })).toBeFocused();
+});
+
+test('the footer on a phone: stacked, the social logos big enough to tap, and the terms on their own page (no pop-up)', async ({ page }) => {
     await page.goto('/');
-    await page.locator('footer').getByRole('button', { name: 'Terms and Conditions' }).click();
-    const popUp = page.locator('.popUpDisplay');
-    await expect(popUp).toBeVisible();
-    const box = await popUp.boundingBox();
-    expect(box.x).toBeGreaterThanOrEqual(16 - 1);
-    expect(box.x + box.width).toBeLessThanOrEqual(WIDTH - 16 + 1);
-    // Close stays reachable after scrolling the terms
-    await popUp.evaluate((el) => el.scrollTo(0, 2000));
-    await popUp.getByRole('button', { name: 'Close' }).click();
-    await expect(popUp).toHaveCount(0);
+    const footer = page.locator('footer');
+    await footer.scrollIntoViewIfNeeded();
+    for (const name of ['Visit our Facebook page', 'Visit our Instagram profile', 'Read our reviews on Tripadvisor', 'Find us on Google']) {
+        const icon = await footer.getByRole('link', { name }).boundingBox();
+        expect(icon.height, name).toBeGreaterThanOrEqual(44);
+        expect(icon.x + icon.width, `${name} on the screen`).toBeLessThanOrEqual(WIDTH);
+    }
+    await footer.getByRole('link', { name: 'Terms and conditions' }).click();
+    await expect(page).toHaveURL(/\/terms$/);
+    await expect(page.getByRole('heading', { name: 'Terms and Conditions - Sark Boat Trips' })).toBeVisible();
 });
 
 test('on a phone the dashboard shows each booking as a card, with its buttons on screen and 16px boxes', async ({ page, request }) => {

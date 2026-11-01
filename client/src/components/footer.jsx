@@ -1,89 +1,77 @@
-import { useState } from 'react'
+import { Link } from 'react-router'
 import '../css/footer.css'
 
-import PrivacyPolicy from './privacyPolicy'
-import Terms from './terms'
-
+import usePage from '../hooks/usePage'
+import logo from '../assets/logos/Boat-Trips-Logo.png'
 import googleLogo from '../assets/logos/googleIcon.png'
 import tripLogo from '../assets/logos/tripadvisorIcon.png'
 import faceLogo from '../assets/logos/facebookIcon.png'
 import instaLogo from '../assets/logos/instagramIcon.png'
-import { CONTACT_EMAIL } from '../utils/contact.js'
+import { CONTACT_EMAIL, CONTACT_PHONE, PHONE_LINK } from '../utils/contact.js'
 
+const SOCIAL = [
+    { name: 'Facebook', label: 'Visit our Facebook page', href: 'https://www.facebook.com/sarkboattrips', logo: faceLogo },
+    { name: 'Instagram', label: 'Visit our Instagram profile', href: 'https://www.instagram.com/sark_boat_trips/', logo: instaLogo },
+    { name: 'Tripadvisor', label: 'Read our reviews on Tripadvisor', href: 'https://www.tripadvisor.com/Attraction_Review-g186231-d6673939-Reviews-Sark_Boat_Trips-Sark_Channel_Islands.html', logo: tripLogo },
+    { name: 'Google', label: 'Find us on Google', href: 'https://g.co/kgs/RsJniax', logo: googleLogo },
+]
+
+// The footer on every page: who we are with a Book button, the page links, how to reach us, and the
+// social links. No address: there is nowhere for customers to visit (owner, 1 Nov 2026).
 function Footer() {
-    const [showPrivacyP, setshowPrivacyP] = useState(false)
-    const [showTerms, setshowTerms] = useState(false)
+    const page = usePage()
+    const home = page === '/'
+    const section = (id) => (home ? `#${id}` : `/#${id}`)
 
     return (
-        <footer>
-            {showPrivacyP && (
-                <>
-                    <div
-                        onClick={() => setshowPrivacyP(false)}
-                        className="popUpBackground"
-                        aria-hidden="true"
-                    ></div>
-                    <PrivacyPolicy close={() => setshowPrivacyP(false)} />
-                </>
-            )}
-
-            {showTerms && (
-                <>
-                    <div
-                        onClick={() => setshowTerms(false)}
-                        className="popUpBackground"
-                        aria-hidden="true"
-                    ></div>
-                    <Terms close={() => setshowTerms(false)} />
-                </>
-            )}
-
-            <div className="footer-container">
-                <address className="footer-section">
-                    <a href="https://maps.google.com/?q=Sark+Boat+Trips+Dixcart+Ln+Sark" target='_blank' rel="noopener noreferrer">
-                        Sark Boat Trips, Dixcart Ln, Sark, GY10, Guernsey
-                    </a>
-                    <a href="tel:+447911764246" aria-label="Call us at +44 7911 764 246">
-                        +44 7911 764 246
-                    </a>
-                    <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
-                </address>
-
-                <div className="footer-section">
-                    <button
-                        className="footer-btn-link"
-                        onClick={() => setshowPrivacyP(true)}
-                        aria-haspopup="dialog"
-                    >
-                        Privacy Policy
-                    </button>
-                    <button
-                        className="footer-btn-link"
-                        onClick={() => setshowTerms(true)}
-                        aria-haspopup="dialog"
-                    >
-                        Terms and Conditions
-                    </button>
+        <footer className='siteFooter'>
+            <div className='footerGrid'>
+                <div className='footerAbout'>
+                    <Link to='/' className='footerBrand'>
+                        <img src={logo} alt='' width='40' height='37' />
+                        <span>Sark Boat Trips</span>
+                    </Link>
+                    <p>Discover Sark from the sea. Guided boat tours with local skippers.</p>
+                    <a href={home ? '#reservations' : '/bookings'} className='footerBook'>Book a trip</a>
                 </div>
 
-                <nav className='footer-links' aria-label="Social Media Links">
-                    <a href="https://www.facebook.com/sarkboattrips" target="_blank" rel="noopener noreferrer" aria-label="Visit our Facebook page">
-                        <img width={'32px'} src={faceLogo} alt="Facebook" />
-                    </a>
-                    <a href="https://www.instagram.com/sark_boat_trips/" target="_blank" rel="noopener noreferrer" aria-label="Visit our Instagram profile">
-                        <img width={'32px'} src={instaLogo} alt="Instagram" />
-                    </a>
-                    <a href='https://www.tripadvisor.com/Attraction_Review-g186231-d6673939-Reviews-Sark_Boat_Trips-Sark_Channel_Islands.html' target="_blank" rel="noopener noreferrer" aria-label="Check our reviews on Tripadvisor">
-                        <img width={'32px'} src={tripLogo} alt="Tripadvisor" />
-                    </a>
-                    <a href='https://g.co/kgs/RsJniax' target="_blank" rel="noopener noreferrer" aria-label="Find us on Google Maps">
-                        <img width={'32px'} src={googleLogo} alt="Google" />
-                    </a>
+                <div className='footerContact'>
+                    <h2>Contact</h2>
+                    <p><small>Call or WhatsApp</small><a href={PHONE_LINK}>{CONTACT_PHONE}</a></p>
+                    <p><small>Email</small><a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></p>
+                </div>
+
+                <nav className='footerExplore' aria-label='Explore'>
+                    <h2>Explore</h2>
+                    <ul>
+                        <li><a href={section('theTour')}>The tour</a></li>
+                        <li><a href={section('charters')}>Charters</a></li>
+                        <li><a href={section('sarkIsland')}>Sark Island</a></li>
+                        <li><a href={section('reviews')}>Reviews</a></li>
+                    </ul>
+                </nav>
+
+                <nav className='footerSocial' aria-label='Social media'>
+                    <h2>Follow us</h2>
+                    <ul>
+                        {SOCIAL.map((site) => (
+                            <li key={site.name}>
+                                <a href={site.href} target='_blank' rel='noopener noreferrer' aria-label={site.label}>
+                                    <img src={site.logo} alt='' width='24' height='24' />
+                                </a>
+                            </li>
+                        ))}
+                    </ul>
                 </nav>
             </div>
 
-            <div className="footer-bottom">
-                <p>&copy; {new Date().getFullYear()} Sark Boat Trips. All rights reserved.</p>
+            <div className='footerBottom'>
+                {/* the year as the visitor's browser has it (the page is built ahead, perhaps last year) */}
+                <span suppressHydrationWarning>&copy; {new Date().getFullYear()} Sark Boat Trips</span>
+                <nav aria-label='Legal'>
+                    <Link to='/terms'>Terms and conditions</Link>
+                    <Link to='/privacy'>Privacy policy</Link>
+                </nav>
             </div>
         </footer>
     )

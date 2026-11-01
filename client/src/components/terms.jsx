@@ -1,11 +1,10 @@
 import { FREE_CANCEL_HOURS } from '../utils/policy.js'
-import { CONTACT_EMAIL } from '../utils/contact.js'
+import { CONTACT_EMAIL, CONTACT_PHONE } from '../utils/contact.js'
 
-// Shown in the footer pop-up and on its own page at /terms (the page Stripe links to)
-function Terms({ className = 'popUpDisplay', close }) {
+// The terms, on their own page at /terms (the page Stripe links to; the footer links to it)
+function Terms({ className = 'termsArticle' }) {
     return (
         <article className={className} aria-labelledby="terms-title">
-            {close ? <button type='button' className='popUpClose' onClick={close}>Close</button> : null}
             <h2 id="terms-title">Terms and Conditions - Sark Boat Trips</h2>
 
             <section>
@@ -19,7 +18,7 @@ function Terms({ className = 'popUpDisplay', close }) {
                 <p><strong>2. Cancellation by you</strong></p>
                 <p>Trips: cancel at least <strong>{FREE_CANCEL_HOURS.trip} hours</strong> before your trip starts and you won&apos;t be charged. Private charters: cancel at least <strong>{FREE_CANCEL_HOURS.charter} hours</strong> before. If you cancel later than that, or don&apos;t come, the full price is charged.</p>
                 <p>If fewer people come than you booked, you&apos;re charged for the booking as it was made, unless you told us about the change before the same deadline.</p>
-                <p>To cancel, or to change the number of people, use the <strong>Manage your booking</strong> link in your confirmation email, up to the same deadline. To change the day or time, or for anything else, call or WhatsApp us on +44 7911 764 246, or email {CONTACT_EMAIL}.</p>
+                <p>To cancel, or to change the number of people, use the <strong>Manage your booking</strong> link in your confirmation email, up to the same deadline. To change the day or time, or for anything else, call or WhatsApp us on {CONTACT_PHONE}, or email {CONTACT_EMAIL}.</p>
             </section>
 
             <section>

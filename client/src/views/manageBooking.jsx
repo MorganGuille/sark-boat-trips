@@ -3,7 +3,7 @@ import { useParams } from 'react-router'
 import axios from 'axios'
 import { URL } from '../../config.js'
 import { formatPounds } from '../utils/money.js'
-import { CONTACT_EMAIL } from '../utils/contact.js'
+import { CONTACT_EMAIL, CONTACT_PHONE, WHATSAPP_LINK } from '../utils/contact.js'
 import '../css/manageBooking.css'
 
 // "Manage my booking" (spec P2-6): the page behind the link in every customer email. Up to the
@@ -36,7 +36,7 @@ const paymentText = (booking) => {
 const Contact = () => (
     <address className='manageContact'>
         <p>Email: <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></p>
-        <p>WhatsApp or phone: <a href="https://wa.me/447911764246">+44 7911 764 246</a></p>
+        <p>WhatsApp or phone: <a href={WHATSAPP_LINK}>{CONTACT_PHONE}</a></p>
     </address>
 )
 

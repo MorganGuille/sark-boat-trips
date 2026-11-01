@@ -1,52 +1,138 @@
-.navbar {
-    height: 4rem;
-    width: 100%;
-    font-size: x-large;
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    gap: 1.5em;
-    position: absolute;
-    top: 0;
-    padding: 0.5em 0;
-    z-index: 999;
-    background-color: rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(1px);
-
-    & a {
-        font-size: 1em;
-        font-weight: 600;
-        text-decoration: none;
-        color: rgb(255, 255, 255);
-    }
-
-    & a:hover {
-        color: rgb(204, 204, 204);
-    }
-}
-
-.sticky-nav {
-    background-color: rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(3px);
-
-    height: 4rem;
-    transition: 0.5s ease-in-out;
+/* The site header (components/navbar.jsx). Fixed to the top of every page, 4rem tall (3.5rem on a
+   phone), so pages keep their top padding (6rem) to clear it. White, except at the top of the home
+   page, where it is see-through over the photo (.overPhoto). */
+.siteHeader {
+    --header-ink: #213547;
+    --header-gold: #d9a404;
+    --header-gold-dark: #b98b00;
+    --header-navy: #1c2f3e;
     position: fixed;
-    top: 0;
+    inset: 0 0 auto;
+    z-index: 999;
+    font-family: 'Noto Sans', sans-serif;
+}
+
+.headerBar {
+    height: 4rem;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    padding: 0 2.5rem;
+    color: var(--header-ink);
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.06);
+    transition: background-color 0.3s, box-shadow 0.3s, color 0.3s;
+}
+
+.siteHeader.overPhoto > .headerBar {
+    color: white;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0));
+    box-shadow: none;
+}
+
+.siteHeader a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.siteHeader .brand {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-weight: 800;
+    font-size: 1.15rem;
+    white-space: nowrap;
+}
+
+.siteHeader .brand img {
+    width: 40px;
+    height: auto;
+    transition: filter 0.3s;
+}
+
+/* the logo turns white over the photo and in the phone menu */
+.siteHeader.overPhoto > .headerBar .brand img,
+.mobileMenu .brand img {
+    filter: brightness(0) invert(1);
+}
+
+.headerLinks {
+    display: flex;
+    gap: 1.8rem;
+    margin-left: auto;
+    font-weight: 600;
+}
+
+.headerLinks a {
+    position: relative;
+    padding: 0.3rem 0;
+}
+
+/* an underline that grows on hover */
+.headerLinks a::after {
+    content: "";
+    position: absolute;
     left: 0;
-    z-index: 999;
+    right: 0;
+    bottom: -2px;
+    height: 2px;
+    background: currentColor;
+    transform: scaleX(0);
+    transition: transform 0.2s;
 }
 
-.mobileNav {
+.headerLinks a:hover::after {
+    transform: scaleX(1);
+}
+
+.siteHeader .bookButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--header-gold);
+    color: white;
+    font-weight: 700;
+    padding: 0.65rem 1.3rem;
+    border-radius: 999px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+    white-space: nowrap;
+    transition: background-color 0.2s, transform 0.2s;
+}
+
+.siteHeader .bookButton:hover {
+    background: var(--header-gold-dark);
+    transform: translateY(-1px);
+}
+
+.siteHeader a:focus-visible,
+.siteHeader button:focus-visible {
+    outline: 3px solid #0f7ae5;
+    outline-offset: 2px;
+}
+
+.menuButton {
     display: none;
-    z-index: 999;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    place-items: center;
+    padding: 0;
 }
 
-.burgerIcon {
-    display: none;
+.menuButton svg {
+    width: 26px;
+    height: 26px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.2;
+    stroke-linecap: round;
 }
 
-.mobileLinks {
+.mobileMenu {
     display: none;
 }
 
@@ -65,113 +151,137 @@
     top: 0;
 }
 
-
-
+/* Phone and tablet: a slim white bar, always (the photo is narrow there), with Book and the menu button */
 @media (max-width: 1020px) {
+    .headerBar,
+    .siteHeader.overPhoto > .headerBar {
+        height: 3.5rem;
+        gap: 0.5rem;
+        padding: 0 0.5rem 0 0.9rem;
+        color: var(--header-ink);
+        background: rgba(255, 255, 255, 0.96);
+        box-shadow: 0 1px 8px rgba(0, 0, 0, 0.12);
+    }
 
-    .navbar,
-    .navlink {
+    .siteHeader.overPhoto > .headerBar .brand img {
+        filter: none;
+    }
+
+    .siteHeader .brand {
+        font-size: 1rem;
+        gap: 0.5rem;
+    }
+
+    .siteHeader .brand img {
+        width: 32px;
+    }
+
+    .headerLinks {
         display: none;
     }
 
-    .mobileNavClosed {
-        background-color: transparent;
-        display: block;
+    .headerBar > .bookButton {
+        margin-left: auto;
+        padding: 0.45rem 1rem;
+        box-shadow: none;
+    }
+
+    .menuButton {
+        display: grid;
+    }
+
+    /* the menu slides down over the whole screen */
+    .mobileMenu {
         position: fixed;
-        top: 0;
-        left: 0;
-        z-index: 999;
-    }
-
-    .burgerIcon {
-        background: none;
-        border: none;
-        display: block;
-        width: 5rem;
-        height: 5rem;
-        font-size: 3em;
-        cursor: pointer;
-        color: black;
-        padding: 0.5rem;
-        opacity: 9;
-        z-index: 999;
-    }
-
-    .burgerIconOpen {
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 0 1.25rem 1.5rem;
+        background: var(--header-navy);
         color: white;
-        z-index: 999;
+        overflow-y: auto;
+        transform: translateY(-100%);
+        visibility: hidden;
+        transition: transform 0.3s ease, visibility 0s linear 0.3s;
     }
 
-    /* Closed, the button floats over the page as it scrolls: a pale tile keeps it visible over text
-       and photos alike (spec P2-14) */
-    .burgerIcon:not(.burgerIconOpen) {
-        width: 3.25rem;
-        height: 3.25rem;
-        margin: 0.75rem;
-        padding: 0;
-        font-size: 2rem;
-        line-height: 1;
-        border-radius: 0.6rem;
-        background-color: rgba(255, 255, 255, 0.85);
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    .mobileMenu.open {
+        transform: none;
+        visibility: visible;
+        transition: transform 0.3s ease;
     }
 
-
-    .mobileNavOpen {
-        position: fixed;
-        top: 0;
-        z-index: 1;
-        background-color: rgba(0, 0, 0, 0.3);
-        backdrop-filter: blur(5px);
-        height: auto;
-        width: 30vw;
+    .mobileMenu > .headerBar {
+        margin: 0 -0.75rem 0.5rem -0.35rem;
+        padding: 0 0.25rem 0 0.35rem;
         color: white;
-        opacity: 10;
-        transition: opacity 0.3s ease-in-out;
-        z-index: 999;
+        background: transparent;
+        box-shadow: none;
+        justify-content: space-between;
     }
 
     .mobileLinks {
-        opacity: 0;
-        color: white;
         display: flex;
         flex-direction: column;
-        padding: 1em;
-        height: 100vh;
-        gap: 1rem;
-        font-size: x-large;
-        max-width: 40vw;
     }
 
-    .mobileLinks a:hover {
-        transform: translate(10px);
-
-    }
-
-    .linksClosed {
-        display: none;
-        opacity: 0;
-    }
-
-    .linksOpen {
+    .mobileLinks a {
         display: flex;
-        position: relative;
-        opacity: 1;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.9rem 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.14);
     }
 
+    .mobileLinks a::after {
+        content: "›"; /* for browsers without the line below */
+        content: "›" / ""; /* decoration: not read out as part of the link's name */
+        opacity: 0.5;
+        font-size: 1.4rem;
+    }
 
-}
+    .mobileMenu > .bookButton {
+        margin-top: 1.5rem;
+        padding: 0.9rem;
+        font-size: 1.05rem;
+    }
 
-@media (max-width: 720px) {
+    .menuContact {
+        margin: auto 0 0;
+        padding-top: 2rem;
+        font-size: 0.95rem;
+        line-height: 1.7;
+        opacity: 0.9;
+        text-align: left;
+    }
 
-    .mobileNavOpen {
-        width: 50vw;
+    .menuContact a {
+        font-weight: 600;
+        text-decoration: underline;
     }
 }
 
-@media (max-width: 450px) {
+/* the phone's Book button is just "Book" */
+@media (max-width: 1020px) {
+    .headerBar > .bookButton .bookWide {
+        display: none;
+    }
+}
 
-    .mobileNavOpen {
-        width: 60vw;
+@media (max-width: 340px) {
+    .siteHeader .brand span {
+        font-size: 0.9rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .headerBar,
+    .mobileMenu,
+    .mobileMenu.open,
+    .headerLinks a::after,
+    .siteHeader .bookButton {
+        transition: none;
     }
 }

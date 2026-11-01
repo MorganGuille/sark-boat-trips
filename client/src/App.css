@@ -198,3 +198,55 @@ body {
   padding: 6rem 1rem 3rem;
   line-height: 1.5;
 }
+
+/* Shared by the home page's charters section and the charters page */
+.eyebrow {
+  margin: 0 0 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #0a5c43;
+}
+
+.factChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.25rem 0 1.4rem;
+  padding: 0;
+  list-style: none;
+}
+
+.factChips li {
+  padding: 0.3rem 0.85rem;
+  border-radius: 999px;
+  background: #e6f4ef;
+  color: #0a5c43;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.goldButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3rem;
+  padding: 0.7rem 1.5rem;
+  border-radius: 999px;
+  background: #d9a404;
+  color: white !important;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: background-color 0.2s;
+}
+
+.goldButton:hover {
+  background: #b98b00;
+}
+
+.goldButton:focus-visible {
+  outline: 3px solid #0f7ae5;
+  outline-offset: 3px;
+}

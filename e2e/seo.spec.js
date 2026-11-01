@@ -31,7 +31,7 @@ const served = async (page, url) => {
 const PUBLIC = [
     { url: '/', title: 'Sark Boat Trips', text: 'THE BEST WAY TO SEE SARK' },
     { url: '/bookings', title: 'Sark Boat Trips | Book a Trip', text: 'Loading calendar' },
-    { url: '/charters', title: 'Sark Boat Trips | Charters', text: 'CHARTER TOURS' },
+    { url: '/charters', title: 'Sark Boat Trips | Charters', text: 'Private charters' },
     { url: '/terms', title: 'Sark Boat Trips | Terms and Conditions', text: 'Terms and Conditions - Sark Boat Trips' },
     { url: '/privacy', title: 'Sark Boat Trips | Privacy Policy', text: 'Privacy Policy for Sark Boat Trips' },
 ];

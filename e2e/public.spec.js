@@ -126,7 +126,8 @@ test('the booking page tells customers how cancelling works', async ({ page }) =
     await expect(page.locator('.bookingsSmall')).toContainText('Free cancellation up to 24 hours before.');
     await page.goto('/charters');
     await expect(page.locator('.bookingsSmall')).toContainText('Free cancellation up to 48 hours before.');
-    await expect(page.locator('.charter-notice')).toContainText('cancel free of charge up to 48 hours before');
+    await expect(page.locator('.charterFacts')).toContainText('up to 48 hours before');
+    await expect(page.locator('.goodToKnow')).toContainText('Free cancellation up to 48 hours before');
     await expect(page.locator('.cardNotice')).toContainText('up to 48 hours before');
     // written differently, it is still the charter page (it used to show the trip booking form)
     await page.goto('/Charters/');

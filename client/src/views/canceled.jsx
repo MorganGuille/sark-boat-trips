@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react'
 import { Link } from 'react-router'
-import { CONTACT_EMAIL } from '../utils/contact.js'
+import { CONTACT_EMAIL, CONTACT_PHONE, WHATSAPP_LINK } from '../utils/contact.js'
 
 // Where a customer lands after closing Stripe's card page, for a trip or a charter. Stripe sends them
 // back to /canceled?kind=trip or ?kind=charter, so Try again returns them to the page they came from.
@@ -34,7 +34,7 @@ function Canceled() {
                             Email: <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
                         </p>
                         <p>
-                            WhatsApp: <a href="https://wa.me/447911764246">+44 7911 764 246</a>
+                            WhatsApp: <a href={WHATSAPP_LINK}>{CONTACT_PHONE}</a>
                         </p>
                     </address>
                 </section>
