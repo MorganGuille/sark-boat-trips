@@ -23,10 +23,17 @@ function Bookings() {
     const heading = charter ? 'Book a private charter' : 'Book a trip'
     // The /bookings page is the whole page, so it clears the site's navbar; elsewhere it follows other sections
     const className = `bookings${pathname === '/bookings' ? ' bookingsPage' : ''}`
+    // The /bookings page's own title and description, in every state: the page is prebuilt while it still
+    // says "Loading calendar…", and that is what search engines read (spec P2-9)
+    const head = pathname === '/bookings' ? (<>
+        <title>Sark Boat Trips | Book a Trip</title>
+        <meta name="description" content={`Book a boat trip around Sark online: pick a day and a trip, see the seats left, and pay when your trip starts. Free cancellation up to ${FREE_CANCEL_HOURS.trip} hours before.`} />
+    </>) : null
 
     if (season.status === 'loading') {
         return (
             <section className={className} aria-label={heading}>
+                {head}
                 <p className='bookingsWait' aria-live="polite" aria-busy="true">Loading calendar…</p>
             </section>
         )
@@ -39,7 +46,7 @@ function Bookings() {
     if (season.status !== 'ready' || over) {
         return (
             <section className={className} aria-label={heading}>
-                {pathname === '/bookings' ? <title>Sark Boat Trips | Book a Trip</title> : null}
+                {head}
                 <div className='bookingsIntro' role="status">
                     <h2>{heading}</h2>
                     <p>
@@ -56,7 +63,7 @@ function Bookings() {
 
     return (
         <section className={className} aria-label={heading}>
-            {pathname === '/bookings' ? <title>Sark Boat Trips | Book a Trip</title> : null}
+            {head}
             <div className='bookingsIntro'>
                 <h2>{heading}</h2>
                 {prices ? (

@@ -38,12 +38,12 @@ app.use(express.urlencoded({ extended: true }));
 const corsMiddleware = corsFor();
 if (corsMiddleware) app.use(corsMiddleware);
 
-// Serve client build
-app.use(express.static(clientDist));
+// robots.txt and sitemap.xml are made from the settings (PUBLIC_URL), so before the client build's files
+const pages = require("./routes/pages")(clientDist);
+app.get(["/robots.txt", "/sitemap.xml"], pages);
 
-app.get("/robots.txt", (req, res) => {
-  res.sendFile(path.join(clientDist, "robots.txt"));
-});
+// Serve client build (index: false, so "/" goes to the pages router like every other page)
+app.use(express.static(clientDist, { index: false }));
 
 // API routes
 app.use("/bookings", require("./routes/bookings"));
@@ -54,10 +54,8 @@ app.use("/notes", require("./routes/notes"));
 // Optional public folder
 app.use(express.static("public"));
 
-// Catch-all for React Router
-app.get("/*", (req, res) => {
-  res.sendFile(path.join(clientDist, "index.html"));
-});
+// Every other address: its prebuilt page, or the empty page the browser builds (routes/pages.js)
+app.use(pages);
 
 // Must come after every route
 app.use(require("./middleware/errorHandler"));

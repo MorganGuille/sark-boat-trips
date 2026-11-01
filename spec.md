@@ -16,7 +16,7 @@ Written after reading the whole codebase and testing the booking and dashboard f
 
 **Done in the sandbox (`version2`), not yet deployed:** P0-1 to P0-5, P1-1 to P1-10 (error reporting in P1-9 was skipped by the owner), P2-1 (prices and the monthly CSV report), P3-2 (lint), P2-4 in full (merged from the `payments` branch on 30 Oct; see `paymentsspec.md`: payment status with Mark paid / Undo paid, a card saved on Stripe's page for every online booking, charged automatically at the trip time, infants, the cancellation rules on `/terms` and `/privacy`, and **Cancel a whole trip**, part of P2-2), P2-10 plus the email part of P2-11 (the site sends from `info@sarkboattrips.com` through Zoho; addresses come from settings), and P2-7 (the reminder email at 6pm the evening before).
 
-**Next:** P2-3, P2-13, P2-9, and the go-live steps in `CLAUDE.md`. Already merged into `version2`: P2-2 (trip tools), P2-12 (no overbooking), P2-6 (manage my booking), P2-8 (new booking form), P2-14 (mobile pass, tried on the owner's Android, 1 Nov 2026). Anything marked DONE only counts once it is deployed.
+**Next:** P2-3, P2-13, and the go-live steps in `CLAUDE.md`. Already merged into `version2`: P2-2 (trip tools), P2-12 (no overbooking), P2-6 (manage my booking), P2-8 (new booking form), P2-14 (mobile pass, tried on the owner's Android, 1 Nov 2026). P2-9 (each page prebuilt) is done on `version2`, not committed yet. Anything marked DONE only counts once it is deployed.
 
 ## Summary
 
@@ -44,7 +44,7 @@ Written after reading the whole codebase and testing the booking and dashboard f
 | P2-6 | Customer | Manage-my-booking link (self-service change and cancel): DONE | M |
 | P2-7 | Customer | Reminder email the day before (**DONE**) | S–M |
 | P2-8 | Customer | Booking form polish: DONE (price total, closed days, keep data on error) | M |
-| P2-9 | Client | Each public route prerendered separately, plus sitemap and noindex | M |
+| P2-9 | Client | Each public route prerendered separately, plus sitemap and noindex (**DONE**) | M |
 | P2-10 | Server | Move off Gmail SMTP (**DONE**: Zoho, `info@sarkboattrips.com`, with SPF, DKIM and DMARC) | M |
 | P2-11 | Server | Business settings hard-coded in many files (email addresses **DONE**; trip times and the 12 limit still to do) | M |
 | P2-12 | Server | Overbooking race condition: DONE | M |
@@ -231,7 +231,7 @@ Written after reading the whole codebase and testing the booking and dashboard f
   - **Bugs the tests found along the way:** the login accepted a list such as `["owner"]` as the username and password (it still needed the right ones, but it was too loose); and a mistake I introduced in P1-7 made the server read `.env` too late, so a laptop ignored its Stripe settings. Both are fixed, and the second now has a test (`startup.test.js`) that runs the real server.
   - **Not covered, because it can't be tested automatically:** a real paid Stripe checkout, the Vimeo video playing, and real email delivery.
   - The first run of the suite was flaky (a database port clash when many test files started at once). It now retries and runs four files at a time, and passed 15 runs out of 15 in a row, including the worst case.
-  - To keep it useful: **add a test with every change**, and when a known problem is fixed, delete its `test.fail()` marker in `e2e/known-issues.spec.js`.
+  - To keep it useful: **add a test with every change**, and when a known problem is fixed, delete its `test.fail()` marker (the last ones, in `known-issues.spec.js`, were fixed by P2-9).
 - **Problem:** There are no tests, and the 108 lint errors mean lint isn't a usable gate. Every change is verified by hand.
 - **Fix:**
   - Server API tests (supertest plus an in-memory MongoDB) for availability maths, public validation, auth gating, cancel and restore, and the charter and webhook flow with Stripe mocked.
@@ -342,6 +342,8 @@ The "your trip time has changed" email from P2-2 should include this link, so a 
 ### Back end and build
 
 #### P2-9 `[Client]` Each public route prerendered separately
+- **Status: DONE** (1 Nov 2026, `version2`, not committed yet). The owner's prerender (home page only) now builds every public page to its own file: `/`, `/bookings`, `/charters`, `/terms`, `/privacy` each arrive with their own HTML, title and description, and React no longer rebuilds them (the four `test.fail()` markers in `known-issues.spec.js` are now ordinary passing tests in `e2e/seo.spec.js`). The dashboard, success, canceled and manage pages get an empty page marked `noindex`, built in the browser. An address that isn't a page now answers **404** (it used to be the home page with 200, which search engines count as a duplicate). `robots.txt` (keeps out `/dashboard` and `/manage/`, points to the sitemap) and `sitemap.xml` (the five public pages) are made by the server from `PUBLIC_URL`. Found on the way: the template's description tag spans several lines, so the prerender never replaced it and every page had the home page's description; fixed, and the bookings, terms and privacy pages got descriptions of their own. Tests: `server/test/pages.test.js`, `e2e/seo.spec.js`.
+- Not done: a `canonical` link per page (would need `PUBLIC_URL` at build time); the home page's title is the short "Sark Boat Trips" from `home.jsx`, as before (the template's longer one is replaced).
 - **Problem (to verify, from reading the code):** [prerender.js](client/prerender.js) renders only `/` and the server returns that same `index.html` for every route. On `/charters` or `/bookings`, the HTML is the home page, which then fails to match what React renders on load, so React logs a hydration error and re-renders. Search engines also see the home page's markup and title for those routes.
 - **Already written as tests:** `e2e/known-issues.spec.js` checks that each page loads without React rebuilding it. It currently expects the pages other than the home page to fail, and flags itself when this item is fixed, so you remove the marker. (This also confirms the problem, which was only suspected from the code.)
 - **Fix:** Prerender each public route to its own file and have the server serve the right one. Add `sitemap.xml`, add `Disallow: /dashboard` to `robots.txt`, and a `noindex` meta tag on the dashboard, success and canceled pages.

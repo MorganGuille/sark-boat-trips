@@ -3,10 +3,11 @@ import ReactDOMServer from 'react-dom/server'
 import { StaticRouter } from 'react-router' // No more /server!
 import App from './App'
 
-export function render() {
+// The page at `url` as HTML, for prerender.js (spec P2-9: each public page is built to its own file)
+export function render(url = '/') {
     const html = ReactDOMServer.renderToString(
         <React.StrictMode>
-            <StaticRouter location="/">
+            <StaticRouter location={url}>
                 <App />
             </StaticRouter>
         </React.StrictMode>
