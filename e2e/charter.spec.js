@@ -14,7 +14,7 @@ const submitCharter = async (page) => {
 test('when Stripe is unavailable the customer is told clearly that nothing was charged', async ({ page, request }) => {
     await request.post('/__test/stripe-fail', { data: { fail: true } });
     await submitCharter(page);
-    await expect(page.locator('.responseDisplay h3')).toContainText("couldn't open the card page. Nothing has been booked or charged");
+    await expect(page.locator('.formError')).toContainText("couldn't open the card page. Nothing has been booked or charged");
 });
 
 test('with Stripe working the customer is sent to Stripe to save a card', async ({ page, request }) => {

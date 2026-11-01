@@ -63,9 +63,23 @@ for (const timezoneId of ['Europe/London', 'America/Los_Angeles', 'Pacific/Auckl
             await page.goto('/bookings');
             await expectOpen(page, START);
             await (await tile(page, START)).click();
-            await expect(page.locator('.calendarDisplay')).toContainText(/spaces available/);
-            await expect(page.locator('.calendarDisplay')).not.toContainText('Invalid Date');
+            await expect(page.locator('.tripCard').first()).toContainText(/spaces left/);
+            await expect(page.locator('.chosenDay')).not.toContainText('Invalid Date');
             await expectBlocked(page, shift(START, -1));
+        });
+
+        test('once the season has begun, days already gone are blocked and today is picked to start with', async ({ page, request }) => {
+            await request.post('/__test/season', { data: { start: iso(-5), end: END } });
+            await page.goto('/bookings');
+            await expect(page.locator('.react-calendar')).toBeVisible();
+            const today = await page.evaluate(() => {
+                const d = new Date();
+                return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            });
+            await expectBlocked(page, shift(today, -1));
+            await expectOpen(page, today);
+            const words = await page.evaluate(() => new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }));
+            await expect(page.locator('.chosenDay')).toHaveText(words);
         });
     });
 }

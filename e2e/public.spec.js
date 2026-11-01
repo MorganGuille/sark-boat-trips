@@ -8,13 +8,13 @@ test('the page loads with the calendar and seat counts, and nothing is blocked o
     const problems = h.watch(page);
     await page.goto('/bookings');
     await expect(page.locator('.react-calendar')).toBeVisible();
-    await expect(page.locator('.calendarDisplay')).toContainText('12 spaces available');
+    await expect(page.locator('.tripCard').first()).toContainText('12 spaces left');
     // the prices come from the owner's settings, not from the page
-    const prices = page.locator('[aria-label="Pricing information"]');
-    await expect(prices).toContainText('Adults: £40');
-    await expect(prices).toContainText('Children (4-14 yrs): £25');
-    await expect(prices).toContainText('Infants (3 and under): free');
-    await expect(prices).toContainText('Private Charter: £400');
+    const prices = page.getByRole('list', { name: 'Prices' });
+    await expect(prices).toContainText('Adults £40');
+    await expect(prices).toContainText('Children (4 to 14) £25');
+    await expect(prices).toContainText('Infants (3 and under) free');
+    await expect(page.locator('.priceTotal')).toContainText('Total £40'); // 1 adult to start with
     expect(problems).toEqual([]);
 });
 
@@ -56,11 +56,12 @@ test('a customer saves a card on Stripe\'s page, comes back to a confirmation, a
 test('a parent with a toddler: the infant box is free, takes a seat, and shows on the dashboard', async ({ page, request }) => {
     await page.route('https://checkout.stripe.test/**', (route) => route.fulfill({ status: 200, contentType: 'text/html', body: '<h1>Fake Stripe page</h1>' }));
     await page.goto('/bookings');
-    await expect(page.locator('label[for="infants"]')).toHaveText('Infants (3 and under, free)');
-    await expect(page.locator('label[for="children"]')).toHaveText('Children (4 to 14)');
+    await expect(page.locator('label[for="infants"]')).toHaveText('Infants3 and under, free');
+    await expect(page.locator('label[for="children"]')).toHaveText('Children4 to 14');
     await h.pickDate(page, 9);
     await h.fillBooking(page, { firstName: 'Parent', adults: '1' });
-    await page.fill('#infants', '1');
+    await page.getByRole('button', { name: 'More infants' }).click();
+    await expect(page.locator('.priceTotal')).toContainText('1 adult × £40 + 1 infant free');
     await page.click('button:has-text("Continue to card details")');
     await page.waitForURL('https://checkout.stripe.test/**');
     const { id } = await (await request.post('/__test/complete-checkout')).json();
@@ -78,12 +79,15 @@ test('a parent with a toddler: the infant box is free, takes a seat, and shows o
 test('a booking the server refuses shows the reason and keeps what the customer typed', async ({ page, request }) => {
     await page.goto('/bookings');
     const date = await h.pickDate(page, 9);
-    await request.post('/__test/insert-booking', { data: { date, adults: 12 } }); // the 11am trip is now full
+    await expect(page.locator('.tripCard').first()).toContainText('12 spaces left'); // the page has the seats as they were
+    await request.post('/__test/insert-booking', { data: { date, adults: 12 } }); // someone else fills the 11am trip meanwhile
     await h.fillBooking(page, { firstName: 'Latecomer', email: 'late@example.test', adults: '2' });
     await page.click('button:has-text("Continue to card details")');
-    await expect(page.locator('.responseDisplay h3')).toContainText('is full. Please choose another trip.');
-    await page.click('.responseDisplay button');
+    await expect(page.locator('.formError')).toContainText('is full. Please choose another trip.');
     await expect(page.locator('#firstName')).toHaveValue('Latecomer');
+    // the cards are reloaded: the 11am now shows Full, and the 2pm is chosen instead
+    await expect(page.locator('.tripCard', { has: page.locator('input[value="11am"]') })).toContainText('Full');
+    await expect(page.locator('input[value="2pm"]')).toBeChecked();
     expect(await h.savedBookings(request)).toHaveLength(1);
 });
 
@@ -118,8 +122,9 @@ test('the privacy policy has its own page (Stripe links to it) and explains the 
 
 test('the booking page tells customers how cancelling works', async ({ page }) => {
     await page.goto('/bookings');
-    await expect(page.locator('[aria-label="Pricing information"]')).toContainText('Free cancellation up to 24 hours before (48 hours for charters)');
+    await expect(page.locator('.bookingsSmall')).toContainText('Free cancellation up to 24 hours before.');
     await page.goto('/charters');
+    await expect(page.locator('.bookingsSmall')).toContainText('Free cancellation up to 48 hours before.');
     await expect(page.locator('.charter-notice')).toContainText('cancel free of charge up to 48 hours before');
     await expect(page.locator('.cardNotice')).toContainText('up to 48 hours before');
 });

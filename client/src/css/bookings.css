@@ -1,25 +1,138 @@
+/* The booking section (components/bookings.jsx): prices, the calendar and the customer form.
+   Phone first: one column. From 900px the calendar sits on the left and stays in view (sticky)
+   while the form scrolls past, like the dashboard's calendar. */
 .bookings {
-    display: flex;
-    flex-direction: row;
-    gap: 5em;
-    justify-content: center;
-    align-items: center;
-    background-color: rgb(255, 255, 255);
-    margin-bottom: 2rem 0 2rem 0;
-    padding: 2rem 0 2rem 0;
+    background-color: #ffffff;
+    padding: 2rem 16px 3rem;
+    scroll-margin-top: 4rem; /* the navbar's RESERVATIONS link lands below the navbar */
 }
 
-.textArea {
-    max-width: 350px;
+/* The /bookings page is the whole page, so it clears the navbar (4rem, 5rem for the phone burger) */
+.bookingsPage {
+    padding-top: 6rem;
+}
+
+.bookingsWait {
     text-align: center;
-    justify-content: center;
 }
 
+.bookingsIntro {
+    max-width: 52rem;
+    margin: 0 auto 1.5rem;
+    text-align: center;
+}
 
-@media (max-width: 1020px) {
+.bookingsIntro h2 {
+    font-size: 2.2rem;
+    margin: 0 0 0.5rem;
+}
 
-    .bookings {
-        flex-direction: column;
-        gap: 1em;
+.priceChips {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    margin: 0.5rem 0;
+    padding: 0;
+}
+
+.priceChips li {
+    background: #eef6f2;
+    border-radius: 999px;
+    padding: 0.35rem 0.9rem;
+    font-size: 0.95rem;
+}
+
+.bookingsSmall {
+    font-size: 0.95rem;
+    color: #4a5a68;
+    margin: 0.5rem auto 0;
+    max-width: 34rem;
+}
+
+.bookingsGrid {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    max-width: 60rem;
+    margin: 0 auto;
+}
+
+.bookingsSide {
+    width: 100%;
+    max-width: 22rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.stepTitle {
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.2rem;
+    margin: 0 0 0.6rem;
+}
+
+.stepNumber {
+    display: inline-grid;
+    place-items: center;
+    width: 1.7rem;
+    height: 1.7rem;
+    border-radius: 50%;
+    background: #04BF8A;
+    color: #ffffff;
+    font-size: 0.95rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.bookingsSide .react-calendar {
+    width: 100%;
+}
+
+.bookingsSide .react-calendar__tile {
+    padding: 0.85em 0.3em; /* bigger days, easier to tap */
+}
+
+.calendarKey {
+    list-style: none;
+    display: flex;
+    gap: 1rem;
+    padding: 0;
+    margin: 0.6rem 0 0;
+    font-size: 0.85rem;
+    color: #4a5a68;
+}
+
+.calendarKey li {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.keySwatch {
+    width: 0.9rem;
+    height: 0.9rem;
+    border-radius: 0.2rem;
+    border: 1px solid #c8c8c8;
+    cursor: default;
+}
+
+@media (min-width: 900px) {
+    .bookingsGrid {
+        flex-direction: row;
+        align-items: flex-start;
+        justify-content: center;
+        gap: 3rem;
+    }
+
+    .bookingsSide {
+        position: sticky;
+        top: 5rem; /* below the navbar */
+        width: 22rem;
     }
 }

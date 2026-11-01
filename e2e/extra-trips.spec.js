@@ -65,17 +65,23 @@ test('a customer sees the swim trip with its price and note; the charter page le
 
     await page.goto('/bookings');
     await h.pickDate(page, 6);
-    await expect(page.locator('.calendarDisplay')).toContainText('Swim trip');
-    const option = page.locator('#timeslot option', { hasText: 'Swim trip' });
-    await expect(option).toHaveText('4:30pm Swim trip');
+    const card = page.locator('.tripCard', { hasText: 'Swim trip' });
+    await expect(card).toContainText('4:30pm');
+    await expect(card).toContainText('8 spaces left');
+    await expect(card).toContainText('£45 adults, £30 children, about 1.5 hours');
     await expect(page.locator('.extraTripNote')).toHaveCount(0); // the 11am trip is chosen
-    await page.selectOption('#timeslot', await option.getAttribute('value'));
-    await expect(page.locator('.extraTripNote')).toHaveText('Swim trip: £45 per adult, £30 per child (infants free), about 1.5 hours.Bring swimwear and a towel.');
+    await card.click();
+    await expect(page.locator('.extraTripNote')).toHaveText('Swim trip: Bring swimwear and a towel.');
+    // its own prices add up
+    await page.getByRole('button', { name: 'More adults' }).click();
+    await page.getByRole('button', { name: 'More children' }).click();
+    await expect(page.locator('.priceTotal')).toContainText('Total £120');
+    await expect(page.locator('.priceTotal')).toContainText('2 adults × £45 + 1 child × £30');
 
     await page.goto('/charters');
     await h.pickDate(page, 6);
-    await expect(page.locator('#timeslot option')).toHaveText(['11am', '2pm']);
-    await expect(page.locator('.calendarDisplay')).not.toContainText('Swim trip');
+    await expect(page.locator('.tripCard')).toHaveCount(2);
+    await expect(page.locator('.tripCards')).not.toContainText('Swim trip');
 });
 
 test('the owner deletes an extra trip; it is refused while someone is booked on it', async ({ page, request }) => {

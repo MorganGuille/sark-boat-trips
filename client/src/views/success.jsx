@@ -5,6 +5,7 @@ import { showDay } from '../utils/dates.js'
 import { formatPounds } from '../utils/money.js'
 import { FREE_CANCEL_HOURS } from '../utils/policy.js'
 import { CONTACT_EMAIL } from '../utils/contact.js'
+import { forgetBookingDetails } from '../utils/rememberBooking.js'
 
 function Success() {
     const [response, setResponseData] = useState(null)
@@ -23,6 +24,7 @@ function Success() {
         try {
             const res = await axios.get(`${URL}/charters/verify-payment?session_id=${sessionId}`);
             if (res.data.ok) {
+                forgetBookingDetails(); // booked: the form starts empty next time
                 setResponseData(res.data);
             } else {
                 setProblem(res.data.message);

@@ -1,6 +1,7 @@
 import Slideshow from '../components/slideshow'
 import Reviews from '../components/reviews'
 import Bookings from '../components/bookings'
+import { FREE_CANCEL_HOURS } from '../utils/policy.js'
 import VideoPlayer from '../components/videoPlayer'
 
 import { NavLink } from 'react-router'
@@ -179,8 +180,9 @@ function Home() {
             <Reviews />
             <section id='reservations' className="reservations centered-section" aria-labelledby="res-heading">
                 <h2 id="res-heading">RESERVATIONS</h2>
-                <p>Please note that we do not charge a deposit online - so if your plans change please let us know asap so
-                    we can rearrange your seat. Payment is on the day, at the end of the trip - either in cash or by card.
+                <p>Book online below: you save a card, and nothing is charged until your trip starts. If your plans change,
+                    the link in your confirmation email lets you change the number of people or cancel free of charge
+                    up to {FREE_CANCEL_HOURS.trip} hours before.
                 </p>
             </section>
 

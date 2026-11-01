@@ -40,6 +40,18 @@ describe("the day's trips", () => {
         assert.equal((await dayTrips(t.day(11))).body.data[1].time, '2pm', 'the next day is untouched');
     });
 
+    it('say how many seats are left on each, and whether a charter could have it (for the trip cards)', async () => {
+        assert.deepEqual((await dayTrips()).body.data.map((trip) => [trip.spaces, trip.charterFree]), [[12, true], [12, true]]);
+        await t.insertBooking({ date: DAY, timeslot: '11am', adults: 3, infants: 1 });
+        await t.insertBooking({ date: DAY, timeslot: '2pm', adults: 2, charter: 'true' });
+        assert.deepEqual((await dayTrips()).body.data.map((trip) => [trip.spaces, trip.charterFree]), [[8, false], [0, false]]);
+    });
+
+    it('say whether each can still be booked online (closed from 1 hour before, and on past days)', async () => {
+        assert.deepEqual((await dayTrips()).body.data.map((trip) => trip.open), [true, true]);
+        assert.deepEqual((await dayTrips(t.day(-1))).body.data.map((trip) => trip.open), [false, false]);
+    });
+
     it('refuse a date that is not a date', async () => {
         assert.equal((await dayTrips('31-12-2030')).status, 400);
     });

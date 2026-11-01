@@ -16,7 +16,7 @@ Written after reading the whole codebase and testing the booking and dashboard f
 
 **Done in the sandbox (`version2`), not yet deployed:** P0-1 to P0-5, P1-1 to P1-10 (error reporting in P1-9 was skipped by the owner), P2-1 (prices and the monthly CSV report), P3-2 (lint), P2-4 in full (merged from the `payments` branch on 30 Oct; see `paymentsspec.md`: payment status with Mark paid / Undo paid, a card saved on Stripe's page for every online booking, charged automatically at the trip time, infants, the cancellation rules on `/terms` and `/privacy`, and **Cancel a whole trip**, part of P2-2), P2-10 plus the email part of P2-11 (the site sends from `info@sarkboattrips.com` through Zoho; addresses come from settings), and P2-7 (the reminder email at 6pm the evening before).
 
-**Next:** merge the `trip-tools` branch (P2-2: change a trip's time and harbour, message everyone on a trip, extra trips) into `version2`, then customer self-cancel (P2-6, built on the `manage-booking` branch). Go-live steps are in `CLAUDE.md`. Anything marked DONE only counts once it is deployed.
+**Next:** the new booking form (P2-8) is committed on the `booking-form` branch and **not merged yet**: the owner tried it on their Android phone (through ngrok) and liked it; merge it into `version2` when they say. Then P2-14 (mobile pass over the whole website, starting with the success page, which is cut off on phones), P2-3, P2-13, P2-9, and the go-live steps in `CLAUDE.md`. Already merged into `version2`: P2-2 (trip tools), P2-12 (no overbooking), P2-6 (manage my booking). Anything marked DONE only counts once it is deployed.
 
 ## Summary
 
@@ -43,12 +43,13 @@ Written after reading the whole codebase and testing the booking and dashboard f
 | P2-4 | Owner | Card saved at booking, charged at the trip time; payment status (see `paymentsspec.md`) (**DONE**) | L |
 | P2-6 | Customer | Manage-my-booking link (self-service change and cancel): DONE | M |
 | P2-7 | Customer | Reminder email the day before (**DONE**) | S–M |
-| P2-8 | Customer | Booking form polish (price total, closed days, keep data on error) | M |
+| P2-8 | Customer | Booking form polish: DONE (price total, closed days, keep data on error) | M |
 | P2-9 | Client | Each public route prerendered separately, plus sitemap and noindex | M |
 | P2-10 | Server | Move off Gmail SMTP (**DONE**: Zoho, `info@sarkboattrips.com`, with SPF, DKIM and DMARC) | M |
 | P2-11 | Server | Business settings hard-coded in many files (email addresses **DONE**; trip times and the 12 limit still to do) | M |
 | P2-12 | Server | Overbooking race condition: DONE | M |
 | P2-13 | Owner | Customer data tools (find, export, erase by email) | S |
+| P2-14 | Customer | Mobile-friendly pass over the whole website (success page first) | M |
 | P3-1 | Build | Untrack committed build output | S |
 | P3-2 | Build | Lint baseline of 108 errors | S–M |
 | P3-3 | Server | Models: indexes and numeric defaults | S |
@@ -304,6 +305,11 @@ Decided with the owner on 26 Oct 2026 and written up in **`paymentsspec.md`**: e
 #### P2-13 `[Owner]` Customer data tools
 One place to find everything held for an email address, export it, and erase it (permanent delete already exists per booking). Update the privacy policy's retention paragraph to state that cancelled bookings are kept until a customer asks for removal, which is current practice.
 
+#### P2-14 `[Customer]` Mobile-friendly pass over the whole website
+Most customers book on a phone (owner, 1 Nov 2026). Go through every page at phone width (390px, and 360px for small phones) on Chrome, the Android phone and WebKit, fix what is cramped, cut off, too small to tap or zooms in, and add a phone check to the browser tests for each page (no sideways scrolling, nothing hidden under the navbar, boxes 16px so iPhones don't zoom). Pages: home (slideshow, video, the tour, reviews, reservations), charters, Sark island, reviews, terms, privacy, success, canceled, manage my booking, the 404 page, and the dashboard (the owner uses it on a phone too).
+- **Known problem, do first: the success page is cut off at the top and the bottom on a phone** (the owner saw it on their Android after a test booking, 1 Nov 2026, and couldn't read all the text). Likely cause: `.stripe-landing` in `client/src/App.css` has `height: 85vh`, `justify-content: center` and `max-width: 60%`, so on a narrow screen the text is taller than the box and spills out above (under the navbar) and below. The canceled page uses the same class. Fix: drop the fixed height (use `min-height`), add top padding to clear the navbar, and use the full width with a 16px gutter on phones.
+- Already done for phones: the booking section (P2-8) and the manage-my-booking page (P2-6).
+
 ### Customer side
 
 #### P2-6 `[Customer]` Manage-my-booking link
@@ -317,6 +323,7 @@ The "your trip time has changed" email from P2-2 should include this link, so a 
 - Original notes: meeting point, what to bring and a weather note. It reduces no-shows.
 
 #### P2-8 `[Customer]` Booking form polish
+- **Done** (1 Nov 2026, `booking-form` branch, not yet deployed). A new customer form, phone first (owner's choices: trip cards and − / + buttons, no summary bar): the day's trips as cards with the seats left (full or closed trips can't be picked), party buttons that stop at the seats left, a running total, inline error messages instead of the pop-up, 16px boxes so iPhones don't zoom, what they typed kept after an error or after coming back from Stripe, past days blocked on the calendar, the calendar opening on the first bookable day, and on wider screens the calendar stays in view while the form scrolls. The home page's out-of-date "pay on the day" text was corrected. The "add to calendar" file was already in the confirmation email; the success page is the summary. See CLAUDE.md.
 - Show the price total as the party size changes.
 - Disable past days and days outside the season on the calendar (the hard-coded "Prices for 2026" text needs to come from config, see P2-11).
 - Keep entered data after an error.

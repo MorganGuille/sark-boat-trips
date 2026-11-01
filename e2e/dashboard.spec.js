@@ -107,10 +107,11 @@ test('prices: set in the top row, shown to customers on the booking page', async
 
     const customer = await browser.newPage();
     await customer.goto('/bookings');
-    const prices = customer.locator('[aria-label="Pricing information"]');
-    await expect(prices).toContainText('Adults: £45');
-    await expect(prices).toContainText('Children (4-14 yrs): £27.50');
-    await expect(prices).toContainText('Private Charter: £450');
+    const prices = customer.getByRole('list', { name: 'Prices' });
+    await expect(prices).toContainText('Adults £45');
+    await expect(prices).toContainText('Children (4 to 14) £27.50');
+    await customer.goto('/charters');
+    await expect(customer.getByRole('list', { name: 'Prices' })).toContainText('£450 for the whole boat');
     await customer.close();
 
     // the browser itself refuses a negative price, so it is never sent

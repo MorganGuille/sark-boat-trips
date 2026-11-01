@@ -5,12 +5,12 @@
 const Bookings = require('../models/bookings');
 const Availability = require('../models/availability');
 const { isDay, showDay } = require('../utils/dates');
-const { isTimeslot, MAX_CAPACITY } = require('../utils/validateBooking');
+const { isTimeslot, MAX_CAPACITY, whenProblem } = require('../utils/validateBooking');
 const { toPence } = require('../utils/prices');
 const { HARBOURS, USUAL_HARBOUR, usualStart, timeLabel, isValidStart, newExtraTimeslot, describeTrip, getTrip, findTrip, getTripsForDay, withTrips } = require('../utils/trips');
 const { HOURS } = require('../emails/calendar');
 const { trySend } = require('../utils/mailer');
-const { getAvailability } = require('../utils/availability');
+const { getAvailability, isSlotEmpty } = require('../utils/availability');
 const { readPrices } = require('../utils/prices');
 const emails = require('../emails');
 
@@ -43,9 +43,11 @@ const dayTrips = async (req, res) => {
     const { date } = req.params;
     if (!isDay(date)) return res.status(400).send({ ok: false, data: 'Invalid date.' });
     const trips = await getTripsForDay(date);
+    // Seats left on each trip, and whether a charter could have it (open and nobody booked), for the trip cards
+    const seats = await Promise.all(trips.map(async (trip) => [await getAvailability(date, trip.timeslot), await isSlotEmpty(date, trip.timeslot)]));
     res.send({
         ok: true,
-        data: trips.map((trip) => ({
+        data: trips.map((trip, i) => ({
             timeslot: trip.timeslot, // the trip's name, which bookings store
             time: trip.time, // its time that day, e.g. '3pm'
             label: trip.label, // '3pm', or 'Swim trip (4:30pm)'
@@ -55,6 +57,9 @@ const dayTrips = async (req, res) => {
             harbourKey: trip.harbour.key,
             harbourChanged: trip.harbourChanged,
             extra: trip.extra,
+            spaces: Math.max(seats[i][0], 0),
+            open: !whenProblem(date, trip.timeslot, new Date(), trip.startTime), // false once online booking has closed (1 hour before)
+            charterFree: !trip.extra && seats[i][1],
             // An extra trip's own details; prices in pounds, as the booking page shows them
             ...(trip.extra && { name: trip.name, note: trip.note, hours: trip.hours, capacity: trip.capacity, prices: { adult: pounds(trip.prices.adult), child: pounds(trip.prices.child) } }),
         })),

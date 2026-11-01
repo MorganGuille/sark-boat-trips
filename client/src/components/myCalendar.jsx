@@ -14,18 +14,24 @@ const clock = (startTime) => {
     return `${((hour + 11) % 12) + 1}:${String(minute).padStart(2, '0')} ${hour >= 12 ? 'PM' : 'AM'}`
 }
 
-function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate, refreshKey }) {
-    const [date, setDate] = useState(new Date());
+// dayPanel: the box under the calendar listing the chosen day's trips and spaces (the dashboard's;
+// the customer pages show trip cards in the booking form instead). initialDate: the day to start on.
+// On the customer pages days before today, or outside the season, can't be picked.
+function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate, refreshKey, dayPanel = true, initialDate }) {
+    const [date, setDate] = useState(() => (initialDate && parseDay(initialDate)) || new Date());
     const [availability, setAvailability] = useState({});
     // The chosen day's trips: the owner may have moved one to another time or harbour that day
     const [trips, setTrips] = useState(USUAL_TRIPS);
 
     let currentLoc = useLocation()
 
+    // The first day a customer can pick: the season's first day, or today if the season has begun
     const dbseasonStartDate = useMemo(() => {
         if (currentLoc.pathname === '/dashboard') return null;
         if (!seasonStartDate) return null;
-        return parseDay(seasonStartDate);
+        const today = parseDay(toDay(new Date()));
+        const start = parseDay(seasonStartDate);
+        return start > today ? start : today;
     }, [currentLoc.pathname, seasonStartDate]);
 
     const dbseasonEndDate = useMemo(() => {
@@ -120,6 +126,13 @@ function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate, refreshKe
         setSelectedDate(toDay(date))
     };
 
+    // Moving to another month picks its first day, or the first day that can be picked in it
+    const handleMonthChange = (firstOfMonth) => {
+        if (dbseasonStartDate && firstOfMonth < dbseasonStartDate) return handleDateChange(dbseasonStartDate);
+        if (dbseasonEndDate && firstOfMonth > dbseasonEndDate) return handleDateChange(dbseasonEndDate);
+        handleDateChange(firstOfMonth);
+    };
+
     const setTileClassName = ({ date, view }) => {
         if (view === 'month') {
             const formattedDate = toDay(date);
@@ -158,7 +171,7 @@ function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate, refreshKe
         <section className="calendar-container" aria-label="Trip Availability Calendar">
             <div className="calendar-wrapper">
                 <Calendar
-                    onActiveStartDateChange={({ activeStartDate }) => handleDateChange(activeStartDate)}
+                    onActiveStartDateChange={({ action, activeStartDate }) => { if (action !== 'onChange') handleMonthChange(activeStartDate) }}
                     onChange={handleDateChange}
                     onClickDay={handleDateChange}
                     value={date}
@@ -175,7 +188,7 @@ function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate, refreshKe
                 />
             </div>
 
-            <div
+            {dayPanel ? <div
                 className="calendarDisplay"
                 aria-live="polite"
                 aria-atomic="true"
@@ -194,7 +207,7 @@ function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate, refreshKe
                         </div>
                     );
                 })}
-            </div>
+            </div> : null}
         </section>
     );
 }

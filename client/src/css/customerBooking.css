@@ -1,0 +1,356 @@
+/* The customer booking form (components/customerBookingForm.jsx), phone first. Scoped under
+   .customerBooking. bookingForm.css has bare "form div", "form button", "form p" (300px wide on screens
+   up to 1366px), "form select" and "form textarea" rules, and dashboard.css a bare "input" rule, which
+   all reach this form, so each is reset here first. */
+.customerBooking {
+    width: 100%;
+    max-width: 32rem;
+}
+
+.customerBooking form div,
+.customerBooking form p {
+    width: auto;
+    max-width: none;
+    margin: 0;
+    gap: 0;
+}
+
+.customerBooking form div {
+    display: block;
+    flex-direction: row; /* "form div" makes every div a column */
+}
+
+.customerBooking input,
+.customerBooking textarea {
+    margin: 0;
+    font-size: 16px; /* 16px or more stops iPhones zooming in when a box is tapped */
+}
+
+.customerBooking form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.bookStep {
+    border: 0;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.bookStep:disabled {
+    opacity: 0.45;
+}
+
+.bookStep legend {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    padding: 0;
+}
+
+.customerBooking .chosenDay {
+    font-weight: 600;
+    margin: -0.25rem 0 0;
+}
+
+.customerBooking .muted {
+    color: #5b6b78;
+}
+
+/* ---------- Trip cards ---------- */
+
+.customerBooking .tripCards {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.tripCard {
+    position: relative; /* keeps the hidden radio button and the visually hidden text inside the card */
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.9rem 1rem;
+    border: 2px solid #d5dde3;
+    border-radius: 0.6rem;
+    background: #ffffff;
+    cursor: pointer;
+}
+
+.tripCard input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+}
+
+.tripCard:hover {
+    border-color: #8fd9c0;
+}
+
+.tripCard.selected {
+    border-color: #04BF8A;
+    background: #effaf6;
+    box-shadow: 0 0 0 1px #04BF8A;
+}
+
+.tripCard:has(input:focus-visible) {
+    outline: 3px solid #1087ff;
+    outline-offset: 2px;
+}
+
+.tripCard.full {
+    cursor: not-allowed;
+    background: #f4f4f4;
+    color: #8a949c;
+    border-color: #e3e3e3;
+}
+
+.tripCardMain {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* the radio dot */
+.tripCardMain::before {
+    content: '';
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 50%;
+    border: 2px solid #9aa7b1;
+    flex-shrink: 0;
+}
+
+.tripCard.selected .tripCardMain::before {
+    border-color: #04BF8A;
+    background: radial-gradient(#04BF8A 45%, transparent 50%);
+}
+
+.tripCard.full .tripCardMain::before {
+    border-color: #d0d0d0;
+}
+
+.tripCardTime {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+    font-size: 1.15rem;
+}
+
+.tripCardName {
+    font-weight: 600;
+    color: #1d4ed8;
+}
+
+.tripCard.full .tripCardName {
+    color: inherit;
+}
+
+.tripCardSpaces {
+    margin-left: auto;
+    font-size: 0.95rem;
+    color: #157347;
+    white-space: nowrap;
+}
+
+.tripCardSpaces.few {
+    color: #b45309;
+    font-weight: 600;
+}
+
+.tripCard.full .tripCardSpaces {
+    color: #8a949c;
+}
+
+.tripCardMore {
+    font-size: 0.9rem;
+    color: #4a5a68;
+    padding-left: 1.85rem; /* under the time, past the radio dot */
+}
+
+/* ---------- Party ---------- */
+
+.customerBooking .stepperRow {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.stepperRow label {
+    display: flex;
+    flex-direction: column;
+    font-weight: 600;
+}
+
+.stepperHint,
+.fieldHint {
+    font-weight: normal;
+    font-size: 0.85rem;
+    color: #5b6b78;
+}
+
+.customerBooking .stepper {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.customerBooking .stepper input {
+    width: 3.2rem;
+    height: 2.75rem;
+    text-align: center;
+    padding: 0;
+    border: 1px solid #c4ccd3;
+    border-radius: 0.4rem;
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+.customerBooking .stepper input::-webkit-outer-spin-button,
+.customerBooking .stepper input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.customerBooking .stepBtn {
+    width: 2.75rem; /* at least 44px: a comfortable thumb target */
+    height: 2.75rem;
+    margin: 0;
+    padding: 0;
+    border-radius: 50%;
+    border: 2px solid #04BF8A;
+    background: #ffffff;
+    color: #04BF8A;
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.customerBooking .stepBtn:hover:not(:disabled) {
+    background: #effaf6;
+}
+
+.customerBooking .stepBtn:disabled {
+    border-color: #d5dde3;
+    color: #b5bec5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.customerBooking .partyProblem {
+    color: #8a1f14;
+    background: #fdecea;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.4rem;
+}
+
+.customerBooking .priceTotal {
+    display: flex;
+    flex-direction: column;
+    background: #f3f6f9;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 1.15rem;
+}
+
+.priceBreakdown {
+    font-size: 0.9rem;
+    color: #4a5a68;
+}
+
+/* ---------- Details ---------- */
+
+.bookStep > label,
+.fieldPair label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-weight: 600;
+}
+
+.customerBooking .fieldPair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+.customerBooking input[type='text'],
+.customerBooking input[type='email'],
+.customerBooking input[type='tel'],
+.customerBooking textarea {
+    width: 100%;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid #c4ccd3;
+    border-radius: 0.4rem;
+    font-weight: normal;
+}
+
+.customerBooking textarea {
+    resize: vertical;
+}
+
+.customerBooking .honeypot {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+/* ---------- Sending ---------- */
+
+.customerBooking .formError {
+    color: #8a1f14;
+    background: #fdecea;
+    border-left: 4px solid #c0392b;
+    padding: 0.75rem 1rem;
+    border-radius: 0.4rem;
+    font-weight: 600;
+}
+
+.customerBooking .bookingSummary {
+    text-align: center;
+}
+
+.customerBooking .continueBtn {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    background: #04BF8A;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.customerBooking .continueBtn:hover:not(:disabled) {
+    background: #03a678;
+}
+
+.customerBooking .continueBtn:disabled {
+    background: #9fdcc8;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.customerBooking .cardNotice {
+    font-size: 0.9rem;
+    color: #4a5a68;
+}
+
+@media (max-width: 360px) {
+    .customerBooking .fieldPair {
+        grid-template-columns: 1fr;
+    }
+}

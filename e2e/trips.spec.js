@@ -57,19 +57,20 @@ test('a customer booking that day sees the trip\'s new time, and that it leaves 
 
     await page.goto('/bookings');
     await h.pickDate(page, 6);
-    await expect(page.locator('#timeslot option[value="2pm"]')).toHaveText('3pm (moved from 2pm)');
-    await expect(page.locator('.calendarDisplay .movedTime')).toHaveText('3:00 PM:');
-    await expect(page.locator('.calendarDisplay s.usualTime')).toHaveText('moved from 2:00 PM');
-    await expect(page.locator('.calendarDisplay')).not.toContainText('Maseline');
-    await expect(page.locator('.calendarDisplay')).toContainText('11:00 AM: 12 spaces available');
+    // the trip card shows the new time in bold, the usual one crossed out under it, and the harbour
+    const card = page.locator('.tripCard', { has: page.locator('input[value="2pm"]') });
+    await expect(card.locator('.movedTime')).toHaveText('3pm');
+    await expect(card.locator('s.usualTime')).toHaveText('moved from 2pm');
+    await expect(card).toContainText('Leaves from the Maseline Harbour');
+    await expect(card).toContainText('12 spaces left');
+    const usual = page.locator('.tripCard', { has: page.locator('input[value="11am"]') });
+    await expect(usual).not.toContainText('Maseline');
     // the moved time lines up with the other trip's time, and its crossed-out time sits under it on the left
-    const left = async (selector) => Math.round((await page.locator(selector).boundingBox()).x);
-    const usualLeft = await left('.calendarDisplay div:nth-of-type(1) > span:first-child');
-    expect(await left('.calendarDisplay .movedTime')).toBe(usualLeft);
-    expect(await left('.calendarDisplay s.usualTime')).toBe(usualLeft);
-    await expect(page.locator('.tripNote')).toHaveCount(0); // the 11am trip is chosen, and it hasn't moved
-    await page.selectOption('#timeslot', '2pm');
-    await expect(page.locator('.tripNote')).toContainText('leaves from the Maseline Harbour, not the Creux Harbour');
+    const left = async (locator) => Math.round((await locator.boundingBox()).x);
+    expect(await left(card.locator('.movedTime'))).toBe(await left(usual.locator('.tripCardTime strong')));
+    expect(await left(card.locator('s.usualTime'))).toBe(await left(usual.locator('.tripCardTime strong')));
+    await card.click();
+    await expect(page.locator('.bookingSummary')).toContainText('3pm trip');
 });
 
 test('the owner messages everyone on a trip from the dashboard', async ({ page, request }) => {
