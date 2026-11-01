@@ -1,79 +1,137 @@
-.video-container {
+/* The home page video (components/videoPlayer.jsx): the cover picture at the video's shape (16:9) on
+   every screen, with a round gold Watch a trip button in the corner, clear of the title in the picture */
+.videoBlock {
+    width: 100%;
+    max-width: 64rem;
+    margin: 0 auto;
+}
+
+.videoFrame {
     position: relative;
     width: 100%;
     aspect-ratio: 16 / 9;
-    display: flex;
-    justify-content: center;
-    align-items: center;
     overflow: hidden;
-    background-color: #000;
+    border-radius: 14px;
+    background: #0b1a24;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
 }
 
-
-@media (min-width: 768px) {
-    .video-container {
-        height: 80vh;
-        aspect-ratio: auto;
-    }
-}
-
-
-.custom-play-btn {
+.videoCover {
     position: absolute;
-    z-index: 10;
-    padding: 0.8em 1.5em;
-    font-size: 1rem;
-    background-color: rgba(217, 164, 4, 0.9);
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* a soft shadow at the bottom so the button's words read over the picture */
+.videoFrame:has(.videoCover)::after {
+    content: "";
+    position: absolute;
+    inset: 40% 0 0;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.6));
+    pointer-events: none;
+}
+
+.videoPlay {
+    position: absolute;
+    left: 1rem;
+    bottom: 1rem;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0;
+    width: auto;
+    border: 0;
+    background: none;
     color: white;
-    border: none;
-    border-radius: 5px;
+    font: inherit;
+    font-weight: 700;
+    font-size: 1.1rem;
+    text-align: left;
     cursor: pointer;
+}
+
+.videoPlayCircle {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 3.6rem;
+    height: 3.6rem;
+    border-radius: 50%;
+    background: #d9a404;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
     transition: transform 0.2s;
 }
 
-@media (min-width: 768px) {
-    .custom-play-btn {
-        padding: 1em 2em;
-        font-size: 1.2rem;
-    }
+.videoPlay:hover .videoPlayCircle {
+    transform: scale(1.06);
 }
 
-
-.custom-play-btn:hover {
-    transform: scale(1.05);
+.videoPlay:focus-visible {
+    outline: 3px solid white;
+    outline-offset: 4px;
+    border-radius: 8px;
 }
 
-.video-placeholder {
+.videoPlayCircle svg {
+    width: 1.5rem;
+    height: 1.5rem;
+    margin-left: 0.2rem;
+    fill: white;
+}
+
+.videoPlayText small {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 400;
+    opacity: 0.9;
+}
+
+.videoLoading {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
-    opacity: 0.7;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    margin: 0;
+    color: white;
 }
 
-
-.videoPlayer {
-    width: 100%;
-    height: 100%;
-}
-
-.videoPlayer>div,
+.videoPlayer,
+.videoPlayer > div,
 .videoPlayer iframe {
     width: 100% !important;
     height: 100% !important;
 }
 
+.videoNote {
+    margin: 0.6rem 0.25rem 0 !important;
+    font-size: 0.85rem;
+    color: #4a5d6e;
+    text-align: left;
+}
 
-.click-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 5;
-    cursor: pointer;
+@media (max-width: 600px) {
+    .videoFrame {
+        border-radius: 10px;
+    }
+
+    .videoPlay {
+        left: 0.75rem;
+        bottom: 0.75rem;
+        font-size: 1rem;
+    }
+
+    .videoPlayCircle {
+        width: 3rem;
+        height: 3rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .videoPlayCircle {
+        transition: none;
+    }
 }

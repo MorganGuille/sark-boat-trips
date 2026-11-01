@@ -142,6 +142,18 @@ test('the hero fills the screen and keeps its size as the address bar slides awa
     expect(Math.abs(hero.height - hero.screen), 'the hero fills the screen').toBeLessThan(2);
 });
 
+test('the video fills its frame at 16:9 on a phone, with Watch a trip inside it and big enough to tap', async ({ page }) => {
+    await page.goto('/');
+    const frame = page.locator('.videoFrame');
+    await frame.scrollIntoViewIfNeeded();
+    const box = await frame.boundingBox();
+    expect(Math.abs(box.width / box.height - 16 / 9), 'the video\'s own shape (no black bars)').toBeLessThan(0.02);
+    expect(box.x + box.width).toBeLessThanOrEqual(WIDTH);
+    const play = await page.getByRole('button', { name: /Watch a trip/ }).boundingBox();
+    expect(play.height).toBeGreaterThanOrEqual(44);
+    expect(play.y + play.height, 'inside the frame').toBeLessThanOrEqual(box.y + box.height);
+});
+
 test('the review links are rows one under another on a phone, inside the screen and easy to tap', async ({ page }) => {
     await page.goto('/');
     const reviews = page.locator('#reviews');

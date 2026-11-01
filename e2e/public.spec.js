@@ -160,3 +160,44 @@ test('a bot that fills in the hidden field is not seen by people, and gets nothi
     expect((await response.json()).url).toBeUndefined();
     expect(await h.savedBookings(request)).toHaveLength(0);
 });
+
+test('the video: nothing from Vimeo loads until Watch a trip is tapped, then Vimeo\'s player starts with its controls and no tracking', async ({ page }) => {
+    // Vimeo blocks automated browsers, so its pages are stood in for; what matters is when they are asked for
+    const vimeo = [];
+    const scripts = []; // the site's own code files, as the page fetches them
+    page.on('request', (req) => {
+        if (/vimeo/i.test(req.url())) vimeo.push(req.url());
+        if (req.resourceType() === 'script' && !/vimeo\.com/.test(req.url())) scripts.push(req.url());
+    });
+    // The player first asks Vimeo for the video's details (oEmbed), sending its settings; answer as Vimeo does
+    await page.route(/vimeo\.com/, (route) => {
+        const url = new URL(route.request().url());
+        if (!url.pathname.endsWith('/oembed.json')) return route.fulfill({ status: 200, contentType: 'text/html', body: '<html></html>' });
+        url.searchParams.delete('url');
+        const html = `<iframe src="https://player.vimeo.com/video/331613265?${url.searchParams}" allow="autoplay; fullscreen"></iframe>`;
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ type: 'video', html, width: 1280, height: 720, video_id: 331613265 }) });
+    });
+    await page.goto('/');
+    const play = page.getByRole('button', { name: /Watch a trip/ });
+    await play.scrollIntoViewIfNeeded();
+    await expect(play).toContainText('About 1 minute');
+    await page.waitForLoadState('networkidle');
+    expect(vimeo, 'nothing from Vimeo, not even its code, before the tap').toEqual([]);
+    await expect(page.locator('.videoFrame iframe')).toHaveCount(0);
+
+    const scriptsBefore = scripts.length;
+    await play.click();
+    const iframe = page.locator('.videoFrame iframe');
+    await expect(iframe).toHaveAttribute('src', /player\.vimeo\.com\/video\/331613265/);
+    // the settings sent to Vimeo
+    const asked = new URL(vimeo.find((u) => u.includes('/oembed.json'))).searchParams;
+    const on = (name) => ['1', 'true'].includes(asked.get(name)); // Vimeo takes either
+    expect(on('dnt'), 'Vimeo\'s "do not track": no cookies').toBe(true);
+    expect(on('autoplay'), 'starts once tapped').toBe(true);
+    expect(['0', 'false'].includes(asked.get('controls')), 'the normal player, with controls').toBe(false);
+    expect(on('background'), 'not the silent background mode').toBe(false);
+    expect(on('muted'), 'with its music').toBe(false);
+    await expect(play).toHaveCount(0);
+    // the player's code was a separate file, fetched by the tap (not part of every visit)
+    expect(scripts.length, 'a new code file was fetched when play was tapped').toBeGreaterThan(scriptsBefore);
+});
