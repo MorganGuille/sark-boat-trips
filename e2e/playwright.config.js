@@ -16,10 +16,10 @@ module.exports = defineConfig({
     projects: [
         { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
         // The calendar's season blocking has broken on Apple devices before (Safari reads dates
-        // differently). These run only that one spec: WebKit is the engine inside every iPhone, iPad
-        // and Mac Safari, and the Pixel is Android's Chrome.
-        { name: 'android-phone', testMatch: 'calendar-devices.spec.js', use: { ...devices['Pixel 7'] } },
-        { name: 'iphone', testMatch: 'calendar-devices.spec.js', use: { ...devices['iPhone 14'] } },
+        // differently), and most customers book on a phone. The phones run only those two specs: WebKit
+        // is the engine inside every iPhone, iPad and Mac Safari, and the Pixel is Android's Chrome.
+        { name: 'android-phone', testMatch: ['calendar-devices.spec.js', 'mobile.spec.js'], use: { ...devices['Pixel 7'] } },
+        { name: 'iphone', testMatch: ['calendar-devices.spec.js', 'mobile.spec.js'], use: { ...devices['iPhone 14'] } },
         { name: 'mac-safari', testMatch: 'calendar-devices.spec.js', use: { ...devices['Desktop Safari'] } },
     ],
     webServer: {

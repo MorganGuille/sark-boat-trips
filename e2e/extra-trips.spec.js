@@ -98,7 +98,7 @@ test('the owner deletes an extra trip; it is refused while someone is booked on 
     await box.getByRole('button', { name: 'Delete Swim trip (4:30pm)' }).click();
     await notice(page, 'has 1 booking. Cancel the trip first');
 
-    await tab(page, 'Bookings');
+    await tab(page, 'Trip tools');
     await page.locator('#cancelTripTime').selectOption(timeslot);
     await page.getByRole('button', { name: 'Cancel Swim trip (4:30pm)' }).click();
     await notice(page, 'The Swim trip (4:30pm) on');

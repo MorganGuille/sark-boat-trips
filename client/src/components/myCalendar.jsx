@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useLocation } from 'react-router'
+import usePage from '../hooks/usePage'
 import Calendar from 'react-calendar';
 import axios from 'axios';
 
@@ -23,22 +23,22 @@ function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate, refreshKe
     // The chosen day's trips: the owner may have moved one to another time or harbour that day
     const [trips, setTrips] = useState(USUAL_TRIPS);
 
-    let currentLoc = useLocation()
+    const page = usePage()
 
     // The first day a customer can pick: the season's first day, or today if the season has begun
     const dbseasonStartDate = useMemo(() => {
-        if (currentLoc.pathname === '/dashboard') return null;
+        if (page === '/dashboard') return null;
         if (!seasonStartDate) return null;
         const today = parseDay(toDay(new Date()));
         const start = parseDay(seasonStartDate);
         return start > today ? start : today;
-    }, [currentLoc.pathname, seasonStartDate]);
+    }, [page, seasonStartDate]);
 
     const dbseasonEndDate = useMemo(() => {
-        if (currentLoc.pathname === '/dashboard') return null;
+        if (page === '/dashboard') return null;
         if (!seasonEndDate) return null;
         return parseDay(seasonEndDate);
-    }, [currentLoc.pathname, seasonEndDate]);
+    }, [page, seasonEndDate]);
 
     const fetchMonthAvailability = async (date) => {
         const year = date.getFullYear();
@@ -84,7 +84,7 @@ function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate, refreshKe
 
     const day = toDay(date);
     // Extra trips are sold by the seat, so the charter page leaves them out
-    const charterPage = currentLoc.pathname === '/charters';
+    const charterPage = page === '/charters';
     useEffect(() => {
         let current = true;
         getDayTrips(day)

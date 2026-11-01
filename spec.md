@@ -16,7 +16,7 @@ Written after reading the whole codebase and testing the booking and dashboard f
 
 **Done in the sandbox (`version2`), not yet deployed:** P0-1 to P0-5, P1-1 to P1-10 (error reporting in P1-9 was skipped by the owner), P2-1 (prices and the monthly CSV report), P3-2 (lint), P2-4 in full (merged from the `payments` branch on 30 Oct; see `paymentsspec.md`: payment status with Mark paid / Undo paid, a card saved on Stripe's page for every online booking, charged automatically at the trip time, infants, the cancellation rules on `/terms` and `/privacy`, and **Cancel a whole trip**, part of P2-2), P2-10 plus the email part of P2-11 (the site sends from `info@sarkboattrips.com` through Zoho; addresses come from settings), and P2-7 (the reminder email at 6pm the evening before).
 
-**Next:** the new booking form (P2-8) is committed on the `booking-form` branch and **not merged yet**: the owner tried it on their Android phone (through ngrok) and liked it; merge it into `version2` when they say. Then P2-14 (mobile pass over the whole website, starting with the success page, which is cut off on phones), P2-3, P2-13, P2-9, and the go-live steps in `CLAUDE.md`. Already merged into `version2`: P2-2 (trip tools), P2-12 (no overbooking), P2-6 (manage my booking). Anything marked DONE only counts once it is deployed.
+**Next:** P2-3, P2-13, P2-9, and the go-live steps in `CLAUDE.md`. Already merged into `version2`: P2-2 (trip tools), P2-12 (no overbooking), P2-6 (manage my booking), P2-8 (new booking form), P2-14 (mobile pass, tried on the owner's Android, 1 Nov 2026). Anything marked DONE only counts once it is deployed.
 
 ## Summary
 
@@ -49,7 +49,7 @@ Written after reading the whole codebase and testing the booking and dashboard f
 | P2-11 | Server | Business settings hard-coded in many files (email addresses **DONE**; trip times and the 12 limit still to do) | M |
 | P2-12 | Server | Overbooking race condition: DONE | M |
 | P2-13 | Owner | Customer data tools (find, export, erase by email) | S |
-| P2-14 | Customer | Mobile-friendly pass over the whole website (success page first) | M |
+| P2-14 | Customer | Mobile-friendly pass over the whole website **DONE** | M |
 | P3-1 | Build | Untrack committed build output | S |
 | P3-2 | Build | Lint baseline of 108 errors | S–M |
 | P3-3 | Server | Models: indexes and numeric defaults | S |
@@ -305,10 +305,20 @@ Decided with the owner on 26 Oct 2026 and written up in **`paymentsspec.md`**: e
 #### P2-13 `[Owner]` Customer data tools
 One place to find everything held for an email address, export it, and erase it (permanent delete already exists per booking). Update the privacy policy's retention paragraph to state that cancelled bookings are kept until a customer asks for removal, which is current practice.
 
-#### P2-14 `[Customer]` Mobile-friendly pass over the whole website
-Most customers book on a phone (owner, 1 Nov 2026). Go through every page at phone width (390px, and 360px for small phones) on Chrome, the Android phone and WebKit, fix what is cramped, cut off, too small to tap or zooms in, and add a phone check to the browser tests for each page (no sideways scrolling, nothing hidden under the navbar, boxes 16px so iPhones don't zoom). Pages: home (slideshow, video, the tour, reviews, reservations), charters, Sark island, reviews, terms, privacy, success, canceled, manage my booking, the 404 page, and the dashboard (the owner uses it on a phone too).
-- **Known problem, do first: the success page is cut off at the top and the bottom on a phone** (the owner saw it on their Android after a test booking, 1 Nov 2026, and couldn't read all the text). Likely cause: `.stripe-landing` in `client/src/App.css` has `height: 85vh`, `justify-content: center` and `max-width: 60%`, so on a narrow screen the text is taller than the box and spills out above (under the navbar) and below. The canceled page uses the same class. Fix: drop the fixed height (use `min-height`), add top padding to clear the navbar, and use the full width with a 16px gutter on phones.
-- Already done for phones: the booking section (P2-8) and the manage-my-booking page (P2-6).
+#### P2-14 `[Customer]` Mobile-friendly pass over the whole website **DONE (1 Nov 2026, `mobile-pass` branch)**
+Most customers book on a phone (owner, 1 Nov 2026). Every page was checked at 360px on Chrome, an emulated Android phone (Pixel 7) and WebKit (iPhone 14). Fixed:
+- **Success and "Booking not made" pages were cut off at the top and the bottom** (the owner saw it on their Android): `.stripe-landing` in `App.css` had a fixed `height: 85vh` and 60% width. Now `min-height`, top padding to clear the menu button, full width with a 16px edge, text left-aligned on phones, the buttons full width, and the email, WhatsApp and terms links underlined.
+- **Review links** ran off both edges of the screen on phones. Redesigned (owner chose option D of five mock-ups): one white panel with the overall 5.0 and stars at the top, then a row per site (Google, Tripadvisor, Facebook) with its score and an arrow, like a phone's settings list; rows at least 44px tall. `components/reviews.jsx`, `css/reviews.css`.
+- **The menu's section links (The tour, Charters...) were dead on every page except home** (bookings, terms, privacy, manage, 404): they now go to `/#theTour` etc., and the home page scrolls to the section (`App.jsx` used to jump back to the top).
+- **Terms and privacy pop-up:** a Close button that stays at the top while the text scrolls (before, only tapping outside closed it), left-aligned text, and on a phone it fills the screen with a 16px edge.
+- **Booking form steps out of line:** on phones over 360px wide and tablets, "1 Choose a day" started further in than steps 2 to 4 (the calendar column was 22rem, the form 32rem, both centred). Below 900px the calendar column is now as wide as the form (`.bookingsSide` in `bookings.css`).
+- **On the owner's Android phone the dashboard greyed out days outside the season** (found 1 Nov 2026 through ngrok; the laptop was fine). Not a date bug: the code compared the page address exactly, and the router also opens the dashboard for `/Dashboard` or `/dashboard/` (the phone capitalised or added a slash), so the calendar took it for a customer page. `/Charters` likewise showed the trip form instead of the charter one. Every address check now goes through `usePage()` (`hooks/usePage.js`: lower case, no trailing slash). Tests in `dashboard.spec.js` and `public.spec.js`.
+- **Dashboard season dates and prices were jumbled on a phone** (the owner's Pixel 8 Pro: dates wrapping onto separate lines with Android's arrows, prices running into each other). On a phone each is now one row with the label in its own column: the two dates side by side as text while locked ("1 May 2027 → 30 Sep 2027"; Android drew the locked date boxes wider and cut the dates off, so the boxes only show while editing), and the three prices as columns (name above, price below). Editing keeps the boxes stacked under the label. `seasonDatesForm.jsx`, `pricesForm.jsx` (`.settingValues`), `dashboard.css`.
+- **Dashboard: a Trip tools tab** (owner, 1 Nov 2026: the Bookings tab was cluttered). Change trip details, Message everyone on a trip and Cancel a whole trip moved from under the bookings list to their own tab next to Bookings; they act on the day picked on the calendar, and during a search the tab offers Back to the day. Test in `dashboard.spec.js`.
+- **The menu button (☰)** floated over the text with nothing behind it: now a pale tile.
+- **Dashboard on a phone:** each booking is a card (a heading next to each detail, `data-label` on the cells; empty lines left out) with Edit, Mark paid and Cancel in a row underneath, so nothing needs a sideways swipe; boxes 16px (iPhones zoomed in on the 15px ones); buttons at least 40px tall.
+- Tests: `e2e/mobile.spec.js` (every page: no sideways scrolling, heading below the menu button, no text under the footer, 16px boxes; plus the success page, reviews, menu links, pop-up and dashboard cards), run on Chrome at 360px and on the Android and iPhone projects. It replaces the old 390px sideways-scroll test in `public.spec.js`, which missed the review cards.
+- Not changed (the owner may want to look): the charters page's long bold, centred paragraph above the booking form, and the big gaps around the photos on the home and charters pages. Still worth a check on a real iPhone before go-live (WebKit is the same engine but not a real phone).
 
 ### Customer side
 

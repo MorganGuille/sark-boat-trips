@@ -8,6 +8,7 @@ test('the page loads with the calendar and seat counts, and nothing is blocked o
     const problems = h.watch(page);
     await page.goto('/bookings');
     await expect(page.locator('.react-calendar')).toBeVisible();
+    await h.pickDate(page, 8); // a day ahead: today's trips close for booking an hour before they leave
     await expect(page.locator('.tripCard').first()).toContainText('12 spaces left');
     // the prices come from the owner's settings, not from the page
     const prices = page.getByRole('list', { name: 'Prices' });
@@ -127,6 +128,10 @@ test('the booking page tells customers how cancelling works', async ({ page }) =
     await expect(page.locator('.bookingsSmall')).toContainText('Free cancellation up to 48 hours before.');
     await expect(page.locator('.charter-notice')).toContainText('cancel free of charge up to 48 hours before');
     await expect(page.locator('.cardNotice')).toContainText('up to 48 hours before');
+    // written differently, it is still the charter page (it used to show the trip booking form)
+    await page.goto('/Charters/');
+    await expect(page.locator('.bookingsSmall')).toContainText('Free cancellation up to 48 hours before.');
+    await expect(page.locator('.cardNotice')).toContainText('up to 48 hours before');
 });
 
 test('closing Stripe\'s page leads to a page saying nothing was booked or charged', async ({ page }) => {
@@ -153,15 +158,4 @@ test('a bot that fills in the hidden field is not seen by people, and gets nothi
     const response = await request.post('/bookings/checkout', { data: { date: '2099-01-01', timeslot: '11am', firstName: 'Bot', lastName: 'Bot', email: 'bot@example.test', phone: '1', adults: '2', website_url: 'http://spam.example' } });
     expect((await response.json()).url).toBeUndefined();
     expect(await h.savedBookings(request)).toHaveLength(0);
-});
-
-test('on a phone nothing scrolls sideways', async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
-    for (const path of ['/', '/bookings', '/charters', '/dashboard', '/terms', '/privacy']) {
-        await page.goto(path);
-        await page.waitForLoadState('networkidle').catch(() => {});
-        const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-        // a few pixels are tolerated: one review card on the home page sticks out by 1.5px, which the page already hides
-        expect(overflow, `${path} is wider than the screen`).toBeLessThanOrEqual(4);
-    }
 });

@@ -42,19 +42,24 @@ function SeasonDatesForm({ savedStart, savedEnd, onSaved, editing }) {
     return (
         <form className='seasonInline' onSubmit={save}>
             <span className='seasonLabel'>Season</span>
-            <label className='sr-only' htmlFor='seasonStart'>Season start date</label>
-            <input id='seasonStart' type='date' value={start} max={end || undefined}
-                onChange={(e) => { setStart(e.target.value); setMessage(null) }} required disabled={!editing} />
-            <span aria-hidden='true'>→</span>
-            <label className='sr-only' htmlFor='seasonEnd'>Season end date</label>
-            <input id='seasonEnd' type='date' value={end} min={start || undefined}
-                onChange={(e) => { setEnd(e.target.value); setMessage(null) }} required disabled={!editing} />
-            {editing ? (
-                <button type='submit' className='btn btnSmall' disabled={!changed || !valid || saving}>
-                    {saving ? 'Saving…' : 'Save'}
-                </button>
-            ) : null}
-            {message ? <span role='status' className={message.type === 'success' ? 'seasonSaved' : 'seasonError'}>{message.text}</span> : null}
+            <span className='settingValues'>
+                {/* Locked, the dates are plain text: a locked date box is drawn wider on Android and cut the dates off */}
+                {!editing ? <span className='settingText'>{start ? formatDay(start) : 'not set'}</span> : null}
+                <label className='sr-only' htmlFor='seasonStart'>Season start date</label>
+                <input id='seasonStart' type='date' value={start} max={end || undefined} hidden={!editing}
+                    onChange={(e) => { setStart(e.target.value); setMessage(null) }} required disabled={!editing} />
+                <span aria-hidden='true'>→</span>
+                {!editing ? <span className='settingText'>{end ? formatDay(end) : 'not set'}</span> : null}
+                <label className='sr-only' htmlFor='seasonEnd'>Season end date</label>
+                <input id='seasonEnd' type='date' value={end} min={start || undefined} hidden={!editing}
+                    onChange={(e) => { setEnd(e.target.value); setMessage(null) }} required disabled={!editing} />
+                {editing ? (
+                    <button type='submit' className='btn btnSmall' disabled={!changed || !valid || saving}>
+                        {saving ? 'Saving…' : 'Save'}
+                    </button>
+                ) : null}
+                {message ? <span role='status' className={message.type === 'success' ? 'seasonSaved' : 'seasonError'}>{message.text}</span> : null}
+            </span>
         </form>
     )
 }

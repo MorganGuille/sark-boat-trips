@@ -170,6 +170,14 @@ input {
     font-weight: 600;
 }
 
+/* everything after the label (the dates, or the three prices, then Save and the message) */
+.settingValues {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
 /* ---------- Prices (header) and monthly report ---------- */
 
 .priceBox {
@@ -218,6 +226,11 @@ input {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
+}
+
+/* Locked, the season shows as text and its date boxes are hidden */
+.seasonInline input[hidden] {
+    display: none;
 }
 
 /* Locked (not editing): the values read as plain text, so nothing can be changed by a stray click */
@@ -904,5 +917,195 @@ input {
     .dashTabs {
         flex-wrap: wrap;
         overflow-x: visible;
+    }
+}
+
+/* ---------- Phone (spec P2-14) ---------- */
+@media (max-width: 600px) {
+    /* 16px boxes, so an iPhone doesn't zoom in when one is tapped */
+    .dashboard input:not([type='checkbox']):not([type='radio']),
+    .dashboard select,
+    .dashboard textarea,
+    .dashboard .changeTrip textarea,
+    .dashboard .changeTrip select,
+    .dashboard .changeTrip input {
+        font-size: 16px;
+    }
+
+    /* buttons big enough to tap with a thumb */
+    .dashboard .btn,
+    .dashboard .btnSmall {
+        min-height: 2.5rem;
+        font-size: 0.95rem;
+    }
+
+    /* Each booking becomes a card: one line per detail, with its heading on the left, and the
+       buttons in a row underneath, so nothing needs a sideways swipe */
+    .tableWrap {
+        overflow-x: visible;
+        border: 0;
+    }
+
+    .bookingsTable,
+    .bookingsTable tbody,
+    .bookingsTable tr,
+    .bookingsTable td {
+        display: block;
+        width: 100%;
+    }
+
+    .bookingsTable thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+    }
+
+    .bookingsTable tr {
+        margin-bottom: 0.75rem;
+        border: 1px solid #e1e4e8;
+        border-radius: 0.5rem;
+        background: #fff;
+        overflow: hidden;
+    }
+
+    /* the heading sits in the left padding, so the cell's own text, badges and links flow as usual */
+    .bookingsTable td {
+        position: relative;
+        padding: 0.45rem 0.75rem 0.45rem 6.25rem;
+        border-top: 1px solid #f0f2f4;
+        font-size: 0.95rem;
+        overflow-wrap: anywhere;
+    }
+
+    .bookingsTable td:first-child {
+        border-top: 0;
+    }
+
+    .bookingsTable td[data-label]::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 0.75rem;
+        top: 0.5rem;
+        color: #5b6773;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    /* nothing to show (no accommodation or message): leave the line out */
+    .bookingsTable td:empty {
+        display: none;
+    }
+
+    .bookingsTable td.nameCell {
+        font-weight: 600;
+    }
+
+    .bookingsTable td.messageCell {
+        max-width: none;
+    }
+
+    .bookingsTable td.actionsCell {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        width: 100%;
+        white-space: normal;
+        padding-left: 0.75rem;
+        background: #f7f8f9;
+    }
+
+    .dashboard .actionsCell .btn {
+        display: inline-block;
+        width: auto;
+        flex: 1 1 auto;
+    }
+
+    .dashboard .actionsCell .btn + .btn {
+        margin-top: 0;
+    }
+}
+
+/* The season and prices on a phone: a row each, the label in its own column and the values beside it,
+   instead of the dates and prices wrapping into each other (the owner's Pixel 8 Pro). */
+@media (max-width: 600px) {
+    .dashHeader {
+        gap: 0.75rem;
+    }
+
+    .dashHeader h1 {
+        flex-basis: 100%;
+        margin: 0;
+    }
+
+    .dashHeader .seasonInline {
+        flex-basis: 100%;
+        flex-wrap: nowrap;
+        align-items: baseline;
+        gap: 0;
+    }
+
+    .dashHeader .seasonLabel {
+        flex: 0 0 4.5rem;
+    }
+
+    .dashHeader .settingValues {
+        flex: 1;
+        min-width: 0;
+        gap: 0.4rem 1rem;
+    }
+
+    .dashHeader .settingValues input {
+        margin: 0;
+    }
+
+    /* locked, the prices are as wide as their text (the dates are plain text then) */
+    .dashHeader .priceBox input:disabled {
+        padding: 0;
+        width: 3.5em;
+    }
+
+    /* locked, the three prices are columns: the name above, the price under it */
+    .dashHeader .priceValues:not(.editing) {
+        display: grid;
+        grid-template-columns: repeat(3, auto);
+        justify-content: start;
+        gap: 0 1.5rem;
+    }
+
+    .dashHeader .priceValues:not(.editing) .priceField {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0;
+    }
+
+    .dashHeader .priceValues:not(.editing) .priceField label {
+        font-size: 0.85rem;
+        color: #5b6773;
+    }
+
+    .dashHeader .priceValues:not(.editing) .seasonSaved,
+    .dashHeader .priceValues:not(.editing) .seasonError {
+        grid-column: 1 / -1;
+    }
+
+    .dashHeader .priceField {
+        gap: 0.3rem;
+    }
+
+    .dashHeader .priceBox {
+        gap: 0;
+    }
+
+    /* editing, the date boxes fit side by side */
+    .dashHeader input[type='date']:enabled {
+        width: 9.5rem;
+        max-width: 100%;
+    }
+
+    .dashHeader .settingValues .btn {
+        width: auto;
+        margin: 0;
     }
 }

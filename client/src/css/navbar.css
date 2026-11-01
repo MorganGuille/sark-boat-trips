@@ -102,6 +102,20 @@
         z-index: 999;
     }
 
+    /* Closed, the button floats over the page as it scrolls: a pale tile keeps it visible over text
+       and photos alike (spec P2-14) */
+    .burgerIcon:not(.burgerIconOpen) {
+        width: 3.25rem;
+        height: 3.25rem;
+        margin: 0.75rem;
+        padding: 0;
+        font-size: 2rem;
+        line-height: 1;
+        border-radius: 0.6rem;
+        background-color: rgba(255, 255, 255, 0.85);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    }
+
 
     .mobileNavOpen {
         position: fixed;

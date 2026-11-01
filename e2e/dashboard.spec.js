@@ -165,22 +165,59 @@ test('payment: a new booking shows as unpaid with what is owed, can be marked pa
     expect((await h.savedBookings(request))[0].paymentStatus).toBe('unpaid');
 });
 
+test('the trip tools have their own tab, so the Bookings tab is just the bookings', async ({ page }) => {
+    await h.logIn(page);
+    await addBooking(page, { firstName: 'Ann', email: '' });
+    await page.click('role=tab[name="Bookings"]');
+    await expect(page.locator('tr:has-text("Ann")')).toBeVisible();
+    const tools = ['Change trip details', 'Message everyone on a trip', 'Cancel a whole trip'];
+    for (const name of tools) await expect(page.getByRole('heading', { name })).toHaveCount(0);
+
+    await page.click('role=tab[name="Trip tools"]');
+    for (const name of tools) await expect(page.getByRole('heading', { name })).toBeVisible();
+    await expect(page.locator('#cancelTripTime')).toContainText('11am trip (1 booking)'); // the day's bookings, as on the Bookings tab
+
+    // a search replaces the day's bookings, so the tools wait until it is cleared
+    await page.click('role=tab[name="Bookings"]');
+    await page.fill('#lastNameSearch', 'Visitor');
+    await page.click('form[role=search] button[type=submit]');
+    await page.click('role=tab[name="Trip tools"]');
+    await expect(page.getByRole('heading', { name: 'Cancel a whole trip' })).toHaveCount(0);
+    await page.getByRole('button', { name: 'Back to the day' }).click();
+    await expect(page.locator('#cancelTripTime')).toContainText('11am trip (1 booking)');
+});
+
 test('cancel a whole trip: one button cancels every booking on it, emails them, and closes the trip', async ({ page, request }) => {
     await h.logIn(page);
     await addBooking(page, { firstName: 'Ann', email: 'ann@example.test', adults: '2' });
     await dismiss(page);
     await addBooking(page, { firstName: 'Bob', email: 'bob@example.test', adults: '3' });
     await dismiss(page);
-    await page.click('role=tab[name="Bookings"]');
+    await page.click('role=tab[name="Trip tools"]'); // the trip tools have their own tab
     await expect(page.locator('#cancelTripTime')).toContainText('11am trip (2 bookings)');
     await page.click('button:has-text("Cancel 11am trip")'); // the "are you sure?" box is accepted
     await notice(page, 'is cancelled and closed to new bookings: 2 bookings cancelled, 2 customers emailed. Nobody will be charged.');
+    await page.click('role=tab[name="Bookings"]');
     await expect(page.locator('tr:has-text("Ann")')).toHaveCount(0);
     await expect(page.locator('.calendarDisplay')).toContainText('11:00 AM: 0 spaces available');
     const saved = await h.savedBookings(request);
     expect(saved.map((b) => b.status)).toEqual(['cancelled', 'cancelled']);
     const sent = (await h.mails(request)).filter((m) => m.result === 'sent' && /cancelled/i.test(m.subject)).map((m) => m.to).sort();
     expect(sent).toEqual(['ann@example.test', 'bob@example.test', 'owner@sarkboattrips.test']);
+});
+
+test('the owner can book outside the season, even when the address is typed /Dashboard/ (an Android phone did)', async ({ page, request }) => {
+    const day = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+    await request.post('/__test/season', { data: { start: day(20), end: day(40) } }); // today is before the season
+    await h.logIn(page);
+    await page.goto('/Dashboard/');
+    await expect(page.locator('.react-calendar')).toBeVisible();
+    await expect(page.locator('#seasonStart')).toHaveValue(day(20)); // the season has loaded, so the calendar knows it
+    await expect(page.locator('.react-calendar__tile.available').first()).toBeVisible(); // and so has the month
+    expect(await page.locator('.react-calendar__tile:disabled').count(), 'no day is greyed out on the dashboard').toBe(0);
+    await addBooking(page, { firstName: 'Offseason', email: '' });
+    await notice(page, 'saved');
+    expect((await h.savedBookings(request)).some((b) => b.firstName === 'Offseason')).toBe(true);
 });
 
 test('a booking can be saved with details missing', async ({ page }) => {

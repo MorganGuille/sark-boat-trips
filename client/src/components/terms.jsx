@@ -2,9 +2,10 @@ import { FREE_CANCEL_HOURS } from '../utils/policy.js'
 import { CONTACT_EMAIL } from '../utils/contact.js'
 
 // Shown in the footer pop-up and on its own page at /terms (the page Stripe links to)
-function Terms({ className = 'popUpDisplay' }) {
+function Terms({ className = 'popUpDisplay', close }) {
     return (
         <article className={className} aria-labelledby="terms-title">
+            {close ? <button type='button' className='popUpClose' onClick={close}>Close</button> : null}
             <h2 id="terms-title">Terms and Conditions - Sark Boat Trips</h2>
 
             <section>

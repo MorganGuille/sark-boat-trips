@@ -24,6 +24,7 @@ import '../css/dashboard.css'
 
 const TABS = [
     { id: 'bookings', label: 'Bookings' },
+    { id: 'tools', label: 'Trip tools' },
     { id: 'new', label: 'New booking' },
     { id: 'availability', label: 'Availability' },
     { id: 'extra', label: 'Extra trips' },
@@ -360,14 +361,31 @@ function Dashboard() {
                                 </div>
                             ) : null}
 
-                            {!searching && bookingsStatus === 'ready' ? (
-                                <>
-                                    <ChangeTripForm key={`${selectedDate}|${trips.map((trip) => trip.startTime + trip.harbourKey).join()}`}
-                                        selectedDate={selectedDate} trips={trips} bookings={bookings} onResult={showNotice} onDone={refreshBookings} />
-                                    <MessageTripForm selectedDate={selectedDate} trips={trips} bookings={bookings} onResult={showNotice} onDone={refreshBookings} />
-                                    <CancelTripForm selectedDate={selectedDate} trips={trips} bookings={bookings} onResult={showNotice} onDone={refreshBookings} />
-                                </>
+                        </>) : null}
+
+                        {/* Moving, messaging and cancelling a whole trip: on their own tab, to keep the bookings list clear */}
+                        {tab === 'tools' ? (<>
+                            <div className='panelHead'>
+                                <div>
+                                    <h2>{prettyDate(selectedDate)}</h2>
+                                    <p className='muted'>These act on the day picked on the calendar.</p>
+                                </div>
+                            </div>
+                            {searching ? (
+                                // bookings holds the search results then, not the day's bookings
+                                <p className='emptyState'>
+                                    Showing search results.{' '}
+                                    <button type='button' className='btnLink' onClick={clearSearch}>Back to the day</button> to use the trip tools.
+                                </p>
                             ) : null}
+                            {!searching && bookingsStatus === 'loading' ? <p className='muted' aria-busy='true'>Loading the day…</p> : null}
+                            {!searching && bookingsStatus === 'error' ? <p className='seasonError' role='alert'>Could not load the day&apos;s bookings. Try again in a moment.</p> : null}
+                            {!searching && bookingsStatus === 'ready' ? (<>
+                                <ChangeTripForm key={`${selectedDate}|${trips.map((trip) => trip.startTime + trip.harbourKey).join()}`}
+                                    selectedDate={selectedDate} trips={trips} bookings={bookings} onResult={showNotice} onDone={refreshBookings} />
+                                <MessageTripForm selectedDate={selectedDate} trips={trips} bookings={bookings} onResult={showNotice} onDone={refreshBookings} />
+                                <CancelTripForm selectedDate={selectedDate} trips={trips} bookings={bookings} onResult={showNotice} onDone={refreshBookings} />
+                            </>) : null}
                         </>) : null}
 
                         {tab === 'new' ? (

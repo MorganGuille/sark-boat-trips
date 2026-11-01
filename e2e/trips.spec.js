@@ -19,6 +19,7 @@ test('the owner moves a trip to another time and harbour; the customer is emaile
     await h.pickDate(page, 5);
     await expect(page.locator('tr:has-text("Ann")')).toBeVisible();
 
+    await page.click('role=tab[name="Trip tools"]'); // the trip tools have their own tab
     const box = page.locator('section.changeTrip');
     await expect(box.getByRole('combobox', { name: 'Trip', exact: true })).toContainText('11am trip (1 booking)');
     await box.getByLabel('New time').fill('12:30');
@@ -27,6 +28,7 @@ test('the owner moves a trip to another time and harbour; the customer is emaile
     await box.getByRole('button', { name: 'Save change' }).click(); // the "are you sure?" box is accepted
 
     await notice(page, 'now leaves at 12:30pm from the Maseline Harbour. 1 customer emailed.');
+    await page.click('role=tab[name="Bookings"]');
     await expect(page.locator('.tripMoved')).toContainText('The 11am trip leaves at 12:30pm from the Maseline Harbour today');
     // like a departures board: the new time, with the usual one crossed out underneath
     await expect(page.locator('tr:has-text("Ann") td .movedTime')).toHaveText('12:30pm');
@@ -37,6 +39,7 @@ test('the owner moves a trip to another time and harbour; the customer is emaile
     // the spaces are right-aligned: "9 spaces" and "12 spaces" end at the same place
     const right = async (selector) => { const box = await page.locator(selector).boundingBox(); return Math.round(box.x + box.width); };
     expect(await right('.calendarDisplay div:nth-of-type(1) > span:last-child')).toBe(await right('.calendarDisplay div:nth-of-type(2) > span:last-child'));
+    await page.click('role=tab[name="Trip tools"]');
     await expect(box.getByRole('combobox', { name: 'Trip', exact: true })).toContainText('12:30pm (usually 11am) trip (1 booking)');
 
     const toAnn = (await h.mails(request)).filter((m) => m.to === 'ann@example.test');
@@ -48,6 +51,7 @@ test('the owner moves a trip to another time and harbour; the customer is emaile
 test('a customer booking that day sees the trip\'s new time, and that it leaves from the Maseline Harbour', async ({ page }) => {
     await h.logIn(page);
     await h.pickDate(page, 6);
+    await page.click('role=tab[name="Trip tools"]'); // the trip tools have their own tab
     const box = page.locator('section.changeTrip');
     await box.getByRole('combobox', { name: 'Trip', exact: true }).selectOption('2pm');
     await box.getByLabel('New time').fill('15:00');
@@ -81,6 +85,7 @@ test('the owner messages everyone on a trip from the dashboard', async ({ page, 
     await page.reload();
     await h.pickDate(page, 5);
 
+    await page.click('role=tab[name="Trip tools"]'); // the trip tools have their own tab
     const box = page.locator('section.messageTrip');
     await expect(box.getByRole('button', { name: 'Nobody booked on this trip' })).toBeDisabled(); // the 11am trip is empty
     await box.getByRole('combobox', { name: 'Trip' }).selectOption('2pm');

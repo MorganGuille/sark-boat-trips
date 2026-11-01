@@ -4,55 +4,39 @@ import googleLogo from '../assets/logos/googleIcon.png'
 import tripLogo from '../assets/logos/tripadvisorIcon.png'
 import faceLogo from '../assets/logos/facebookIcon.png'
 
+const SITES = [
+    { name: 'Google', logo: googleLogo, href: 'https://g.co/kgs/xgNzzxD' },
+    { name: 'Tripadvisor', logo: tripLogo, href: 'https://www.tripadvisor.com/Attraction_Review-g186231-d6673939-Reviews-Sark_Boat_Trips-Sark_Channel_Islands.html' },
+    { name: 'Facebook', logo: faceLogo, href: 'https://www.facebook.com/sarkboattrips/reviews' },
+]
+
+// One panel: the overall score at the top, then a row per review site (like a phone's settings list)
 function Reviews() {
     return (
-        /* 1. REGION LANDMARK: Labeling the section so it appears in landmark menus */
         <section id="reviews" className='reviews centered-section' aria-labelledby="reviews-heading">
             <h2 id="reviews-heading">REVIEWS</h2>
 
-            <div className='reviewsContainer'>
-                {/* 2. DESCRIPTIVE LINKS: Adding aria-labels so users know exactly where the link goes */}
-
-                <a href="https://g.co/kgs/xgNzzxD" target="_blank" rel="noopener noreferrer" aria-label="Read our reviews on Google">
-                    <div className='reviewCard'>
-                        <img src={googleLogo} alt="" />
-                        <div>
-                            <p>Google</p>
-                            {/* 3. ACCESSIBLE RATINGS: Hide the visual stars from screen readers 
-                                  and provide a clear text alternative */}
-                            <span aria-label="5.0 out of 5 stars">
-                                <p aria-hidden="true">5.0</p>
-                                <p className='gold' aria-hidden="true"> ★★★★★</p>
-                            </span>
-                        </div>
+            <div className='reviewsPanel'>
+                <div className='reviewsScore'>
+                    <span className='reviewsNumber' aria-hidden="true">5.0</span>
+                    <div>
+                        <span className='gold reviewsStars' aria-hidden="true">★★★★★</span>
+                        <span className='reviewsSummary'><span className='sr-only'>5.0 out of 5. </span>Rated 5 stars on every site</span>
                     </div>
-                </a>
+                </div>
 
-                <a href="https://www.tripadvisor.com/Attraction_Review-g186231-d6673939-Reviews-Sark_Boat_Trips-Sark_Channel_Islands.html" target="_blank" rel="noopener noreferrer" aria-label="Read our reviews on Tripadvisor">
-                    <div className='reviewCard'>
-                        <img src={tripLogo} alt="" />
-                        <div>
-                            <p>Tripadvisor</p>
-                            <span aria-label="5.0 out of 5 stars">
-                                <p aria-hidden="true">5.0</p>
-                                <p className='gold' aria-hidden="true"> ★★★★★</p>
-                            </span>
-                        </div>
-                    </div>
-                </a>
-
-                <a href="https://www.facebook.com/sarkboattrips/reviews" target="_blank" rel="noopener noreferrer" aria-label="Read our reviews on Facebook">
-                    <div className='reviewCard'>
-                        <img src={faceLogo} alt="" />
-                        <div>
-                            <p>Facebook</p>
-                            <span aria-label="5.0 out of 5 stars">
-                                <p aria-hidden="true">5.0</p>
-                                <p className='gold' aria-hidden="true"> ★★★★★</p>
-                            </span>
-                        </div>
-                    </div>
-                </a>
+                <ul className='reviewsList'>
+                    {SITES.map((site) => (
+                        <li key={site.name}>
+                            <a className='reviewRow' href={site.href} target="_blank" rel="noopener noreferrer" aria-label={`Read our reviews on ${site.name}, rated 5.0 out of 5`}>
+                                <img src={site.logo} alt="" />
+                                <span className='reviewSite'>{site.name}</span>
+                                <span className='reviewScore'>5.0<span className='gold' aria-hidden="true">★★★★★</span></span>
+                                <span className='reviewChevron' aria-hidden="true">›</span>
+                            </a>
+                        </li>
+                    ))}
+                </ul>
             </div>
         </section>
     )

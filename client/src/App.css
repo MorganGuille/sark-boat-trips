@@ -99,15 +99,46 @@ body {
   text-align: left;
 }
 
+/* The success and "Booking not made" pages. The box grows with its text (a fixed height cut the
+   text off on phones, spec P2-14), and the top padding clears the navbar. */
 .stripe-landing {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
   justify-content: center;
-  max-width: 60%;
-  margin: 2em auto;
-  height: 85vh;
+  max-width: 40rem;
+  margin: 0 auto;
+  min-height: 85vh;
+  padding: 6rem 1rem 3rem;
+}
+
+/* the email, WhatsApp and terms links look like links (the site's links are otherwise plain text) */
+.stripe-landing a:not(.btn) {
+  color: #0b57b0;
+  text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+  .stripe-landing {
+    justify-content: flex-start;
+    text-align: left;
+    align-items: stretch;
+  }
+
+  .stripe-landing p {
+    font-size: 1.05rem;
+  }
+
+  .stripe-landing .landingButtons {
+    flex-direction: column;
+  }
+
+  .stripe-landing .landingButtons .btn {
+    margin: 0;
+    text-align: center;
+    min-height: 3rem;
+  }
 }
 
 .landingButtons {

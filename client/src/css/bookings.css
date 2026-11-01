@@ -60,9 +60,10 @@
     margin: 0 auto;
 }
 
+/* As wide as the form under it (.customerBooking), so "1 Choose a day" lines up with steps 2 to 4 */
 .bookingsSide {
     width: 100%;
-    max-width: 22rem;
+    max-width: 32rem;
     display: flex;
     flex-direction: column;
     align-items: center;

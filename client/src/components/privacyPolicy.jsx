@@ -1,9 +1,10 @@
 import { CONTACT_EMAIL } from '../utils/contact.js'
 
 // Shown in the footer pop-up and on its own page at /privacy (the page Stripe links to)
-function PrivacyPolicy({ className = 'popUpDisplay' }) {
+function PrivacyPolicy({ className = 'popUpDisplay', close }) {
     return (
         <article className={className} aria-labelledby="pp-title">
+            {close ? <button type='button' className='popUpClose' onClick={close}>Close</button> : null}
             <h2 id="pp-title">Privacy Policy for Sark Boat Trips</h2>
 
             <section>

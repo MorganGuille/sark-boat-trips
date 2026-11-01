@@ -53,29 +53,29 @@ function BookingsTable({ bookings, showDate, trips = [], onEdit, onCancel, onRes
                         const amount = status === 'paid' || status === 'paid_in_person' ? booking.amountPaid : booking.amountDue
                         return (
                         <tr key={booking._id} className={isCancelled ? 'cancelledRow' : undefined}>
-                            {showDate ? <td>{showDay(booking.date)}</td> : null}
-                            <td>{timeCell(booking)}</td>
-                            <td>
+                            {showDate ? <td data-label='Date'>{showDay(booking.date)}</td> : null}
+                            <td data-label='Time'>{timeCell(booking)}</td>
+                            <td data-label='Name' className='nameCell'>
                                 {[booking.firstName, booking.lastName].filter(Boolean).join(' ') || '(no name)'}
                                 {booking.charter === 'true' ? <span className='badge'>Charter</span> : null}
                                 {isCancelled ? <span className='badge badgeCancelled'>Cancelled</span> : null}
                                 {booking.reference ? <span className='bookingRef'>{booking.reference}</span> : null}
                             </td>
-                            <td>{guests(booking)}</td>
-                            <td>
+                            <td data-label='Party'>{guests(booking)}</td>
+                            <td data-label='Payment'>
                                 <span className={`payBadge ${payment.className}`}>{payment.label}</span>
                                 {Number.isFinite(amount) ? <span className='payAmount'>{formatPounds(amount / 100)}</span> : null}
                                 {status === 'card_saved' && booking.cardLabel ? <span className='payCardLabel'>{booking.cardLabel}</span> : null}
                                 {booking.paymentNote ? <span className='payNote'>{booking.paymentNote}</span> : null}
                             </td>
-                            <td>
+                            <td data-label='Contact'>
                                 {booking.email ? <a href={`mailto:${booking.email}`}>{booking.email}</a> : null}
                                 {booking.email && booking.phone ? <br /> : null}
                                 {booking.phone ? <a href={`tel:${booking.phone}`}>{booking.phone}</a> : null}
                                 {!booking.email && !booking.phone ? '—' : null}
                             </td>
-                            <td>{booking.accommodation}</td>
-                            <td className='messageCell'>{booking.message}</td>
+                            <td data-label='Staying'>{booking.accommodation}</td>
+                            <td data-label='Message' className='messageCell'>{booking.message}</td>
                             <td className='actionsCell'>
                                 {isCancelled ? (<>
                                     <button type='button' className='btn btnSmall' onClick={() => onRestore(booking)}>Restore</button>

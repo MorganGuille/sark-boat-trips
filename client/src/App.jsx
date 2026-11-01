@@ -22,9 +22,12 @@ const Wrapper = ({ children }) => {
   const location = useLocation();
 
   useEffect(() => {
-    // Scroll to the top of the page when the route changes
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-  }, [location.pathname]);
+    // Scroll to the top of the page when the route changes, or to the section a link asked for
+    // (the menu's "/#theTour" from another page)
+    const section = location.hash && document.getElementById(location.hash.slice(1));
+    if (section) section.scrollIntoView();
+    else window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [location.pathname, location.hash]);
 
   return children;
 };

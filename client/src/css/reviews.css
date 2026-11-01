@@ -3,96 +3,119 @@ a {
     color: inherit;
 }
 
-
-.reviewsContainer {
-    margin: 2em 0;
+/* One white panel: the overall score, then a row per review site */
+.reviewsPanel {
+    position: relative; /* keeps the hidden screen-reader text inside it */
     width: 100%;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
+    max-width: 36rem;
+    margin: 2em auto;
+    background-color: white;
+    border-radius: 18px;
+    box-shadow: 0 8px 24px rgba(33, 53, 71, 0.08);
+    overflow: hidden;
+    text-align: left;
 }
 
-.reviewCard {
+.reviewsScore {
     display: flex;
     align-items: center;
-    justify-content: center;
-    width: 250px;
-    height: 7rem;
-    border: 1px solid black;
-    border-radius: 0.5em;
-    background-color: white;
-    filter: drop-shadow(0.5em 0.5em grey);
-    transition: 0.3s ease-in-out;
+    gap: 1rem;
+    padding: 1.25rem 1.25rem 1rem;
 }
 
-.reviewCard img {
-    width: 40px;
-    margin-right: 10px;
+.reviewsNumber {
+    font-size: 2.6rem;
+    font-weight: 800;
+    line-height: 1;
 }
 
-.reviewCard span {
+.reviewsStars {
+    display: block;
+    font-size: 1.15rem;
+    letter-spacing: 0.08em;
+}
+
+.reviewsSummary {
+    color: #5b6b7b;
+    font-size: 0.9rem;
+}
+
+.reviewsList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.reviewRow {
     display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    min-height: 3.5rem;
+    padding: 0.9rem 1.25rem;
+    border-top: 1px solid #edf0f3;
+    transition: background-color 0.15s;
 }
 
-.reviewCard:hover {
-    cursor: pointer;
-    transform: scale(1.1);
+.reviewRow:hover {
+    background-color: #f6f8fa;
+}
+
+.reviewRow:focus-visible {
+    outline: 3px solid #0f6fb8;
+    outline-offset: -3px;
+}
+
+.reviewRow img {
+    width: 26px;
+    height: 26px;
+}
+
+.reviewSite {
+    flex: 1;
+    font-weight: 600;
+}
+
+.reviewScore {
+    font-weight: 600;
+}
+
+.reviewScore .gold {
+    margin-left: 0.25rem;
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+}
+
+.reviewChevron {
+    color: #9aa6b4;
+    font-size: 1.6rem;
+    line-height: 1;
 }
 
 .gold {
-    color: goldenrod;
+    color: #f2a900;
 }
 
 @media (max-width: 1366px) {
-
     .reviews {
         max-width: 80%;
-    }
-
-    .reviewsContainer {
-        justify-content: space-around;
-    }
-
-    .reviewCard {
-        height: 7rem;
     }
 }
 
 @media (max-width: 800px) {
-
     .reviews {
-        display: flex;
-        flex-direction: column;
         max-width: 95%;
     }
+}
 
-    .reviewsContainer {
-        flex-direction: row;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
+/* On a small phone the row's stars go: the panel already shows them at the top */
+@media (max-width: 400px) {
+    .reviewScore .gold {
+        display: none;
     }
+}
 
-    .reviewCard {
-        width: 100%;
-        height: auto;
-        padding: 1em;
-        flex-direction: column;
-        text-align: center;
+@media (prefers-reduced-motion: reduce) {
+    .reviewRow {
+        transition: none;
     }
-
-    .reviewCard img {
-        width: 30px;
-        height: auto;
-    }
-
-    .reviewCard span {
-        flex-direction: column;
-        align-items: center;
-    }
-
-    .reviewCard p {
-        margin: 0;
-    }
-
 }

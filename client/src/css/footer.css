@@ -82,6 +82,33 @@ footer a:hover {
     list-style: none;
 }
 
+/* The pop-up reads like a page: left-aligned (the footer around it is centred on smaller screens) */
+.popUpDisplay {
+    text-align: left;
+}
+
+/* Close, pinned to the top of the pop-up while its text scrolls (tapping outside also closes it) */
+.popUpClose {
+    position: sticky;
+    top: 0;
+    float: right;
+    margin: 0 0 0.5rem 0.5rem;
+    min-height: 2.75rem;
+    padding: 0 1rem;
+    border: 0;
+    border-radius: 0.5rem;
+    background: #3f4e5a;
+    color: white;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    z-index: 1;
+}
+
+.popUpDisplay h2 {
+    font-size: 1.6rem;
+}
+
 .footer-btn-link {
     background: none;
     border: none;
@@ -140,5 +167,27 @@ footer a:hover {
 
     address.footer-section {
         align-items: center;
+    }
+}
+
+/* On a phone the pop-up fills the screen below the menu button, with a 16px edge */
+@media (max-width: 600px) {
+    .popUpDisplay {
+        top: 5rem;
+        bottom: 1rem;
+        left: 1rem;
+        right: 1rem;
+        width: auto;
+        height: auto;
+        background-color: rgba(255, 255, 255, 0.97);
+    }
+
+    .popUpDisplay h2 {
+        font-size: 1.4rem;
+        margin-top: 0;
+    }
+
+    .popUpDisplay p {
+        font-size: 1rem;
     }
 }

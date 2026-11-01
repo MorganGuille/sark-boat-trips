@@ -50,15 +50,17 @@ function PricesForm({ saved, onSaved, editing }) {
     return (
         <form className='seasonInline' onSubmit={save}>
             <span className='seasonLabel'>Prices</span>
-            {field('priceAdult', 'Adult', adult, setAdult)}
-            {field('priceChild', 'Child', child, setChild)}
-            {field('priceCharter', 'Charter', charter, setCharter)}
-            {editing ? (
-                <button type='submit' className='btn btnSmall' disabled={!changed || !filled || saving}>
-                    {saving ? 'Saving…' : 'Save'}
-                </button>
-            ) : null}
-            {message ? <span role='status' className={message.type === 'success' ? 'seasonSaved' : 'seasonError'}>{message.text}</span> : null}
+            <span className={`settingValues priceValues${editing ? ' editing' : ''}`}>
+                {field('priceAdult', 'Adult', adult, setAdult)}
+                {field('priceChild', 'Child', child, setChild)}
+                {field('priceCharter', 'Charter', charter, setCharter)}
+                {editing ? (
+                    <button type='submit' className='btn btnSmall' disabled={!changed || !filled || saving}>
+                        {saving ? 'Saving…' : 'Save'}
+                    </button>
+                ) : null}
+                {message ? <span role='status' className={message.type === 'success' ? 'seasonSaved' : 'seasonError'}>{message.text}</span> : null}
+            </span>
         </form>
     )
 }

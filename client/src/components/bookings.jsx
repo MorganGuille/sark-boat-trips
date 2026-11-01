@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useLocation } from 'react-router'
+import usePage from '../hooks/usePage'
 import MyCalendar from './myCalendar'
 import CustomerBookingForm from './customerBookingForm'
 import useSeasonDates from '../hooks/useSeasonDates'
@@ -13,7 +13,7 @@ import '../css/bookings.css'
 // charter). On a phone it is one column: prices, the calendar, then the form. On a wider screen the
 // calendar sits on the left and stays in view while the form scrolls past it.
 function Bookings() {
-    const { pathname } = useLocation()
+    const pathname = usePage()
     const charter = pathname === '/charters'
     const season = useSeasonDates()
     const { prices } = usePrices()
