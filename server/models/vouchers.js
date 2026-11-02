@@ -16,6 +16,7 @@ const vouchersSchema = new mongoose.Schema({
     recipientEmail: { type: String },
     // The voucher email goes to deliverTo on sendOn ('YYYY-MM-DD', Guernsey time) or straight away
     deliverTo: { type: String },
+    erasedAt: { type: Date }, // a buyer's or recipient's details were erased at their request (utils/customerData.js)
     sendOn: { type: String },
     sentAt: { type: Date },
     sendAttempts: { type: Number },

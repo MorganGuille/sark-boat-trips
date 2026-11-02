@@ -45,9 +45,9 @@ function Footer() {
                     <h2>Explore</h2>
                     <ul>
                         <li><a href={section('theTour')}>The tour</a></li>
+                        <li><a href={section('reviews')}>Reviews</a></li>
                         <li><a href={section('charters')}>Charters</a></li>
                         <li><a href={section('sarkIsland')}>Sark Island</a></li>
-                        <li><a href={section('reviews')}>Reviews</a></li>
                         <li><Link to='/gift-vouchers'>Gift vouchers</Link></li>
                     </ul>
                 </nav>

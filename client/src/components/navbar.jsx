@@ -56,12 +56,12 @@ function Navbar() {
         window.history.pushState(null, '', `#${id}`)
     }
 
-    // inMenu: the phone menu's copy of the links
+    // inMenu: the phone menu's copy of the links. In the order of the home page's sections.
     const links = (inMenu) => (<>
         <a href={section('theTour')} onClick={inMenu ? fromMenu('theTour') : undefined}>The tour</a>
+        <a href={section('reviews')} onClick={inMenu ? fromMenu('reviews') : undefined}>Reviews</a>
         <a href={section('charters')} onClick={inMenu ? fromMenu('charters') : undefined}>Charters</a>
         <a href={section('sarkIsland')} onClick={inMenu ? fromMenu('sarkIsland') : undefined}>Sark Island</a>
-        <a href={section('reviews')} onClick={inMenu ? fromMenu('reviews') : undefined}>Reviews</a>
     </>)
 
     return (

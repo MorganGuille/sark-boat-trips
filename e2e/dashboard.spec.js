@@ -391,3 +391,30 @@ test('season dates: an end before the start cannot be saved, a valid change is s
     await expect(page.locator('#seasonStart')).toHaveValue(start);
     await expect(page.locator('#seasonEnd')).toHaveValue(later);
 });
+
+test('customer data: searching an email shows everything held for it, downloads it, and erases it once confirmed', async ({ page, request }) => {
+    const lastMonth = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+    await request.post('/__test/insert-booking', { data: { date: lastMonth, firstName: 'Ann', lastName: 'Le Page', email: 'ann@example.test', phone: '07700 900123', adults: 2, reference: 'SBT-ANNANN', paymentStatus: 'paid', amountPaid: 8000 } });
+    await h.logIn(page);
+    await page.fill('#bookingSearch', 'Ann@Example.test');
+    await page.click('form[role=search] button[type=submit]');
+    await page.getByRole('button', { name: 'Customer data for ann@example.test' }).click();
+    const panel = page.locator('.customerDataBody');
+    await expect(panel).toContainText('Bookings (1)');
+    await expect(panel).toContainText('Ann Le Page · 2 adults · SBT-ANNANN');
+    await expect(panel).toContainText('Paid online · 07700 900123');
+
+    const download = page.waitForEvent('download');
+    await panel.getByRole('button', { name: 'Download their data' }).click();
+    expect((await download).suggestedFilename()).toBe('sark-boat-trips-ann@example.test.json');
+
+    await panel.getByRole('button', { name: 'Erase' }).click();
+    const erase = panel.getByRole('button', { name: 'Erase for good' });
+    await expect(erase).toBeDisabled(); // until the address is typed again
+    await page.fill('#eraseConfirm', 'ann@example.test');
+    await erase.click();
+    await notice(page, 'Erased ann@example.test from 1 booking. Dates, party sizes and amounts are kept for your reports.');
+    await expect(panel).toContainText('Nothing is held for ann@example.test.');
+    const [saved] = await h.savedBookings(request);
+    expect([saved.firstName, saved.email, saved.phone, saved.adults, saved.amountPaid]).toEqual(['Erased', '', '', 2, 8000]);
+});

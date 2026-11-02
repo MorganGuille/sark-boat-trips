@@ -18,9 +18,11 @@ Written after reading the whole codebase and testing the booking and dashboard f
 
 **Merged into `version2` (2 Nov 2026):** P2-15, gift vouchers bought online, and the home page redesign (see "Home page redesign" under P2-14).
 
-**Next:** P2-13 (customer data tools), then the go-live steps in `CLAUDE.md`. Already on `version2` (all committed, 1 Nov 2026): P2-2 (trip tools), P2-12 (no overbooking), P2-6 (manage my booking), P2-8 (new booking form), P2-14 (mobile pass, tried on the owner's Android), P2-9 (each page prebuilt, robots.txt, sitemap), P2-3 (upcoming list and better search), and the client-side pass: new header and phone menu, new footer, charters section and page, the home page video, and a steady hero on phones (see "Header and footer redesign" under P2-14). Anything marked DONE only counts once it is deployed.
+**Next:** the go-live steps in `CLAUDE.md` (P2-13, customer data tools, done 3 Nov 2026). Already on `version2` (all committed, 1 Nov 2026): P2-2 (trip tools), P2-12 (no overbooking), P2-6 (manage my booking), P2-8 (new booking form), P2-14 (mobile pass, tried on the owner's Android), P2-9 (each page prebuilt, robots.txt, sitemap), P2-3 (upcoming list and better search), and the client-side pass: new header and phone menu, new footer, charters section and page, the home page video, and a steady hero on phones (see "Header and footer redesign" under P2-14). Anything marked DONE only counts once it is deployed.
 
-**Waiting on the owner:** newer photos for the charters page (the evening card borrows a coastline shot). The owner's ngrok address (`strained-raking-acquire.ngrok-free.dev`, port 4041 copy) is how they check changes on their Android.
+**Owner's decisions on gift vouchers (2 Nov 2026):** a voucher for more people than come is used up (the owner can put it right in person); customers can't change or cancel a booking with a voucher on it themselves, for now; no header link (footer and home page only).
+
+**Waiting on the owner:** an evening photo for the charters page's evening card (it borrows a coastline shot); a check of the home page photo descriptions (`views/home.jsx`); a try on a real iPhone before go-live. The owner's ngrok address (`strained-raking-acquire.ngrok-free.dev`, port 4041 copy) is how they check changes on their Android.
 
 ## Summary
 
@@ -50,9 +52,9 @@ Written after reading the whole codebase and testing the booking and dashboard f
 | P2-8 | Customer | Booking form polish: DONE (price total, closed days, keep data on error) | M |
 | P2-9 | Client | Each public route prerendered separately, plus sitemap and noindex (**DONE**) | M |
 | P2-10 | Server | Move off Gmail SMTP (**DONE**: Zoho, `info@sarkboattrips.com`, with SPF, DKIM and DMARC) | M |
-| P2-11 | Server | Business settings hard-coded in many files (email addresses **DONE**; trip times and the 12 limit still to do) | M |
+| P2-11 | Server | Business settings hard-coded in many files (email addresses **DONE**; the rest **closed** by the owner, 2 Nov 2026) | M |
 | P2-12 | Server | Overbooking race condition: DONE | M |
-| P2-13 | Owner | Customer data tools (find, export, erase by email) | S |
+| P2-13 | Owner | Customer data tools (find, export, erase by email) (**DONE**, on `version2`) | S |
 | P2-14 | Customer | Mobile-friendly pass over the whole website **DONE** | M |
 | P2-15 | Customer | Gift vouchers bought online, with a dashboard list (**DONE**, on `version2`) | M–L |
 | P3-1 | Build | Untrack committed build output | S |
@@ -314,6 +316,7 @@ Decided with the owner on 26 Oct 2026 and written up in **`paymentsspec.md`**: e
 
 #### P2-13 `[Owner]` Customer data tools
 One place to find everything held for an email address, export it, and erase it (permanent delete already exists per booking). Update the privacy policy's retention paragraph to state that cancelled bookings are kept until a customer asks for removal, which is current practice.
+- **Done** (3 Nov 2026, on `version2`, not yet deployed). Owner's choices: erase **blanks** the details (keeps date, party and money so reports stay right), **removes the saved card at Stripe**, and lives on the **Bookings search** (search an email, then Customer data). Download is a JSON file. Erasing is refused while they have a booking today or later, a charge in progress, or a voucher still to be emailed to them. The privacy policy already said cancelled bookings are kept until asked; it now also says what is kept after erasing. Not covered: the owner's Notes, their inbox, and local backups (`backups/`), which keep old copies until replaced. See CLAUDE.md. Tests: `server/test/customers.test.js`, `e2e/dashboard.spec.js`.
 
 #### P2-14 `[Customer]` Mobile-friendly pass over the whole website **DONE (1 Nov 2026, `mobile-pass` branch)**
 Most customers book on a phone (owner, 1 Nov 2026). Every page was checked at 360px on Chrome, an emulated Android phone (Pixel 7) and WebKit (iPhone 14). Fixed:
@@ -381,6 +384,7 @@ The "your trip time has changed" email from P2-2 should include this link, so a 
 Gmail SMTP has daily sending limits, weaker deliverability (your own email asks customers to check spam), and it ties delivery to one personal account. Use a transactional service (Resend, Postmark or SES) behind one `mailer.js` module that also holds the three email layouts now copied across the code, the HTML escaping (P1-5), and failure alerts to you.
 
 #### P2-11 `[Server]` Business settings hard-coded in many files
+- **Closed** (owner, 2 Nov 2026): the usual trip times stay as they are, now that extra trips (P2-2) cover anything different, and 12 is the boat's legal limit, so neither needs to be a setting.
 - **Partly done** (30 Oct 2026, not yet deployed): **email addresses.** The server reads `MAIL_FROM`, `OWNER_EMAIL` and the mail server from its settings (`settings.mail`), the website pages use `CONTACT_EMAIL` (`client/src/utils/contact.js`), and `email-settings.test.js` fails if the old Gmail address comes back. Prices and the Stripe price id were done in P2-1 and P2-4. **Still to do:** the trip times (`'11am'`, `'2pm'`), the 12 limit and the phone number (now in one place for emails, `server/emails/layout.js`, but still typed into the website's pages); best done with P2-2 (changing a trip's time).
 Timeslots (`'11am'`, `'2pm'`), default capacity 12, prices and the "2026" text, the Stripe price id, the domain, and the email addresses are scattered across files. Put them in one server config plus a small settings document editable from the dashboard, and have the client read them.
 

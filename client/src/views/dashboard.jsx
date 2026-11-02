@@ -15,6 +15,7 @@ import LoginForm from '../components/dashboard/loginForm'
 import BookingsTable from '../components/dashboard/bookingsTable'
 import AvailabilityForm from '../components/dashboard/availabilityForm'
 import NotesPanel from '../components/dashboard/notesPanel'
+import CustomerData from '../components/dashboard/customerData'
 import useSeasonDates from '../hooks/useSeasonDates'
 import usePrices from '../hooks/usePrices'
 import { URL } from '../../config.js'
@@ -380,6 +381,11 @@ function Dashboard() {
                                 <button type='submit' className='btn btnSmall'>Search</button>
                                 {searching ? <button type='button' className='btn btnSmall btnGhost' onClick={clearSearch}>Back to day</button> : null}
                             </form>
+
+                            {/* Searching by an email address: everything held for it, to download or erase (spec P2-13) */}
+                            {searching && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(view.term) ? (
+                                <CustomerData key={view.term} email={view.term.toLowerCase()} onResult={showNotice} onErased={refreshBookings} />
+                            ) : null}
 
                             {dayView && movedTrips.length ? (
                                 <p className='tripMoved' role='note'>

@@ -96,6 +96,7 @@ const bookingsSchema = new mongoose.Schema({
     // The customer's "manage my booking" link and the short reference they quote (utils/bookingCodes.js)
     manageToken: { type: String, index: true },
     reference: { type: String, index: true },
+    erasedAt: { type: Date }, // the customer's details were erased at their request (utils/customerData.js)
     // Set on paid charters. The unique index means one Stripe payment can only ever create one booking
     stripeSessionId: {
         type: String,

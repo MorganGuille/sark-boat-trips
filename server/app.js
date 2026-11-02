@@ -51,6 +51,7 @@ app.use("/admin", require("./routes/admin"));
 app.use("/charters", require("./routes/charters"));
 app.use("/notes", require("./routes/notes"));
 app.use("/vouchers", require("./routes/vouchers"));
+app.use("/customers", require("./routes/customers"));
 
 // Optional public folder
 app.use(express.static("public"));

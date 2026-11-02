@@ -47,6 +47,18 @@ test('every page has the same header: logo home, the four links, and Book a trip
     }
 });
 
+test('the header and footer links are in the order of the home page\'s sections', async ({ page }) => {
+    await page.goto('/');
+    const sections = await page.locator('main > section[id]').evaluateAll((all) => all.map((s) => s.id));
+    const order = (hrefs) => hrefs.map((href) => href.replace(/^\/?#/, '')).filter((id) => sections.includes(id));
+    const inPageOrder = (ids) => [...ids].sort((a, b) => sections.indexOf(a) - sections.indexOf(b));
+    const header = order(await page.locator('.headerLinks a').evaluateAll((all) => all.map((a) => a.getAttribute('href'))));
+    const footer = order(await page.locator('.footerExplore a').evaluateAll((all) => all.map((a) => a.getAttribute('href'))));
+    expect(header).toEqual(['theTour', 'reviews', 'charters', 'sarkIsland']);
+    expect(header).toEqual(inPageOrder(header));
+    expect(footer).toEqual(header);
+});
+
 test('every header link goes to a section of the home page, Charters too (the owner found it jarring when it alone opened another page)', async ({ page }) => {
     await page.goto('/');
     const nav = page.getByRole('navigation', { name: 'Main' });

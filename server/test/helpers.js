@@ -54,6 +54,7 @@ const installMocks = () => {
         // saved cards (setup intents) it knows, and whether creating a session should fail
         stripe: {
             keys: [], created: [], customers: [], sessions: {}, setupIntents: {}, fail: false,
+            deleted: [], // customers removed (erasing a customer's data); fail makes that fail too
             // card charges: every request made, the answers given per idempotency key, and how a
             // saved card behaves: 'ok' (default), 'declined', 'insufficient_funds',
             // 'authentication_required', 'unreachable' (Stripe can't be reached) or 'processing'
@@ -63,7 +64,7 @@ const installMocks = () => {
     currentMocks = mocks;
     mocks.sent = (to) => mocks.mails.filter((m) => m.result === 'sent' && (!to || m.to === to));
     mocks.reset = () => {
-        mocks.mails.length = 0; mocks.mailMode = 'none'; mocks.failTo.clear(); mocks.stripe.created.length = 0; mocks.stripe.customers.length = 0; mocks.stripe.charges.length = 0; mocks.stripe.fail = false;
+        mocks.mails.length = 0; mocks.mailMode = 'none'; mocks.failTo.clear(); mocks.stripe.created.length = 0; mocks.stripe.customers.length = 0; mocks.stripe.charges.length = 0; mocks.stripe.deleted.length = 0; mocks.stripe.fail = false;
         for (const store of [mocks.stripe.sessions, mocks.stripe.setupIntents, mocks.stripe.intents, mocks.stripe.cards]) for (const key of Object.keys(store)) delete store[key];
     };
 
@@ -95,6 +96,11 @@ const installMocks = () => {
             client.customers.create = async (params) => {
                 mocks.stripe.customers.push(params);
                 return { id: `cus_test_${mocks.stripe.customers.length}` };
+            };
+            client.customers.del = async (id) => {
+                if (mocks.stripe.fail) throw Object.assign(new Error('fake Stripe unreachable'), { type: 'StripeConnectionError' });
+                mocks.stripe.deleted.push(id);
+                return { id, object: 'customer', deleted: true };
             };
             // A saved card. Unless a test set one up, every setup intent holds a Visa ending 4242
             client.setupIntents.retrieve = async (id) => mocks.stripe.setupIntents[id] || {

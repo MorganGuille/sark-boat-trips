@@ -51,7 +51,7 @@ function PrivacyPolicy({ className = 'termsArticle' }) {
 
             <section>
                 <p><strong>6. Data Retention</strong></p>
-                <p>We keep your booking records, including cancelled bookings, until you ask us to remove them, unless we need to keep them for legal, accounting or reporting reasons. Your saved card is held by Stripe: ask us and we will remove it.</p>
+                <p>We keep your booking records, including cancelled bookings, until you ask us to remove them, unless we need to keep them for legal, accounting or reporting reasons. Your saved card is held by Stripe: ask us and we will remove it. When we remove your details at your request, we keep only an anonymous record of each trip (its date, the number of people and what was paid) for our accounts.</p>
             </section>
 
             <section>
