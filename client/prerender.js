@@ -11,7 +11,7 @@ const toAbsolute = (p) => path.resolve(__dirname, p);
 // the server sends for that address (server/routes/pages.js, whose PUBLIC_PAGES must match this list).
 // Every other page (dashboard, success, canceled, manage, 404) is built in the browser from
 // dist/app.html, the empty page, marked noindex.
-const PAGES = ["/", "/bookings", "/charters", "/terms", "/privacy"];
+const PAGES = ["/", "/bookings", "/charters", "/gift-vouchers", "/terms", "/privacy"];
 
 // The page's HTML put into the template, with React's title and description moved into the <head>
 const fill = (template, appHtml) => {

@@ -12,9 +12,11 @@ Written after reading the whole codebase and testing the booking and dashboard f
 
 **Areas**: `[Server]`, `[Client]`, `[Owner]` (the dashboard), `[Customer]` (the public site), `[Build]`.
 
-## Progress (1 Nov 2026)
+## Progress (2 Nov 2026)
 
 **Done in the sandbox (`version2`), not yet deployed:** P0-1 to P0-5, P1-1 to P1-10 (error reporting in P1-9 was skipped by the owner), P2-1 (prices and the monthly CSV report), P3-2 (lint), P2-4 in full (merged from the `payments` branch on 30 Oct; see `paymentsspec.md`: payment status with Mark paid / Undo paid, a card saved on Stripe's page for every online booking, charged automatically at the trip time, infants, the cancellation rules on `/terms` and `/privacy`, and **Cancel a whole trip**, part of P2-2), P2-10 plus the email part of P2-11 (the site sends from `info@sarkboattrips.com` through Zoho; addresses come from settings), and P2-7 (the reminder email at 6pm the evening before).
+
+**On the `gift-vouchers` branch (2 Nov 2026, not yet merged):** P2-15, gift vouchers bought online.
 
 **Next:** P2-13 (customer data tools), then the go-live steps in `CLAUDE.md`. Already on `version2` (all committed, 1 Nov 2026): P2-2 (trip tools), P2-12 (no overbooking), P2-6 (manage my booking), P2-8 (new booking form), P2-14 (mobile pass, tried on the owner's Android), P2-9 (each page prebuilt, robots.txt, sitemap), P2-3 (upcoming list and better search), and the client-side pass: new header and phone menu, new footer, charters section and page, the home page video, and a steady hero on phones (see "Header and footer redesign" under P2-14). Anything marked DONE only counts once it is deployed.
 
@@ -52,6 +54,7 @@ Written after reading the whole codebase and testing the booking and dashboard f
 | P2-12 | Server | Overbooking race condition: DONE | M |
 | P2-13 | Owner | Customer data tools (find, export, erase by email) | S |
 | P2-14 | Customer | Mobile-friendly pass over the whole website **DONE** | M |
+| P2-15 | Customer | Gift vouchers bought online, with a dashboard list (**DONE** on the `gift-vouchers` branch) | M–L |
 | P3-1 | Build | Untrack committed build output | S |
 | P3-2 | Build | Lint baseline of 108 errors | S–M |
 | P3-3 | Server | Models: indexes and numeric defaults | S |
@@ -357,6 +360,9 @@ The "your trip time has changed" email from P2-2 should include this link, so a 
 - Disable past days and days outside the season on the calendar (the hard-coded "Prices for 2026" text needs to come from config, see P2-11).
 - Keep entered data after an error.
 - Show a confirmation summary and an "add to calendar" file.
+
+#### P2-15 `[Customer]` Gift vouchers
+- **Done** (2 Nov 2026, `gift-vouchers` branch, not yet merged). Before: the owner took a bank transfer and emailed a plain PDF with no code, name or expiry. Owner's decisions (option B of the mock-ups): a **Gift vouchers page** (`/gift-vouchers`) where the buyer picks adults and children at the normal dashboard prices, or a **private charter**, adds who it's for and a message, and has it emailed to themselves or to the person it's for, now or at 8am on a day they choose; **paid at once** on Stripe's page (mode `payment`, unlike bookings). Vouchers are **for people, not money**, valid until **1 October of the next season to start** (the season always ends by then), **not refundable but can be passed on** (on the voucher, the page, Stripe's page and the terms, section 10). The voucher is a PDF (the hero photo, name, message, what it covers, code `GIFT-XXXX-XX`, expiry) attached to the email. The owner gets an email per sale. **Dashboard Vouchers tab:** list and search, make one by hand (bank transfer, cash or a free prize), **Use** with a booking reference (the voucher's value comes off what the booking owes; a voucher covering it all marks it `voucher`, so a saved card isn't charged), Undo, Email again (to a corrected address), Extend, PDF. Using a voucher online (option C) was left for later. **Report:** vouchers sold (and their money) and used that month; a trip paid by voucher only counts what was left to pay, so money is counted once, when the voucher is sold. My choices, worth the owner confirming: a voucher for more people than came is used up; a customer can't change or cancel a voucher booking themselves (the owner does, then presses Undo). Tests: `vouchers.test.js`, `e2e/gift-vouchers.spec.js`.
 
 ### Back end and build
 

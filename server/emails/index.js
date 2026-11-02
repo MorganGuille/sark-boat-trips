@@ -2,7 +2,7 @@
 // subject, html, text, attachments); the controllers decide when to send it, with trySend or sendEmail
 // (utils/mailer.js). The look is in emails/layout.js, the calendar file in emails/calendar.js.
 // Dates are written out ('Monday 9 November 2026', 'Mon 9 Nov' in subjects) so they can't be misread.
-const { renderEmail } = require('./layout');
+const { renderEmail, PHONE } = require('./layout');
 const { calendarFile } = require('./calendar');
 const { settings } = require('../utils/settings');
 const { longDay, shortDay } = require('../utils/dates');
@@ -10,6 +10,7 @@ const { partyText, seatsFor } = require('../utils/party');
 const { cancelRule } = require('../utils/policy');
 const { describeTrip } = require('../utils/trips');
 const { manageUrl } = require('../utils/manage');
+const { coversText, coversShort, validUntil } = require('../utils/vouchers');
 
 const pounds = (pence) => `£${(pence / 100).toFixed(2).replace(/\.00$/, '')}`;
 const isCharter = (booking) => booking.charter === 'true';
@@ -71,6 +72,7 @@ const paymentRow = (booking, amount) => {
         return ['Payment', `${amount == null ? 'The trip price' : pounds(amount)}, charged to your saved card at ${at(booking)} on the day`];
     }
     if (['paid', 'paid_in_person'].includes(booking.paymentStatus)) return ['Payment', 'Paid, thank you'];
+    if (booking.paymentStatus === 'voucher') return ['Payment', 'Paid with a gift voucher'];
     return ['Payment', 'At the end of the trip, by cash or card'];
 };
 
@@ -119,6 +121,7 @@ const updatedEmail = (booking, { amount } = {}) => {
 const cancelPaymentLine = (paymentStatus) => {
     if (paymentStatus === 'card_saved') return "Your card has not been charged, and it won't be charged for this booking.";
     if (['paid', 'paid_in_person', 'charging'].includes(paymentStatus)) return "If you've already paid, please get in touch and we'll sort out a refund.";
+    if (paymentStatus === 'voucher') return "Your gift voucher hasn't been used up: please get in touch to book another day.";
     return 'Nothing has been charged.';
 };
 
@@ -269,6 +272,7 @@ const updatedOwnerEmail = (booking, { change } = {}) => change
 const PAYMENT_FOR_OWNER = {
     card_saved: 'card saved, it will not be charged', paid: 'PAID ONLINE: refund it in Stripe if needed',
     paid_in_person: 'PAID IN PERSON: refund it yourself if needed', charging: 'a charge was under way: check Stripe',
+    voucher: 'PAID WITH A GIFT VOUCHER: press Undo on the Vouchers tab so it can be used again',
 };
 
 // byCustomer: they cancelled it themselves, before the free-cancellation deadline (controllers/manage.js)
@@ -386,7 +390,95 @@ const tripCancelledOwnerEmail = ({ date, time, named = `${time} trip`, reasonTex
     });
 };
 
+// ---------------------------------------------------------------- gift vouchers (utils/vouchers.js)
+
+const VOUCHER_RULE = 'The voucher can be passed on to someone else, but it cannot be exchanged for money or refunded.';
+const howToBook = () => `To book, call or WhatsApp ${PHONE} or email ${settings.mail.from} with the voucher code, and we'll find you a day.`;
+const voucherDetails = (voucher, extraRows = []) => ({
+    details: [
+        ...(voucher.recipientName ? [['For', voucher.recipientName]] : []),
+        ...(voucher.buyerName ? [['From', voucher.buyerName]] : []),
+        ['Covers', coversText(voucher)],
+        ['Valid until', validUntil(voucher)],
+        ['Code', voucher.code],
+        ...extraRows,
+    ],
+});
+const voucherPdfFile = (voucher, pdf) => ({ filename: `sark-boat-trips-gift-voucher-${voucher.code}.pdf`, content: pdf, contentType: 'application/pdf' });
+const toSomeoneElse = (voucher) => Boolean(voucher.recipientEmail) && voucher.deliverTo === voucher.recipientEmail && voucher.recipientEmail !== voucher.buyerEmail;
+const giftWhat = (voucher) => (voucher.kind === 'charter' ? 'a private charter' : 'a boat trip');
+
+// The voucher itself, to whoever it is sent to (the buyer, or the person it's for), with the PDF
+const voucherEmail = (voucher, pdf) => {
+    const forThem = toSomeoneElse(voucher);
+    const { html, text, attachments } = renderEmail({
+        heading: forThem ? `${voucher.recipientName || 'Hello'}, you've been given ${giftWhat(voucher)} around Sark!` : 'Your gift voucher',
+        preheader: `${coversText(voucher)}, valid until ${validUntil(voucher)}`,
+        signoff: 'See you on the water,',
+        blocks: [
+            forThem
+                ? `${voucher.buyerName || 'Someone'} has given you ${giftWhat(voucher)} with Sark Boat Trips.`
+                : `Thank you for buying a Sark Boat Trips gift voucher. It's attached as a PDF, ready to print or forward${voucher.recipientName ? ` to ${voucher.recipientName}` : ''}.`,
+            ...(voucher.message ? [[{ bold: `"${voucher.message}"` }]] : []),
+            voucherDetails(voucher),
+            howToBook(),
+            ...(forThem ? ['The voucher is attached as a PDF, if you would like to print it.'] : []),
+            VOUCHER_RULE,
+        ],
+    });
+    return { from: settings.mail.sender, to: voucher.deliverTo, subject: forThem ? `A gift for you: ${giftWhat(voucher)} around Sark` : 'Your Sark Boat Trips gift voucher', html, text, attachments: [...attachments, voucherPdfFile(voucher, pdf)] };
+};
+
+// The buyer's receipt, when the voucher goes to someone else (now or on a later day), with the PDF too
+const voucherBoughtEmail = (voucher, pdf) => {
+    const later = Boolean(voucher.sendOn) && !voucher.sentAt;
+    const { html, text, attachments } = renderEmail({
+        heading: 'Thank you for your gift voucher',
+        preheader: later ? `We'll email it to ${voucher.recipientName || voucher.recipientEmail} on ${longDay(voucher.sendOn)}` : `We've emailed it to ${voucher.recipientName || voucher.recipientEmail}`,
+        signoff: 'Thank you so much,',
+        blocks: [
+            `Dear ${voucher.buyerName || 'customer'},`,
+            later
+                ? `Thank you for buying a gift voucher. We'll email it to ${voucher.recipientEmail} on ${longDay(voucher.sendOn)}, in the morning.`
+                : `Thank you for buying a gift voucher. We've emailed it to ${voucher.recipientEmail}.`,
+            voucherDetails(voucher, [['Paid', pounds(voucher.amountPaid || 0)]]),
+            'A copy is attached as a PDF, in case you would like to print it.',
+            VOUCHER_RULE,
+        ],
+    });
+    return { from: settings.mail.sender, to: voucher.buyerEmail, subject: 'Your gift voucher receipt', html, text, attachments: [...attachments, voucherPdfFile(voucher, pdf)] };
+};
+
+const voucherLine = (voucher) => `${coversShort(voucher)}${voucher.recipientName ? ` for ${voucher.recipientName}` : ''}`;
+
+// A voucher was bought online. emailFailed: the voucher (or receipt) could not be sent.
+const voucherSoldOwnerEmail = (voucher, { emailFailed = false } = {}) =>
+    ownerEmail(`Gift voucher sold: ${voucherLine(voucher)}, ${pounds(voucher.amountPaid || 0)}${emailFailed ? ' (EMAIL FAILED)' : ''}`, {
+        heading: 'Gift voucher sold',
+        blocks: [
+            ...(emailFailed ? [[{ bold: 'The voucher email could not be sent. Use Resend on the Vouchers tab, or contact them.' }]] : []),
+            voucherDetails(voucher, [
+                ['Paid', `${pounds(voucher.amountPaid || 0)} by card`],
+                ['Bought by', [voucher.buyerName, voucher.buyerEmail].filter(Boolean).join(', ') || '(not given)'],
+                ['Sent to', voucher.sendOn && !voucher.sentAt ? `${voucher.deliverTo} on ${longDay(voucher.sendOn)}` : voucher.deliverTo || '(nobody)'],
+            ]),
+            dashboardButton(),
+        ],
+    });
+
+// A voucher email set for a later day failed every time
+const voucherNotSentOwnerEmail = (voucher) =>
+    ownerEmail(`Gift voucher NOT emailed: ${voucherLine(voucher)} to ${voucher.deliverTo}`, {
+        heading: 'A gift voucher could not be emailed',
+        blocks: [
+            `The voucher could not be emailed to ${voucher.deliverTo}. Check the address, then use Resend on the Vouchers tab, or contact them.`,
+            voucherDetails(voucher),
+            dashboardButton(),
+        ],
+    });
+
 module.exports = {
     confirmationEmail, updatedEmail, cancellationEmail, reminderEmail, tripChangedEmail, tripMessageEmail, tripFullEmail,
     newBookingOwnerEmail, updatedOwnerEmail, cancelledOwnerEmail, customerMessageOwnerEmail, tripFullOwnerEmail, failedChargesEmail, tripCancelledOwnerEmail, tripChangedOwnerEmail, tripMessageOwnerEmail,
+    voucherEmail, voucherBoughtEmail, voucherSoldOwnerEmail, voucherNotSentOwnerEmail,
 };

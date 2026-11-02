@@ -13,6 +13,8 @@ import Canceled from "./views/canceled";
 import ManageBooking from "./views/manageBooking";
 import TermsPage from "./views/termsPage";
 import PrivacyPage from "./views/privacyPage";
+import GiftVouchers from "./views/giftVouchers";
+import VoucherThanks from "./views/voucherThanks";
 import NotFound from "./views/notfound";
 
 import Footer from './components/footer';
@@ -48,6 +50,8 @@ function App() {
           <Route path='/manage/:token' element={<ManageBooking />} />
           <Route path='/terms' element={<TermsPage />} />
           <Route path='/privacy' element={<PrivacyPage />} />
+          <Route path='/gift-vouchers' element={<GiftVouchers />} />
+          <Route path='/gift-vouchers/thanks' element={<VoucherThanks />} />
           <Route path='*' element={<NotFound />} />
         </Routes>
       </Wrapper>

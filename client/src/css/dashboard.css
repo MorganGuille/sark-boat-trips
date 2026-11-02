@@ -803,6 +803,125 @@ input {
     overflow-wrap: anywhere;
 }
 
+/* ---------- Gift vouchers (components/dashboard/vouchersPanel.jsx) ---------- */
+
+.vouchersPanel {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-width: 0;
+}
+
+.vouchersHead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.vouchersHead h2 {
+    margin: 0;
+}
+
+.vouchersPanel > .muted {
+    margin: 0;
+    max-width: 60ch;
+}
+
+.voucherForm {
+    padding: 1rem 1.2rem;
+    border: 1px solid #e1e4e8;
+    border-radius: 0.5rem;
+    background: #fff;
+}
+
+.voucherForm h3 {
+    margin: 0;
+}
+
+.dashboard .voucherPair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    width: 100%;
+    margin: 0;
+}
+
+.dashboard .voucherForm textarea,
+.dashboard .voucherForm input,
+.dashboard .voucherForm select {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.dashboard .vouchersSearch {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    max-width: 44rem;
+}
+
+.dashboard .vouchersSearch input[type='search'] {
+    flex: 1 1 14rem;
+    margin: 0;
+}
+
+.voucherCodeCell {
+    font-family: ui-monospace, Consolas, monospace;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+}
+
+.voucherSub {
+    display: block;
+    font-size: 0.8rem;
+}
+
+.voucherStatus {
+    display: inline-block;
+    padding: 0.1rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.voucherOpen {
+    background: #e3f4ec;
+    color: #0a5c43;
+}
+
+.voucherUsed {
+    background: #eceff2;
+    color: #4a5d6e;
+}
+
+.voucherExpired {
+    background: #fff1d6;
+    color: #7a4f00;
+}
+
+.voucherAction {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    min-width: 12rem;
+    white-space: normal;
+}
+
+.voucherActionButtons {
+    display: flex;
+    gap: 0.4rem;
+}
+
+.dashboard .voucherActionButtons .btn {
+    width: auto;
+    margin: 0;
+}
+
 /* ---------- Login ---------- */
 
 .loginCard {
@@ -1113,6 +1232,10 @@ input {
 
     .bookingsTable td.messageCell {
         max-width: none;
+    }
+
+    .dashboard .voucherPair {
+        grid-template-columns: 1fr;
     }
 
     .bookingsTable td.actionsCell {

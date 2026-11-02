@@ -27,12 +27,17 @@ const hasPrices = (prices) => Boolean(prices) && KEYS.every((key) => Number.isIn
 
 // What a booking is worth, in pence (infants are free): the flat charter price, or adults and children at their own
 // prices. It uses the prices saved on the booking, or the current ones for a booking that has none.
-// Returns null if no prices are known at all.
-const bookingValue = (booking, current) => {
+// Returns null if no prices are known at all. A gift voucher used for the booking is taken off (the
+// voucher's money came in when it was sold), so this is what is still to be charged or collected.
+const fullValue = (booking, current) => {
     const prices = hasPrices(booking.prices) ? booking.prices : current;
     if (!hasPrices(prices)) return null;
     if (booking.charter === 'true') return prices.charter;
     return (Number(booking.adults) || 0) * prices.adult + (Number(booking.children) || 0) * prices.child;
+};
+const bookingValue = (booking, current) => {
+    const value = fullValue(booking, current);
+    return value === null ? null : Math.max(0, value - (Number(booking.voucher?.value) || 0));
 };
 
 // The prices a new booking on this trip saves (booking.prices): an extra trip's own adult and child
@@ -42,4 +47,4 @@ const pricesFor = (trip, current) => {
     return { adult: trip.prices.adult, child: trip.prices.child, charter: current?.charter ?? 0 };
 };
 
-module.exports = { toPence, readPrices, hasPrices, bookingValue, pricesFor };
+module.exports = { toPence, readPrices, hasPrices, bookingValue, fullValue, pricesFor };

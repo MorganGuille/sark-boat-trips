@@ -74,6 +74,18 @@ function ReportPanel({ selectedDate }) {
                     <div><dt>Income</dt><dd>{formatPounds(total.income / 100)}</dd></div>
                 </dl>
             ) : null}
+            {total && (report.vouchers?.sold || report.vouchers?.used) ? (<>
+                <dl className='reportStats' aria-label={`Gift vouchers in ${MONTHS[month - 1]} ${year}`}>
+                    <div><dt>Vouchers sold</dt><dd>{report.vouchers.sold}</dd></div>
+                    <div><dt>Voucher income</dt><dd>{formatPounds(report.vouchers.income / 100)}</dd></div>
+                    <div><dt>Vouchers used</dt><dd>{report.vouchers.used}</dd></div>
+                    <div><dt>Income with vouchers</dt><dd>{formatPounds((total.income + report.vouchers.income) / 100)}</dd></div>
+                </dl>
+                <p className='muted'>
+                    A voucher&apos;s money counts in the month it was sold. A trip paid with a voucher counts its passengers, but only
+                    the income still to pay on top of the voucher.
+                </p>
+            </>) : null}
 
             <button className='btn' type='button' onClick={download} disabled={!total || downloading}>
                 {downloading ? 'Preparing…' : 'Download CSV'}

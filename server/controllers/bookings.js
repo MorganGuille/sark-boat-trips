@@ -8,7 +8,7 @@ const { readPrices, bookingValue, pricesFor } = require('../utils/prices');
 const { seatsFor, partyText } = require('../utils/party');
 const emails = require('../emails');
 const { withTrip, withTrips, getTrip, findTrip, getTripsForDay, tripsFor, tripOfBooking } = require('../utils/trips');
-const { isMonth, monthRange, buildReport, toCsv } = require('../utils/report');
+const { isMonth, monthRange, buildReport, toCsv, voucherSummary } = require('../utils/report');
 const { validatePublicBooking, validateAdminBooking, validateAvailabilitySetting, guernseyToday } = require('../utils/validateBooking');
 
 
@@ -446,11 +446,12 @@ const monthlyReport = async (req, res) => {
     if (!report) {
         return res.status(409).send({ ok: false, data: "Set your adult, child and charter prices first, so the income can be worked out." });
     }
+    const vouchers = await voucherSummary(month);
     if (req.query.format === 'csv') {
         res.set({ 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': `attachment; filename="sark-boat-trips-${month}.csv"` });
-        return res.send(toCsv(report));
+        return res.send(toCsv(report, vouchers));
     }
-    res.send({ ok: true, month, days: report.days, total: report.total });
+    res.send({ ok: true, month, days: report.days, total: report.total, vouchers });
 };
 
 // The owner took the money on the day (cash or card reader). Also stops a saved card being charged.

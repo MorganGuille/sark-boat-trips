@@ -257,3 +257,49 @@
 
 
 }
+/* The gift vouchers band after the booking form */
+.giftBand {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem 2rem;
+    max-width: 72rem;
+    margin: 1rem auto 3rem;
+    padding: 1.6rem 2rem;
+    border-radius: 14px;
+    background: #1c2f3e;
+    color: white;
+    text-align: left;
+    box-sizing: border-box;
+}
+
+.giftBand h2 {
+    margin: 0.2rem 0 0.3rem;
+    font-size: 1.6rem;
+}
+
+.giftBand p {
+    margin: 0;
+}
+
+.giftBand .eyebrow {
+    color: #f2c94c;
+}
+
+@media (max-width: 1100px) {
+    .giftBand {
+        margin: 1rem 16px 2.5rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .giftBand {
+        padding: 1.25rem;
+    }
+
+    .giftBand .goldButton {
+        width: 100%;
+        box-sizing: border-box;
+    }
+}

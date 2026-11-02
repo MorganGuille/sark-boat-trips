@@ -200,6 +200,11 @@ const webhook = async (req, res) => {
             // If this throws (e.g. the database is down) Stripe gets a 500 and retries later
             await fulfillCheckoutSession(session);
         }
+        // A gift voucher, paid at once (controllers/vouchers.js)
+        const vouchers = require('./vouchers');
+        if (vouchers.isVoucherSession(session) && session.status === 'complete') {
+            await vouchers.fulfillVoucherSession(session);
+        }
     }
 
     res.json({ received: true });

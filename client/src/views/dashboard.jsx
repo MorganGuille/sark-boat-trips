@@ -5,6 +5,7 @@ import BookingForm from '../components/bookingForm'
 import SeasonDatesForm from '../components/seasonDatesForm'
 import PricesForm from '../components/pricesForm'
 import ReportPanel from '../components/dashboard/reportPanel'
+import VouchersPanel from '../components/dashboard/vouchersPanel'
 import CancelTripForm from '../components/dashboard/cancelTripForm'
 import ChangeTripForm from '../components/dashboard/changeTripForm'
 import MessageTripForm from '../components/dashboard/messageTripForm'
@@ -29,6 +30,7 @@ const TABS = [
     { id: 'new', label: 'New booking' },
     { id: 'availability', label: 'Availability' },
     { id: 'extra', label: 'Extra trips' },
+    { id: 'vouchers', label: 'Vouchers' },
     { id: 'notes', label: 'Notes' },
     { id: 'report', label: 'Report' },
 ]
@@ -451,6 +453,10 @@ function Dashboard() {
                             // bookings is null in the upcoming list and search results: the day's bookings aren't loaded then
                             <AddTripForm key={`${selectedDate}|${prices?.adult}|${prices?.child}`} selectedDate={selectedDate} trips={trips}
                                 bookings={dayView ? bookings : null} prices={prices} onResult={showNotice} onDone={refreshBookings} />
+                        ) : null}
+
+                        {tab === 'vouchers' ? (
+                            <VouchersPanel prices={prices} onResult={showNotice} />
                         ) : null}
 
                         {tab === 'report' ? (

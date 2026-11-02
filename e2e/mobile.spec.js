@@ -52,7 +52,7 @@ const check = async (page, path) => {
     expect(found.underFooter, `${path}: text under the footer`).toEqual([]);
 };
 
-for (const path of ['/', '/bookings', '/charters', '/terms', '/privacy', '/canceled?kind=trip', '/canceled?kind=charter', '/no-such-page']) {
+for (const path of ['/', '/bookings', '/charters', '/gift-vouchers', '/gift-vouchers/thanks', '/terms', '/privacy', '/canceled?kind=trip', '/canceled?kind=charter', '/no-such-page']) {
     test(`${path} fits a phone`, async ({ page }) => {
         await page.goto(path);
         await expect(page.locator('h1, h2').first()).toBeVisible();

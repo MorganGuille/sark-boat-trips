@@ -1,0 +1,267 @@
+/* The Gift vouchers page (views/giftVouchers.jsx): a photo with the title, then how it works beside the
+   form (one column on a phone). The form borrows the booking form's look (customerBooking.css).
+   Starts below the fixed header (4rem, 3.5rem below 1020px). */
+.giftPage {
+    padding-top: 4rem;
+    color: #213547;
+}
+
+.giftHero {
+    position: relative;
+    min-height: 20rem;
+    display: flex;
+    align-items: flex-end;
+    background-size: cover;
+    background-position: center;
+    color: white;
+}
+
+.giftHero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.05) 30%, rgba(0, 0, 0, 0.65));
+}
+
+.giftHeroText {
+    position: relative;
+    width: 100%;
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: 0 2rem 2.25rem;
+    text-align: left;
+}
+
+.giftHero h1 {
+    margin: 0 0 0.4rem;
+    font-size: 2.8rem;
+    line-height: 1.1;
+}
+
+.giftHero p {
+    margin: 0;
+    font-size: 1.15rem;
+    max-width: 34rem;
+}
+
+.giftBody {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 32rem);
+    gap: 3rem;
+    align-items: start;
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: 3rem 2rem 4rem;
+    text-align: left;
+}
+
+.giftAbout {
+    position: sticky;
+    top: 6rem;
+}
+
+.giftAbout h2 {
+    margin: 0 0 1rem;
+    font-size: 1.6rem;
+}
+
+.giftAbout ul {
+    display: grid;
+    gap: 0.7rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.giftAbout li {
+    position: relative;
+    padding-left: 1.6rem;
+    line-height: 1.5;
+}
+
+.giftAbout li::before {
+    content: "✓" / "";
+    position: absolute;
+    left: 0;
+    color: #0a5c43;
+    font-weight: 800;
+}
+
+.giftContact {
+    margin: 1.5rem 0 0;
+    padding: 1rem 1.2rem;
+    border-radius: 12px;
+    background: white;
+    line-height: 1.6;
+}
+
+.giftContact a {
+    font-weight: 700;
+    color: inherit;
+}
+
+.giftForm {
+    background: white;
+    border-radius: 14px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.06);
+    box-sizing: border-box;
+}
+
+.customerBooking .giftChoice {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.giftChoice .tripCard {
+    min-width: 0;
+}
+
+/* the price under the name, so a long one wraps instead of widening the card */
+.giftChoice .tripCardTime {
+    white-space: nowrap;
+}
+
+.giftChoice .tripCardSpaces {
+    white-space: normal;
+    text-align: right;
+}
+
+.customerBooking .giftNote {
+    font-size: 0.9rem;
+}
+
+/* Two choices side by side, like a switch */
+.customerBooking .giftToggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border: 1px solid #c4ccd3;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.giftToggle label {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.75rem;
+    padding: 0.4rem 0.5rem;
+    text-align: center;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.giftToggle label + label {
+    border-left: 1px solid #c4ccd3;
+}
+
+.giftToggle label.on {
+    background: #1c2f3e;
+    color: white;
+}
+
+.giftToggle input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.giftToggle label:has(input:focus-visible) {
+    outline: 3px solid #04BF8A;
+    outline-offset: -3px;
+}
+
+.customerBooking input[type='date'] {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid #c4ccd3;
+    border-radius: 0.4rem;
+    font-weight: normal;
+}
+
+/* The voucher thank-you page (views/voucherThanks.jsx) */
+.voucherThanks {
+    max-width: 36rem;
+    margin: 0 auto;
+    padding: 7rem 16px 4rem;
+    text-align: left;
+    color: #213547;
+}
+
+.voucherThanks h1 {
+    font-size: 2rem;
+    margin: 0 0 1rem;
+}
+
+.voucherThanks dl {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.4rem 1rem;
+    margin: 1.25rem 0;
+    padding: 1rem 1.2rem;
+    border-radius: 12px;
+    background: white;
+}
+
+.voucherThanks dt {
+    color: #4a5d6e;
+}
+
+.voucherThanks dd {
+    margin: 0;
+    font-weight: 700;
+}
+
+.voucherCode {
+    font-family: ui-monospace, Consolas, monospace;
+    letter-spacing: 0.06em;
+}
+
+@media (max-width: 1020px) {
+    .giftPage {
+        padding-top: 3.5rem;
+    }
+}
+
+@media (max-width: 900px) {
+    .giftBody {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+        padding: 2rem 16px 3rem;
+    }
+
+    .giftAbout {
+        position: static;
+    }
+
+    .giftForm {
+        max-width: 32rem;
+        width: 100%;
+        margin: 0 auto;
+    }
+}
+
+@media (max-width: 600px) {
+    .giftHero {
+        min-height: 16rem;
+    }
+
+    .giftHeroText {
+        padding: 0 16px 1.5rem;
+    }
+
+    .giftHero h1 {
+        font-size: 2rem;
+    }
+
+    .giftHero p {
+        font-size: 1rem;
+    }
+
+    .giftForm {
+        padding: 1.1rem;
+    }
+}

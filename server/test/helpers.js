@@ -164,7 +164,7 @@ const stopDb = async () => {
 };
 const resetDb = async () => {
     const db = require('mongoose').connection.db;
-    for (const name of ['bookings', 'availabilities', 'notes']) await db.collection(name).deleteMany({});
+    for (const name of ['bookings', 'availabilities', 'notes', 'vouchers']) await db.collection(name).deleteMany({});
 };
 
 // Dates. The booking site only accepts dates that are in the future and inside the season, so the
@@ -247,4 +247,27 @@ const bookOnline = async (app, body, { kind = 'trip', ip } = {}) => {
     return { res, session, booking };
 };
 
-module.exports = { dbUri, OWNER, MAIL_FROM, PASSWORD, USERNAME, WEBHOOK_SECRET, setEnv, installMocks, startDb, stopDb, resetDb, seedSeason, day, shown, long, short, call, login, booking, insertBooking, findBooking, seatsLeft, webhook, cardSession, bookOnline };
+// Buys a gift voucher the way a customer does: starts the checkout, pays on the fake Stripe page and
+// delivers Stripe's webhook. Returns the first reply (res), the Stripe session and the voucher (or null).
+const buyVoucher = async (app, body, { ip } = {}) => {
+    const res = await call(app, 'post', '/vouchers/checkout', { body, ip });
+    if (!res.body.url) return { res, session: null, voucher: null };
+    const params = currentMocks.stripe.created.at(-1);
+    const id = res.body.url.split('/').pop();
+    const session = {
+        id, object: 'checkout.session', mode: 'payment', status: 'complete', payment_status: 'paid',
+        amount_total: params.line_items[0].price_data.unit_amount, payment_intent: `pi_${id}`, metadata: params.metadata,
+    };
+    currentMocks.stripe.sessions[id] = session;
+    const delivered = await webhook(app, session);
+    assert.equal(delivered.status, 200, 'the webhook should be accepted');
+    const voucher = await require('mongoose').connection.db.collection('vouchers').findOne({ stripeSessionId: id });
+    return { res, session, voucher };
+};
+// A voucher order from the Gift vouchers page, with any field overridden
+const voucherOrder = (overrides = {}) => ({
+    kind: 'trip', adults: '2', children: '0', recipientName: 'Jane', message: 'Happy birthday!',
+    buyerName: 'Tom Le Page', buyerEmail: `tom${++seq}@example.test`, sendTo: 'buyer', ...overrides,
+});
+
+module.exports = { buyVoucher, voucherOrder, dbUri, OWNER, MAIL_FROM, PASSWORD, USERNAME, WEBHOOK_SECRET, setEnv, installMocks, startDb, stopDb, resetDb, seedSeason, day, shown, long, short, call, login, booking, insertBooking, findBooking, seatsLeft, webhook, cardSession, bookOnline };

@@ -7,6 +7,7 @@ export const PAYMENT = {
     charging: { label: 'Charging…', className: 'payCard' },
     paid: { label: 'Paid online', className: 'payPaid' },
     paid_in_person: { label: 'Paid in person', className: 'payPaid' },
+    voucher: { label: 'Gift voucher', className: 'payPaid' },
 }
 
 // "2 adults, 1 child", or "—" when the party is missing (allowed on the dashboard)
@@ -21,9 +22,11 @@ export const partyOf = (booking) => {
 // Everyone on the booking, infants included (they take a seat)
 export const guestsOf = (booking) => (Number(booking.adults) || 0) + (Number(booking.children) || 0) + (Number(booking.infants) || 0)
 
-// In pence: what was paid, or what is due
+// In pence: what was paid, or what is due (a gift voucher's part is already taken off: nothing for a
+// booking a voucher pays for in full)
 export const amountOf = (booking) => {
     const status = booking.paymentStatus || 'unpaid'
+    if (status === 'voucher') return null
     return status === 'paid' || status === 'paid_in_person' ? booking.amountPaid : booking.amountDue
 }
 

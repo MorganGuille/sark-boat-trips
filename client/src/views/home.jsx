@@ -195,6 +195,16 @@ function Home() {
             </section>
 
             <Bookings />
+
+            {/* Gift vouchers (owner, 2 Nov 2026): a small band after the booking form, linking to their page */}
+            <section className='giftBand' aria-labelledby='gift-heading'>
+                <div>
+                    <p className='eyebrow'>Gift vouchers</p>
+                    <h2 id='gift-heading'>Give a trip around Sark</h2>
+                    <p>For any number of people, or a private charter. Emailed straight away, or on a day you choose.</p>
+                </div>
+                <Link to='/gift-vouchers' className='goldButton'>Buy a gift voucher</Link>
+            </section>
         </main>
 
 

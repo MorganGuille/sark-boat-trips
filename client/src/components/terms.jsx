@@ -57,6 +57,13 @@ function Terms({ className = 'termsArticle' }) {
                 <p><strong>9. Wildlife</strong></p>
                 <p>While we know the best spots for puffins, seals, and dolphins, sightings are subject to nature and cannot be guaranteed.</p>
             </section>
+
+            <section id='gift-vouchers'>
+                <p><strong>10. Gift vouchers</strong></p>
+                <p>A gift voucher pays for the people it names (adults and children) on one of our boat trips, or for a private charter, whatever our prices are when it is used. It is valid until the date printed on it: 1 October, at the end of the next season to start after it was bought.</p>
+                <p>To use it, contact us with the voucher code and we&apos;ll book you a day. A voucher is used once. Anyone extra pays the normal price, and if fewer people come than the voucher covers, the rest can&apos;t be kept for later.</p>
+                <p><strong>A voucher can be passed on to someone else, but it can&apos;t be exchanged for money or refunded.</strong> If we cancel a trip booked with a voucher (because of the weather, for example), you can use the voucher for another day.</p>
+            </section>
         </article>
     )
 }

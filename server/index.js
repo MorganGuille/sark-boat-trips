@@ -10,6 +10,7 @@ const { corsSummary } = require("./middleware/security");
 const { readDatabase } = require("./utils/database");
 const { startChargeTimer } = require("./utils/charges");
 const { startReminderTimer } = require("./utils/reminders");
+const { startVoucherTimer } = require("./utils/vouchers");
 
 const PORT = process.env.PORT || 4040;
 const dbname = process.env.atlasDB_name;
@@ -37,6 +38,9 @@ async function connecting() {
     // The reminder email the evening before each trip (utils/reminders.js)
     startReminderTimer();
     console.log("Reminders: emailed at 6pm (Guernsey time) the evening before each trip");
+    // Gift vouchers the buyer asked to be sent on a later day (utils/vouchers.js)
+    startVoucherTimer();
+    console.log("Gift vouchers: emailed at 8am (Guernsey time) on the day the buyer chose");
     // Saved cards are charged at the trip time (paymentsspec.md). Only once the database is there,
     // and never without a usable Stripe key.
     if (!settings.stripe.problem) {

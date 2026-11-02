@@ -11,6 +11,7 @@ const write = (name, text) => fs.writeFileSync(path.join(dist, name), `<!doctype
 write('index.html', 'PAGE home');
 write('app.html', 'PAGE app');
 for (const page of ['bookings', 'charters', 'terms', 'privacy']) write(`pages/${page}.html`, `PAGE ${page}`);
+write('pages/gift-vouchers.html', 'PAGE gift');
 
 t.setEnv({ PUBLIC_URL: 'https://boats.example.test', CLIENT_DIST: dist });
 t.installMocks();
@@ -23,7 +24,7 @@ const sent = (res) => (res.text.match(/PAGE (\w+)/) || [])[1];
 
 describe('the page sent for each address', () => {
     it('each public page gets its own prebuilt file, so search engines see the real page', async () => {
-        for (const [url, page] of [['/', 'home'], ['/bookings', 'bookings'], ['/charters', 'charters'], ['/terms', 'terms'], ['/privacy', 'privacy']]) {
+        for (const [url, page] of [['/', 'home'], ['/bookings', 'bookings'], ['/charters', 'charters'], ['/gift-vouchers', 'gift'], ['/terms', 'terms'], ['/privacy', 'privacy']]) {
             const res = await get(url);
             assert.equal(res.status, 200, url);
             assert.equal(sent(res), page, url);
@@ -36,7 +37,7 @@ describe('the page sent for each address', () => {
     });
 
     it('pages built in the browser get the empty page (marked noindex by the build)', async () => {
-        for (const url of ['/dashboard', '/Dashboard/', '/success?session_id=cs_1', '/canceled?kind=trip', '/manage/abcdefghijklmnopqrstuvwxyz123456']) {
+        for (const url of ['/dashboard', '/Dashboard/', '/success?session_id=cs_1', '/canceled?kind=trip', '/manage/abcdefghijklmnopqrstuvwxyz123456', '/gift-vouchers/thanks?session_id=cs_1']) {
             const res = await get(url);
             assert.equal(res.status, 200, url);
             assert.equal(sent(res), 'app', url);
@@ -67,6 +68,6 @@ describe('robots.txt and sitemap.xml', () => {
         assert.equal(res.status, 200);
         assert.match(res.headers['content-type'], /xml/);
         const urls = [...res.text.matchAll(/<loc>(.*?)<\/loc>/g)].map((m) => m[1]);
-        assert.deepEqual(urls, ['/', '/bookings', '/charters', '/terms', '/privacy'].map((page) => `https://boats.example.test${page}`));
+        assert.deepEqual(urls, ['/', '/bookings', '/charters', '/gift-vouchers', '/terms', '/privacy'].map((page) => `https://boats.example.test${page}`));
     });
 });

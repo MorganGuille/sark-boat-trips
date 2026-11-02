@@ -37,6 +37,15 @@ process.env.CLIENT_DIST = process.env.CLIENT_DIST || require('./build-client')()
         mocks.stripe.sessions[id] = { id, object: 'checkout.session', mode: 'setup', status: 'complete', customer: params.customer, setup_intent: `seti_${id}`, metadata: params.metadata };
         res.json({ id });
     });
+    // Plays the buyer paying for a gift voucher on Stripe's page: the last checkout started becomes a
+    // paid session, which the thank-you page (or a webhook) then turns into a voucher
+    test.post('/complete-voucher-checkout', (req, res) => {
+        const params = mocks.stripe.created.at(-1);
+        const id = `cs_test_created_${mocks.stripe.created.length}`;
+        mocks.stripe.sessions[id] = { id, object: 'checkout.session', mode: 'payment', status: 'complete', payment_status: 'paid', amount_total: params.line_items[0].price_data.unit_amount, payment_intent: `pi_${id}`, metadata: params.metadata };
+        res.json({ id, params });
+    });
+    test.get('/vouchers', async (req, res) => res.json(await db.collection('vouchers').find({}).toArray()));
     // A booking put straight into the database, e.g. to fill a trip
     test.post('/insert-booking', async (req, res) => {
         await db.collection('bookings').insertOne({ timeslot: '11am', firstName: 'Test', lastName: 'Booking', adults: 2, children: 0, status: 'active', charter: 'false', ...req.body });

@@ -66,11 +66,19 @@ const bookingsSchema = new mongoose.Schema({
     },
     // Payment (see paymentsspec.md). unpaid: nothing taken yet (dashboard bookings, or a failed charge);
     // card_saved: will be charged at the trip time; charging: a charge is under way; paid: charged
-    // online; paid_in_person: the owner took cash or card on the day. A booking without one is unpaid.
+    // online; paid_in_person: the owner took cash or card on the day; voucher: a gift voucher covers
+    // all of it. A booking without one is unpaid.
     paymentStatus: {
         type: String,
-        enum: ['unpaid', 'card_saved', 'charging', 'paid', 'paid_in_person'],
+        enum: ['unpaid', 'card_saved', 'charging', 'paid', 'paid_in_person', 'voucher'],
         default: 'unpaid',
+    },
+    // A gift voucher used for this booking (utils/vouchers.js): its code, what it covers in pence (taken
+    // off what is charged or collected, see bookingValue) and the payment status it had before.
+    voucher: {
+        code: { type: String },
+        value: { type: Number, min: 0 },
+        previousStatus: { type: String },
     },
     paidAt: { type: Date },
     amountPaid: { type: Number, min: 0 }, // pence

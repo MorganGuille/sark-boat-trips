@@ -2,7 +2,7 @@
 // client/prerender.js builds each public page to its own file, with its own title and description, so
 // search engines and the first paint see the real page: the home page is dist/index.html (sent by
 // express.static), the others dist/pages/<name>.html. Pages that only make sense in the browser
-// (the dashboard, success, canceled, manage my booking) get dist/app.html, the empty page marked noindex,
+// (the dashboard, success, canceled, manage my booking, the gift voucher thank-you page) get dist/app.html, the empty page marked noindex,
 // and anything else gets it with a 404 status (React shows the "page not found" page).
 const express = require("express");
 const fs = require("fs");
@@ -10,9 +10,9 @@ const path = require("path");
 const { settings } = require("../utils/settings");
 
 // Must match PAGES in client/prerender.js
-const PUBLIC_PAGES = ["/", "/bookings", "/charters", "/terms", "/privacy"];
+const PUBLIC_PAGES = ["/", "/bookings", "/charters", "/gift-vouchers", "/terms", "/privacy"];
 // The other routes in client/src/App.jsx
-const BROWSER_PAGES = ["/dashboard", "/success", "/canceled"];
+const BROWSER_PAGES = ["/dashboard", "/success", "/canceled", "/gift-vouchers/thanks"];
 const isBrowserPage = (page) => BROWSER_PAGES.includes(page) || /^\/manage\/[^/]+$/.test(page);
 
 // As the website compares addresses (client/src/hooks/usePage.js): the router also opens /Bookings or

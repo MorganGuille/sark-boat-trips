@@ -31,6 +31,18 @@ module.exports = {
     },
   }),
 
+  // Gift vouchers: each attempt opens a Stripe payment page, and each voucher emails the buyer
+  voucherByIp: limiter({ windowMs: 15 * MINUTE, limit: 10, message: "Too many attempts. Please wait a few minutes and try again, or contact us." }),
+  voucherByEmail: limiter({
+    windowMs: 60 * MINUTE,
+    limit: 5,
+    message: "We've had several voucher orders for this email address. Please wait an hour, or contact us.",
+    keyGenerator: (req) => {
+      const email = typeof req.body?.buyerEmail === "string" ? req.body.buyerEmail.trim().toLowerCase().slice(0, 254) : "";
+      return email ? `voucher:${email}` : ipKeyGenerator(req.ip);
+    },
+  }),
+
   // The calendar asks for one month at a time, so this is generous
   availabilityByIp: limiter({ windowMs: MINUTE, limit: 60, message: "Too many requests. Please wait a moment and try again." }),
 

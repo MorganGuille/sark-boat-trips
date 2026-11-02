@@ -25,6 +25,7 @@ const priceFor = (booking, party) => {
 const paymentText = (booking) => {
     if (booking.cancelled) return booking.paymentStatus === 'card_saved' ? 'Nothing will be charged' : null
     if (['paid', 'paid_in_person'].includes(booking.paymentStatus)) return 'Paid, thank you'
+    if (booking.paymentStatus === 'voucher') return 'Paid with a gift voucher'
     if (booking.paymentStatus === 'charging') return 'Being charged now'
     const amount = booking.amount == null ? 'The trip price' : pounds(booking.amount)
     if (booking.paymentStatus === 'card_saved') {

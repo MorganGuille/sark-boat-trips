@@ -214,7 +214,7 @@ const addTrip = async (req, res) => {
 };
 
 // Payment states whose amount is settled: a price change no longer applies to them
-const SETTLED = ['paid', 'paid_in_person', 'charging'];
+const SETTLED = ['paid', 'paid_in_person', 'charging', 'voucher'];
 
 // POST /bookings/edit-trip { date, timeslot, ...the same details as add-trip, notifyCustomers }: changes an
 // extra trip. A new price applies to everyone booked on it who hasn't paid yet (owner's decision, 1 Nov

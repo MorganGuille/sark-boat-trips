@@ -9,9 +9,10 @@ const { longDay } = require('./dates');
 const { settings } = require('./settings');
 const { newManageToken, newReference } = require('./bookingCodes');
 
-// A paid booking (or one being charged right now) is never changed by the customer: the owner sorts it out
+// A paid booking (or one being charged right now, or one a gift voucher pays towards) is never changed
+// by the customer: the owner sorts it out
 const CHANGEABLE = ['unpaid', 'card_saved'];
-const changeablePayment = { paymentStatus: { $in: [...CHANGEABLE, null] } }; // null: no paymentStatus, which counts as unpaid
+const changeablePayment = { paymentStatus: { $in: [...CHANGEABLE, null] }, 'voucher.code': { $exists: false } }; // null: no paymentStatus, which counts as unpaid
 
 const manageUrl = (booking) => (booking.manageToken && settings.publicUrl ? `${settings.publicUrl}/manage/${booking.manageToken}` : null);
 
@@ -29,7 +30,7 @@ const freeUntil = (booking, trip) => {
 const whatCanChange = (booking, trip, now = new Date()) => {
     if (booking.status === 'cancelled') return { canChange: false, why: 'cancelled' };
     if (!trip?.startsAt || trip.startsAt <= now) return { canChange: false, why: 'started' };
-    if (!CHANGEABLE.includes(booking.paymentStatus || 'unpaid')) return { canChange: false, why: 'paid' };
+    if (!CHANGEABLE.includes(booking.paymentStatus || 'unpaid') || booking.voucher?.code) return { canChange: false, why: 'paid' };
     if (now >= freeUntil(booking, trip)) return { canChange: false, why: 'deadline' };
     return { canChange: true, why: null };
 };
