@@ -62,4 +62,12 @@ const logIn = async (page) => {
     await expect(page.locator('.dashHeader')).toBeVisible();
 };
 
-module.exports = { asNewVisitor, USERNAME, PASSWORD, reset, mails, savedBookings, watch, pickDate, fillBooking, logIn };
+// Every page of the site, in one place: the phone, security and search-engine tests all visit these,
+// so a new page is added here once (as well as in client/prerender.js and server/routes/pages.js;
+// seo.spec.js fails if the sitemap and PUBLIC_PAGES differ). Browser pages are listed in the states
+// customers see them in.
+const PUBLIC_PAGES = ['/', '/bookings', '/charters', '/gift-vouchers', '/terms', '/privacy'];
+const BROWSER_PAGES = ['/dashboard', '/canceled?kind=trip', '/canceled?kind=charter', '/success?session_id=cs_test_nope', '/gift-vouchers/thanks', `/manage/${'z'.repeat(32)}`];
+const NOT_FOUND = '/no-such-page';
+
+module.exports = { asNewVisitor, USERNAME, PASSWORD, reset, mails, savedBookings, watch, pickDate, fillBooking, logIn, PUBLIC_PAGES, BROWSER_PAGES, NOT_FOUND };

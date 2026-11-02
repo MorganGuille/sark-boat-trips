@@ -4,7 +4,7 @@ const h = require('./helpers');
 
 test.beforeEach(async ({ request }) => { await h.reset(request); });
 
-for (const path of ['/', '/charters', '/bookings', '/success', '/canceled', '/not-a-real-page', '/dashboard']) {
+for (const path of [...h.PUBLIC_PAGES, ...h.BROWSER_PAGES, h.NOT_FOUND]) {
     test(`${path}: nothing is blocked by the security policy and nothing throws`, async ({ page }) => {
         const problems = h.watch(page);
         await page.addInitScript(() => { window.__violations = []; document.addEventListener('securitypolicyviolation', (e) => window.__violations.push(`${e.violatedDirective} blocked ${e.blockedURI}`)); });

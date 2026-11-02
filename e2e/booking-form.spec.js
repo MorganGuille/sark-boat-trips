@@ -71,15 +71,11 @@ test('coming back from Stripe\'s page without saving a card, what they typed is 
     await expect(page.locator('#adults')).toHaveValue('3');
 });
 
-test('on a phone: one column, nothing off the edge, boxes big enough not to zoom, buttons big enough to tap', async ({ page }) => {
+// Fitting the screen and 16px boxes are checked for every page in mobile.spec.js
+test('on a phone: one column, and buttons big enough to tap', async ({ page }) => {
     await page.setViewportSize({ width: 360, height: 780 });
     await page.goto('/bookings');
     await expect(page.locator('.tripCard').first()).toBeVisible();
-    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
-    // under 16px, iPhones zoom in when a box is tapped
-    for (const id of ['#firstName', '#email', '#phone', '#adults', '#message']) {
-        expect(parseFloat(await page.locator(id).evaluate((el) => getComputedStyle(el).fontSize)), id).toBeGreaterThanOrEqual(16);
-    }
     const plus = await page.getByRole('button', { name: 'More adults' }).boundingBox();
     expect(plus.width).toBeGreaterThanOrEqual(44);
     expect(plus.height).toBeGreaterThanOrEqual(44);

@@ -99,18 +99,6 @@ test('a wrong link says so and shows how to get in touch', async ({ page }) => {
     await expect(page.locator('main')).toContainText('info@sarkboattrips.com');
 });
 
-test('on a phone the page fits the screen and search engines are told not to list it', async ({ page, request }) => {
-    await page.setViewportSize({ width: 360, height: 800 });
-    const code = await insert(request);
-    await page.goto(`/manage/${code}`);
-    await expect(page.getByRole('heading', { name: 'Hello Ann' })).toBeVisible();
-    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
-    // the empty page the server sends says noindex, and so does the page itself (for the dev server): both, never anything else
-    const robots = await page.locator('meta[name="robots"]').evaluateAll((tags) => tags.map((tag) => tag.content));
-    expect(robots.length).toBeGreaterThan(0);
-    expect(robots.every((content) => content === 'noindex')).toBe(true);
-});
-
 test('the owner sees the reference under the name and can search for it', async ({ page, request }) => {
     await insert(request, { lastName: 'Jones' });
     await h.logIn(page);

@@ -37,6 +37,10 @@ const PUBLIC = [
     { url: '/privacy', title: 'Sark Boat Trips | Privacy Policy', text: 'Privacy Policy for Sark Boat Trips' },
 ];
 
+test('every public page has its title and text listed here', () => {
+    expect(PUBLIC.map((p) => p.url)).toEqual(h.PUBLIC_PAGES);
+});
+
 for (const { url, title, text } of PUBLIC) {
     test(`${url} arrives as its own page, with its own title and description, and React doesn't rebuild it`, async ({ page }) => {
         const html = await served(page, url);
@@ -64,7 +68,7 @@ test('written differently (/Bookings/), it is still the bookings page', async ({
     expect(html.title).toBe('Sark Boat Trips | Book a Trip');
 });
 
-for (const url of ['/dashboard', '/canceled?kind=trip', '/success?session_id=cs_test_nope', `/manage/${'z'.repeat(32)}`]) {
+for (const url of h.BROWSER_PAGES) {
     test(`${url} is built in the browser, kept out of search results, and loads cleanly`, async ({ page }) => {
         const html = await served(page, url);
         expect(html.status).toBe(200);
@@ -78,10 +82,10 @@ for (const url of ['/dashboard', '/canceled?kind=trip', '/success?session_id=cs_
 }
 
 test('an address that is not a page answers 404 (not the home page) and shows the page-not-found page', async ({ page }) => {
-    const html = await served(page, '/no-such-page');
+    const html = await served(page, h.NOT_FOUND);
     expect(html.status).toBe(404);
     expect(html.noindex).toBe(true);
-    await page.goto('/no-such-page');
+    await page.goto(h.NOT_FOUND);
     await expect(page.locator('h1')).toHaveText('404 - Adrift!');
 });
 

@@ -130,12 +130,3 @@ test('the owner edits an extra trip: fixes its name, adds seats and changes its 
     await expect(box.getByRole('heading', { name: 'Add a trip' })).toBeVisible(); // back to adding
     await expect(page.locator('.calendarDisplay div', { hasText: 'Swimming trip' })).toContainText('10 spaces available');
 });
-
-test('on a phone all six dashboard tabs are on screen (they wrap onto two lines)', async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
-    await h.logIn(page);
-    for (const name of ['Bookings', 'New booking', 'Availability', 'Extra trips', 'Notes', 'Report']) {
-        const box = await page.getByRole('tab', { name }).boundingBox();
-        expect(box.x + box.width, `${name} fits`).toBeLessThanOrEqual(390);
-    }
-});

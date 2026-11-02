@@ -61,13 +61,6 @@ test('a charter voucher costs the charter price, and a problem on the server sho
     await request.post('/__test/stripe-fail', { data: { fail: false } });
 });
 
-test('the home page and the footer link to the Gift vouchers page', async ({ page }) => {
-    await page.goto('/');
-    await expect(page.locator('.giftBand')).toContainText('Give a trip around Sark');
-    await page.locator('footer').getByRole('link', { name: 'Gift vouchers' }).click();
-    await expect(page).toHaveURL(/\/gift-vouchers$/);
-});
-
 test('dashboard: make a voucher paid by bank transfer, use it for a booking (then hidden until Show used), then undo', async ({ page, request }) => {
     const date = new Date(Date.now() + 10 * 86400000).toISOString().slice(0, 10);
     await request.post('/__test/insert-booking', { data: { date, adults: 2, children: 1, firstName: 'Ann', lastName: 'Smith', reference: 'SBT-AAAAAA', paymentStatus: 'unpaid', prices: { adult: 4000, child: 2500, charter: 40000 } } });

@@ -52,7 +52,8 @@ const check = async (page, path) => {
     expect(found.underFooter, `${path}: text under the footer`).toEqual([]);
 };
 
-for (const path of ['/', '/bookings', '/charters', '/gift-vouchers', '/gift-vouchers/thanks', '/terms', '/privacy', '/canceled?kind=trip', '/canceled?kind=charter', '/no-such-page']) {
+// every page but the dashboard, which has its own phone tests below (logged in)
+for (const path of [...h.PUBLIC_PAGES, ...h.BROWSER_PAGES.filter((p) => p !== '/dashboard'), h.NOT_FOUND]) {
     test(`${path} fits a phone`, async ({ page }) => {
         await page.goto(path);
         await expect(page.locator('h1, h2').first()).toBeVisible();
@@ -75,12 +76,6 @@ test('the success page fits a phone, from the heading to the contact details (it
     const whatsapp = await page.getByRole('link', { name: '+44 7911 764 246' }).first().boundingBox();
     const footer = await page.locator('footer').boundingBox();
     expect(whatsapp.y + whatsapp.height).toBeLessThanOrEqual(footer.y);
-});
-
-test('the success page that could not confirm a booking fits a phone', async ({ page }) => {
-    await page.goto('/success?session_id=cs_test_nope');
-    await expect(page.locator('h1')).toHaveText("We couldn't confirm your booking");
-    await check(page, '/success');
 });
 
 test('manage my booking fits a phone', async ({ page, request }) => {
@@ -240,6 +235,24 @@ test('the footer on a phone: stacked, the social logos big enough to tap, and th
     await footer.getByRole('link', { name: 'Terms and conditions' }).click();
     await expect(page).toHaveURL(/\/terms$/);
     await expect(page.getByRole('heading', { name: 'Terms and Conditions - Sark Boat Trips' })).toBeVisible();
+});
+
+test('on a phone every dashboard tab fits: the tabs themselves, and each one opened, even with a booking showing', async ({ page, request }) => {
+    await request.post('/__test/insert-booking', { data: booking({ date: dayFromNow(0) }) });
+    await h.logIn(page);
+    await expect(page.locator('.bookingsTable')).toBeVisible();
+    // read from the page, so a new tab is checked without anyone remembering to add it here
+    const tabs = page.getByRole('tab');
+    const names = await tabs.allTextContents();
+    expect(names.length).toBeGreaterThanOrEqual(8);
+    for (const [i, name] of names.entries()) {
+        const box = await tabs.nth(i).boundingBox();
+        expect(box.x + box.width, `the ${name} tab is on the screen`).toBeLessThanOrEqual(WIDTH);
+        await tabs.nth(i).click();
+        await page.waitForLoadState('networkidle').catch(() => {});
+        const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+        expect(overflow, `the ${name} tab is wider than the screen`).toBeLessThanOrEqual(0);
+    }
 });
 
 test('on a phone the dashboard shows each booking as a card, with its buttons on screen and 16px boxes', async ({ page, request }) => {

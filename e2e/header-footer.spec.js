@@ -71,6 +71,7 @@ test('the footer: description, contact, links and social logos, no address, and 
     await expect(footer.getByRole('link', { name: 'Charters' })).toHaveAttribute('href', '#charters');
     await expect(footer.getByRole('link', { name: 'Book a trip' })).toHaveAttribute('href', '#reservations');
     await expect(footer.locator('.footerSocial a')).toHaveCount(4);
+    await expect(footer.getByRole('link', { name: 'Gift vouchers' })).toHaveAttribute('href', '/gift-vouchers');
     await expect(footer.getByRole('button')).toHaveCount(0); // no pop-up buttons
 
     await footer.getByRole('link', { name: 'Privacy policy' }).click();
@@ -93,6 +94,7 @@ test('the charter price on the home page and the charters page is the one set on
     await expect(facts).toContainText('Up to 12people');
     await expect(facts).not.toContainText('infants');
     await expect(page.locator('.ideaCard')).toHaveCount(4);
+    await expect(page.locator('.ideaCard', { hasText: 'Beach explorer' }).locator('img')).toHaveAttribute('src', /beach-explorer/); // the owner's photo
     await expect(page.locator('.goodToKnow')).toContainText('Paddleboards and snorkelling gear are included');
 
     // the owner changes the price on the dashboard: both pages follow
@@ -126,10 +128,3 @@ test('on a wide screen the charters facts line up with the page, not the edges o
     expect(last.x + last.width).toBeLessThanOrEqual(ideas.x + ideas.width + 40); // ends with the page, not at 2000px
 });
 
-test('the owner\'s photos: the cove on the Beach explorer card, the swim photo on the home page charters', async ({ page }) => {
-    await page.goto('/charters');
-    await expect(page.locator('.ideaCard', { hasText: 'Beach explorer' }).locator('img')).toHaveAttribute('src', /beach-explorer/);
-    await page.goto('/');
-    await expect(page.locator('#charters img')).toHaveAttribute('src', /charter-swim/);
-    await expect(page.locator('.boatSection img')).toHaveAttribute('src', /dorado/);
-});

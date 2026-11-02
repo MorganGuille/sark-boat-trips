@@ -391,17 +391,3 @@ test('season dates: an end before the start cannot be saved, a valid change is s
     await expect(page.locator('#seasonStart')).toHaveValue(start);
     await expect(page.locator('#seasonEnd')).toHaveValue(later);
 });
-
-test('on a phone the dashboard does not scroll sideways, even with a bookings table showing', async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
-    await h.logIn(page);
-    await addBooking(page);
-    await page.click('role=tab[name="Bookings"]');
-    await expect(page.locator('.bookingsTable')).toBeVisible();
-        for (const tab of ['Bookings', 'New booking', 'Availability', 'Notes', 'Report']) {
-        await page.click(`role=tab[name^="${tab}"]`);
-        if (tab === 'Report') await expect(page.locator('.reportStats')).toBeVisible(); // wait for the totals
-        const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-        expect(overflow, `the ${tab} tab is wider than the screen`).toBeLessThanOrEqual(4);
-    }
-});
