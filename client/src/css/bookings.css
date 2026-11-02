@@ -44,6 +44,37 @@
     font-size: 0.95rem;
 }
 
+/* How paying works: three short points in a row, one under another on a phone */
+.bookingPoints {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.4rem 1.25rem;
+    margin: 0.75rem 0 0;
+    padding: 0;
+    font-size: 0.95rem;
+    color: #4a5a68;
+}
+
+.bookingPoints li::before {
+    content: "✓" / "";
+    margin-right: 0.4rem;
+    color: #0a5c43;
+    font-weight: 800;
+}
+
+.bookingPoints strong {
+    color: #213547;
+}
+
+@media (max-width: 600px) {
+    .bookingPoints {
+        flex-direction: column;
+        align-items: center;
+    }
+}
+
 .bookingsSmall {
     font-size: 0.95rem;
     color: #4a5a68;

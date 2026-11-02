@@ -94,10 +94,6 @@
 }
 
 
-.content {
-    margin-bottom: 2rem;
-}
-
 /* The charters section: the photo beside the text, stacked on a phone */
 .chartersIntro {
     display: grid;
@@ -115,6 +111,7 @@
     height: auto;
     aspect-ratio: 4 / 3;
     object-fit: cover;
+    object-position: center 65%; /* keeps the boat and the paddleboard in when the frame crops */
     border-radius: 16px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
 }
@@ -153,25 +150,6 @@
     }
 }
 
-.sarkIsland .grid1 {
-    display: grid;
-    grid-template-columns: auto auto;
-    gap: 1em;
-    padding: 1em;
-    text-align: start;
-
-}
-
-.sarkIsland img {
-    align-self: center;
-    max-width: 500px;
-    height: auto;
-}
-
-.sarkIsland h2 {
-    margin-top: 0;
-    padding-top: 0;
-}
 
 @keyframes pulse {
     0% {
@@ -204,25 +182,6 @@
 
     }
 
-    .sarkIsland {
-        max-width: 80%;
-    }
-
-    .sarkIsland .grid1 {
-        gap: 1em;
-        padding: 1em 0;
-        text-align: start;
-        align-items: center;
-    }
-
-    .sarkIsland img {
-        max-width: 500px;
-        width: 100%;
-    }
-
-    .sarkIsland .textGrid {
-        grid-template-columns: auto;
-    }
 }
 
 
@@ -232,14 +191,15 @@
         max-width: 90%;
     }
 
+}
 
-
-    .sarkIsland .grid1 {
-        grid-template-columns: 1fr;
-        gap: 1em;
-        padding: 1em 0;
-        text-align: center;
-        align-items: center;
+/* A short screen, like a phone held sideways: the big gap above pushed the heading off the top and Book
+   now under the next section, so keep them close together, below the header */
+@media (max-height: 600px) {
+    .hero-banner {
+        gap: 1.5em;
+        padding-top: 3.5rem;
+        box-sizing: border-box;
     }
 }
 
@@ -257,6 +217,228 @@
 
 
 }
+/* The tour, the boat and Sark Island (owner, 2 Nov 2026): the charters section's style, a small label
+   over a sentence-case heading, on the page's 72rem column. Reviews (reviews.css) use the same column. */
+.homeSection {
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: 3.5rem 2rem;
+    text-align: left;
+}
+
+.homeSection h2 {
+    margin: 0 0 0.6rem;
+    font-size: 2rem;
+    text-wrap: balance;
+}
+
+.homeSection .lead {
+    margin: 0;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: #4a5d6e;
+}
+
+.sectionIntro {
+    max-width: 46rem;
+    margin-bottom: 1.75rem;
+}
+
+/* The tour's facts in one white strip, like the charters page */
+.tourFacts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+    margin: 0 0 1.5rem;
+    background: white;
+    border-radius: 14px;
+    box-shadow: 0 4px 16px rgba(33, 53, 71, 0.06);
+    overflow: hidden;
+}
+
+.tourFacts div {
+    padding: 1.1rem 1.25rem;
+    box-shadow: -1px 0 0 #e6eaee; /* a line between facts, wherever the row wraps */
+}
+
+.tourFacts dt {
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.tourFacts dd {
+    margin: 0;
+    font-size: 0.92rem;
+    color: #4a5d6e;
+}
+
+/* What you might see: three photo cards */
+.tourCards {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.tourCards li {
+    background: white;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.tourCards img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+}
+
+.tourCards div {
+    padding: 0.9rem 1.1rem 1.1rem;
+}
+
+.homeSection h3 {
+    margin: 0 0 0.25rem;
+    font-size: 1.1rem;
+}
+
+.tourCards p,
+.islandCards p {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #4a5d6e;
+}
+
+/* The boat: her photo beside the text */
+.boatSection {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    align-items: center;
+}
+
+/* a wide photo: a wide frame, so the whole boat stays in it */
+.boatSection img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 2 / 1;
+    object-fit: cover;
+    object-position: 40% center;
+    border-radius: 16px;
+}
+
+.boatSection .lead {
+    margin-bottom: 1rem;
+}
+
+/* Sark Island: two cards, coming for the day and staying over */
+.islandCards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+}
+
+.islandCards article {
+    background: white;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.islandCards img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 8;
+    object-fit: cover;
+}
+
+.islandCards article > div {
+    display: grid;
+    gap: 0.6rem;
+    padding: 1.1rem 1.25rem 1.3rem;
+}
+
+/* Links inside the text (reviews.css takes the underline off every link, so put it back here) */
+.homeSection a.textLink {
+    color: #0b5c8a;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 800px) {
+    .homeSection {
+        padding: 2.5rem 16px;
+    }
+
+    .homeSection h2 {
+        font-size: 1.6rem;
+    }
+
+    .homeSection .lead {
+        font-size: 1rem;
+    }
+
+    /* the facts two by two */
+    .tourFacts {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .tourFacts div {
+        padding: 0.8rem 1rem;
+        box-shadow: -1px 0 0 #e6eaee, 0 -1px 0 #e6eaee;
+    }
+
+    .tourFacts dt {
+        font-size: 1.05rem;
+    }
+
+    /* an odd one out (the price) takes the whole last row */
+    .tourFacts div:last-child:nth-child(odd) {
+        grid-column: 1 / -1;
+    }
+
+    /* the photo cards as rows: the photo beside the words */
+    .tourCards {
+        grid-template-columns: 1fr;
+        gap: 0.7rem;
+    }
+
+    .tourCards li {
+        display: flex;
+    }
+
+    .tourCards img {
+        width: 7rem;
+        height: 5.75rem;
+        flex-shrink: 0;
+        aspect-ratio: auto;
+    }
+
+    .tourCards div {
+        align-self: center;
+        padding: 0.7rem 0.9rem;
+    }
+
+    .tourCards p {
+        font-size: 0.92rem;
+    }
+
+    .boatSection,
+    .islandCards {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+
+    .boatSection img {
+        aspect-ratio: 16 / 9;
+    }
+}
+
 /* The gift vouchers band after the booking form */
 .giftBand {
     display: flex;

@@ -125,3 +125,11 @@ test('on a wide screen the charters facts line up with the page, not the edges o
     expect(Math.abs(first.x - heading.x)).toBeLessThan(2); // starts where the heading does
     expect(last.x + last.width).toBeLessThanOrEqual(ideas.x + ideas.width + 40); // ends with the page, not at 2000px
 });
+
+test('the owner\'s photos: the cove on the Beach explorer card, the swim photo on the home page charters', async ({ page }) => {
+    await page.goto('/charters');
+    await expect(page.locator('.ideaCard', { hasText: 'Beach explorer' }).locator('img')).toHaveAttribute('src', /beach-explorer/);
+    await page.goto('/');
+    await expect(page.locator('#charters img')).toHaveAttribute('src', /charter-swim/);
+    await expect(page.locator('.boatSection img')).toHaveAttribute('src', /dorado/);
+});

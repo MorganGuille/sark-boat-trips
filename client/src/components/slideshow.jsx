@@ -1,85 +1,75 @@
-import { useState, useEffect, useRef } from 'react';
-import '../css/slideshow.css';
+import { useEffect, useRef, useState } from 'react'
+import '../css/slideshow.css'
 
-function Slideshow({ images, interval = 5000 }) {
+// The home page photos (owner, 2 Nov 2026): a clean row of photos, each at its own shape (nothing
+// cropped, no grey bands), that people move themselves: drag with the mouse or use the arrows on a
+// laptop, swipe on a phone. It never moves by itself. images: [{ src, alt, width, height }]
+function Slideshow({ images }) {
+    const strip = useRef(null)
+    const drag = useRef(null) // { x, scrollLeft } while the mouse is held down on the row
+    const [dragging, setDragging] = useState(false)
+    const [atStart, setAtStart] = useState(true)
+    const [atEnd, setAtEnd] = useState(false)
 
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const startX = useRef(0);
-    const endX = useRef(0);
-    const activePointerId = useRef(null);
-
+    // Hides an arrow at either end of the row
+    const update = () => {
+        const el = strip.current
+        if (!el) return
+        setAtStart(el.scrollLeft <= 1)
+        setAtEnd(el.scrollLeft + el.clientWidth >= el.scrollWidth - 1)
+    }
     useEffect(() => {
-        const timer = setInterval(() => {
-            setCurrentIndex((prevIndex) => (prevIndex + 1) % images.length);
-        }, interval);
+        update()
+        window.addEventListener('resize', update)
+        return () => window.removeEventListener('resize', update)
+    }, [])
 
-        return () => {
-            clearInterval(timer);
-        };
-    }, [images, interval]);
+    // Most of a screen's width at a time, so the last photo shown is the first one after
+    const move = (direction) => {
+        const el = strip.current
+        const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        el.scrollBy({ left: direction * el.clientWidth * 0.8, behavior: smooth ? 'smooth' : 'auto' })
+    }
 
-    const goToPrevious = () => {
-        setCurrentIndex((prevIndex) => (prevIndex - 1 + images.length) % images.length);
-    };
-
-    const goToNext = () => {
-        setCurrentIndex((prevIndex) => (prevIndex + 1) % images.length);
-    };
-
-    const handlePointerDown = (e) => {
-        startX.current = e.clientX || e.touches[0].clientX;
-        activePointerId.current = e.pointerId;
-    };
-
-    const handlePointerMove = (e) => {
-        if (e.pointerId === activePointerId.current) {
-            endX.current = e.clientX || e.touches[0].clientX;
-        }
-    };
-
-    const handlePointerUp = (e) => {
-        if (e.pointerId === activePointerId.current) {
-            if (startX.current - endX.current > 10) {
-                goToNext();
-            } else if (startX.current - endX.current < -10) {
-                goToPrevious();
-            }
-            startX.current = 0;
-            endX.current = 0;
-            activePointerId.current = null;
-        }
-    };
+    // Dragging with a mouse (fingers already scroll it themselves)
+    const startDrag = (e) => {
+        if (e.pointerType !== 'mouse' || e.button !== 0) return
+        drag.current = { x: e.clientX, scrollLeft: strip.current.scrollLeft }
+        strip.current.setPointerCapture(e.pointerId)
+        setDragging(true)
+    }
+    const whileDragging = (e) => {
+        if (!drag.current) return
+        strip.current.scrollLeft = drag.current.scrollLeft - (e.clientX - drag.current.x)
+    }
+    const endDrag = () => {
+        drag.current = null
+        setDragging(false)
+    }
 
     return (
-        <div
-            className="image-slider"
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            onPointerOut={handlePointerUp}
-        >
-            <div className="slider-container">
-                {images.map((image, index) => {
-                    const isVisible =
-                        index === currentIndex ||
-                        index === (currentIndex + 1) % images.length ||
-                        index === (currentIndex - 1 + images.length) % images.length;
-
-                    return (
-                        <div
-                            key={index}
-                            className={`slide ${index === currentIndex ? 'active' : ''}`}
-                            style={{ backgroundImage: isVisible ? `url(${image})` : 'none' }}
-                        ></div>
-                    );
-                })}
+        <section className='photoStrip' aria-labelledby='photos-heading'>
+            <h2 id='photos-heading' className='sr-only'>Photos from our trips</h2>
+            <div className='photoStripFrame'>
+                {/* tabIndex: the arrow keys scroll it for people using a keyboard */}
+                <ul className={`photoStripRow${dragging ? ' dragging' : ''}`} ref={strip} onScroll={update} tabIndex={0}
+                    aria-label='Photos, scroll sideways for more'
+                    onPointerDown={startDrag} onPointerMove={whileDragging} onPointerUp={endDrag} onPointerCancel={endDrag}>
+                    {images.map((image) => (
+                        <li key={image.src}>
+                            <img src={image.src} alt={image.alt} width={image.width} height={image.height} loading='lazy' draggable='false' />
+                        </li>
+                    ))}
+                </ul>
+                <button type='button' className='photoArrow photoArrowBack' onClick={() => move(-1)} hidden={atStart} aria-label='Earlier photos'>
+                    <svg width='22' height='22' viewBox='0 0 24 24' aria-hidden='true'><path d='M15 18l-6-6 6-6' /></svg>
+                </button>
+                <button type='button' className='photoArrow photoArrowNext' onClick={() => move(1)} hidden={atEnd} aria-label='More photos'>
+                    <svg width='22' height='22' viewBox='0 0 24 24' aria-hidden='true'><path d='M9 18l6-6-6-6' /></svg>
+                </button>
             </div>
-            <div className="slider-controls">
-                <button onClick={goToPrevious}>{`<`}</button>
-                <button onClick={goToNext}>{`>`}</button>
-            </div>
-        </div>
-    );
+        </section>
+    )
 }
 
-export default Slideshow;
+export default Slideshow

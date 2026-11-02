@@ -77,10 +77,13 @@ function Bookings() {
                         </>)}
                     </ul>
                 ) : null}
-                <p className='bookingsSmall'>
-                    {charter ? '' : 'Special trips (like a swim or sunset trip) show their own price. '}
-                    Pay by card when your {charter ? 'charter' : 'trip'} starts. Free cancellation up to {charter ? FREE_CANCEL_HOURS.charter : FREE_CANCEL_HOURS.trip} hours before.
-                </p>
+                {/* How paying works, in three points (owner, 2 Nov 2026) */}
+                <ul className='bookingPoints' aria-label='How paying works'>
+                    <li><strong>Save a card:</strong> nothing taken now</li>
+                    <li><strong>Charged</strong> when your {charter ? 'charter' : 'trip'} starts</li>
+                    <li><strong>Free cancellation</strong> up to {charter ? FREE_CANCEL_HOURS.charter : FREE_CANCEL_HOURS.trip} hours before</li>
+                </ul>
+                {charter ? null : <p className='bookingsSmall'>Special trips (like a swim or sunset trip) show their own price.</p>}
             </div>
 
             <div className='bookingsGrid'>

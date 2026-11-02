@@ -6,15 +6,15 @@ import Bookings from '../components/bookings'
 
 import '../css/charters.css'
 
-import charterDerrible from '../assets/images/Charter+Tour+Derrible.webp'
+import charterHero from '../assets/images/charter-hero.webp'
 import guillemots from '../assets/images/Guillemots.webp'
-import beachCave from '../assets/images/gallery3.webp'
+import beachCove from '../assets/images/beach-explorer.webp'
 import coastline from '../assets/images/gallery10.webp'
 import swimmerEscort from '../assets/images/gallery5.webp'
 
 // The owner's charter ideas (1 Nov 2026). The evening card borrows a coastline photo until there is an evening one.
 const IDEAS = [
-    { title: 'Beach explorer', image: beachCave, alt: 'A secluded bay with a sea cave', text: "Sark's secluded beaches are hard to reach on foot. We'll take you there in comfort, even to bays you can't reach by land." },
+    { title: 'Beach explorer', image: beachCove, alt: 'The boat at anchor in a secluded cove with clear water', text: "Sark's secluded beaches are hard to reach on foot. We'll take you there in comfort, even to bays you can't reach by land." },
     { title: 'Birdwatching', image: guillemots, alt: 'Guests watching guillemots from the boat', text: 'In season: guillemots, razorbills, puffins and fulmars. Get up close to their offshore colonies.' },
     { title: 'Evening or early morning cruise', image: coastline, alt: "Sark's coastline", text: 'Round the island in the low light. Maybe with a glass of champagne to toast the day.' },
     { title: 'Safety boat', image: swimmerEscort, alt: 'A swimmer beside the boat in a narrow gully', text: "Swimming or kayaking round the island? We'll stay close, and help you plan a safe route with the tides." },
@@ -30,7 +30,7 @@ function Charters() {
         <title>Sark Boat Trips | Charters</title>
         <meta name="description" content="Private boat charters around Sark for up to 12 people: secluded bays, seabird colonies, evening cruises and safety boat cover, with paddleboards and snorkelling gear included." />
         <main id="main-content" className='chartersPage'>
-            <header className='charterHero' style={{ backgroundImage: `url(${charterDerrible})` }}>
+            <header className='charterHero' style={{ backgroundImage: `url(${charterHero})` }}>
                 <div className='charterHeroText'>
                     <h1>Private charters</h1>
                     <p>The boat and a local skipper to yourselves, for up to 12 people.</p>

@@ -123,15 +123,15 @@ test('the privacy policy has its own page (Stripe links to it) and explains the 
 
 test('the booking page tells customers how cancelling works', async ({ page }) => {
     await page.goto('/bookings');
-    await expect(page.locator('.bookingsSmall')).toContainText('Free cancellation up to 24 hours before.');
+    await expect(page.locator('.bookingPoints')).toContainText('Free cancellation up to 24 hours before');
     await page.goto('/charters');
-    await expect(page.locator('.bookingsSmall')).toContainText('Free cancellation up to 48 hours before.');
+    await expect(page.locator('.bookingPoints')).toContainText('Free cancellation up to 48 hours before');
     await expect(page.locator('.charterFacts')).toContainText('up to 48 hours before');
     await expect(page.locator('.goodToKnow')).toContainText('Free cancellation up to 48 hours before');
     await expect(page.locator('.cardNotice')).toContainText('up to 48 hours before');
     // written differently, it is still the charter page (it used to show the trip booking form)
     await page.goto('/Charters/');
-    await expect(page.locator('.bookingsSmall')).toContainText('Free cancellation up to 48 hours before.');
+    await expect(page.locator('.bookingPoints')).toContainText('Free cancellation up to 48 hours before');
     await expect(page.locator('.cardNotice')).toContainText('up to 48 hours before');
 });
 
@@ -200,4 +200,69 @@ test('the video: nothing from Vimeo loads until Watch a trip is tapped, then Vim
     await expect(play).toHaveCount(0);
     // the player's code was a separate file, fetched by the tap (not part of every visit)
     expect(scripts.length, 'a new code file was fetched when play was tapped').toBeGreaterThan(scriptsBefore);
+});
+
+test('home page: the shipping website, and Sue\'s phone and email, are real links', async ({ page }) => {
+    await page.goto('/');
+    const island = page.locator('#sarkIsland');
+    await expect(island.getByRole('link', { name: /sarkshipping\.gg/ })).toHaveAttribute('href', 'https://www.sarkshipping.gg');
+    await expect(island.getByRole('link', { name: '+44 1481 832107' })).toHaveAttribute('href', 'tel:+441481832107');
+    await expect(island.getByRole('link', { name: 'suebnbsark@gmail.com' })).toHaveAttribute('href', 'mailto:suebnbsark@gmail.com');
+});
+
+test('home page: the reviews come straight after the tour, with three quotes side by side on a laptop', async ({ page }) => {
+    await page.goto('/');
+    const order = await page.locator('main > section[id]').evaluateAll((sections) => sections.map((s) => s.id));
+    expect(order.indexOf('reviews'), 'reviews follow the tour').toBe(order.indexOf('theTour') + 1);
+    const quotes = page.locator('#reviews .reviewQuotes figure');
+    await expect(quotes).toHaveCount(3);
+    await expect(quotes.nth(0)).toContainText('Richard W., Google');
+    await expect(quotes.nth(2)).toContainText("puffin colony at L'Etac");
+    const tops = await quotes.evaluateAll((all) => all.map((q) => Math.round(q.getBoundingClientRect().top)));
+    expect(new Set(tops).size, 'one row of quotes').toBe(1);
+});
+
+test('home page: the tour facts show the dashboard prices, and the wording the owner chose', async ({ page }) => {
+    await page.goto('/');
+    const facts = page.locator('.tourFacts');
+    await expect(facts).toContainText('Max 12people on board');
+    await expect(facts).toContainText('£40 adult£25 child, under 4s free'); // the test settings' prices
+    await expect(facts.locator('div')).toHaveCount(4); // the owner's four facts (no Creux Harbour)
+    await expect(page.locator('.tourCards')).toContainText('and other marine life');
+    await expect(page.locator('main')).not.toContainText('basking sharks');
+    await expect(page.locator('.boatSection')).toContainText('when she was converted for fishing');
+    await expect(page.locator('#sarkIsland')).not.toContainText('30 minutes');
+    await expect(page.locator('#reservations .bookingPoints')).toContainText('Save a card: nothing taken now');
+});
+
+test('home page photos: a row the arrows scroll (it never moves by itself), every photo described', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/');
+    const row = page.locator('.photoStripRow');
+    await row.scrollIntoViewIfNeeded();
+    const photos = row.locator('img');
+    await expect(photos).toHaveCount(12);
+    for (const alt of await photos.evaluateAll((imgs) => imgs.map((img) => img.alt))) expect(alt.length).toBeGreaterThan(10);
+    const back = page.getByRole('button', { name: 'Earlier photos' });
+    await expect(back).toBeHidden(); // nothing before the first photo
+    await page.waitForTimeout(6000); // the old slideshow moved on every 5 seconds
+    expect(await row.evaluate((el) => el.scrollLeft)).toBe(0);
+    await page.getByRole('button', { name: 'More photos' }).click();
+    await expect.poll(() => row.evaluate((el) => el.scrollLeft)).toBeGreaterThan(400);
+    await expect(back).toBeVisible();
+    await expect(page.locator('.photoStrip h2')).toHaveClass(/sr-only/); // a clean row: the heading is only for screen readers
+});
+
+test('home page photos: on a laptop the row can be dragged with the mouse', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/');
+    const row = page.locator('.photoStripRow');
+    await row.scrollIntoViewIfNeeded();
+    const box = await row.boundingBox();
+    await page.mouse.move(box.x + 700, box.y + 150);
+    await page.mouse.down();
+    await page.mouse.move(box.x + 400, box.y + 150, { steps: 8 });
+    await page.mouse.move(box.x + 200, box.y + 150, { steps: 8 });
+    await page.mouse.up();
+    expect(await row.evaluate((el) => el.scrollLeft)).toBeGreaterThan(300);
 });

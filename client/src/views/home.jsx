@@ -1,7 +1,6 @@
 import Slideshow from '../components/slideshow'
 import Reviews from '../components/reviews'
 import Bookings from '../components/bookings'
-import { FREE_CANCEL_HOURS } from '../utils/policy.js'
 import VideoPlayer from '../components/videoPlayer'
 
 import { Link } from 'react-router'
@@ -20,27 +19,32 @@ import gallery9 from '../assets/images/gallery9.webp'
 import gallery10 from '../assets/images/gallery10.webp'
 import gallery11 from '../assets/images/gallery11.webp'
 
-import charters from "../assets/images/charters.webp"
+import charters from "../assets/images/charter-swim.webp"
+import cave from "../assets/images/charters.webp"
 import suesbnb from "../assets/images/SuesbnbextGeorge.webp"
-import sarkMap from "../assets/images/map_web_blue.webp"
+import dorado from "../assets/images/dorado.webp"
+import guillemots from "../assets/images/Guillemots.webp"
+import ferry from "../assets/images/isle-of-sark-shipping-company.webp"
 
 
 import '../css/home.css'
 
 function Home() {
 
+    // The photos row: every photo with a description for people who can't see it, and its size
     const images = [
-        gallery1,
-        gallery2,
-        gallery3,
-        gallery4,
-        gallery5,
-        gallery6,
-        gallery7,
-        gallery8,
-        gallery9,
-        gallery10,
-        gallery11,
+        { src: gallery1, alt: 'Boats moored in the Creux Harbour', width: 1299, height: 974 },
+        { src: gallery2, alt: 'Non Pareil, our old boat, leaving the harbour with passengers', width: 1299, height: 974 },
+        { src: gallery3, alt: 'The boat beside a sea cave in orange cliffs', width: 1920, height: 1440 },
+        { src: gallery4, alt: 'Looking out from inside a dark sea cave', width: 1920, height: 2560 },
+        { src: gallery5, alt: 'Passengers on the boat in a narrow gully between rocks', width: 1920, height: 2550 },
+        { src: gallery6, alt: 'Two dolphins swimming beside the boat', width: 1920, height: 2560 },
+        { src: gallery7, alt: 'Seabirds on the rocks above the sea', width: 1920, height: 1080 },
+        { src: gallery8, alt: 'Swimmers in a green bay beside the boat', width: 1920, height: 1423 },
+        { src: gallery9, alt: 'A narrow sea cave between orange rocks', width: 1920, height: 1279 },
+        { src: gallery10, alt: 'Cliffs and clear water along the coast', width: 1920, height: 1279 },
+        { src: gallery11, alt: 'Passengers on the boat close to the rocks', width: 1920, height: 2550 },
+        { src: cave, alt: 'A charter group inside a sea cave', width: 1920, height: 1280 },
     ]
 
     // The charter price the owner set on the dashboard (none until it is set or while it loads)
@@ -81,32 +85,58 @@ function Home() {
             <section className="centered-section" aria-label="Introduction Video">
                 <VideoPlayer />
             </section>
-            <section id='theTour' className='theTour centered-section' aria-labelledby="tour-heading">
-                <div id="tour-heading" className="content">
-                    <h2>THE TOUR</h2>
-                    <p>Departing from the ‘Creux’ Harbour, the original fishing port on Sark we will take a leisurely two
-                        and a half hour trip around the Island, exploring the bays, coves and secret caves.</p>
-                    <p> In season you
-                        can see our sea birds such as puffins, guillemots, razor-bills, cormorants and many others. There is
-                        also the chance of seeing some of Sark’s other sea life such as dolphins and seals, even basking
-                        sharks and sunfish.</p>
-                    <p>We usually run two trips daily, at 11am and 2pm weather dependent. </p>
+            {/* The tour, the reviews and the boat (owner, 2 Nov 2026): the facts and price up front, in the
+                same style as the charters section. The trip prices come from the dashboard. */}
+            <section id='theTour' className='theTour homeSection' aria-labelledby="tour-heading">
+                <div className='sectionIntro'>
+                    <p className='eyebrow'>The tour</p>
+                    <h2 id="tour-heading">Two and a half hours around Sark</h2>
+                    <p className='lead'>A leisurely trip right round the island from the Creux Harbour, the original fishing
+                        port on Sark, exploring the bays, coves and secret caves.</p>
                 </div>
-                <div className="content">
-                    <h2>THE BOAT</h2>
-                    <p>Rebuilt in 2024, the Dorado is a purpose built Treeve Marine 25’ , one of the most successful British
-                        built boats. She was commissioned in 1980 for Dominic Wakey who ran tours around the island until
-                        the mid 90’s when he refitted the Dorado as a fishing boat.</p>
-                    <p>After the loss of Non Pareil, our much loved wooden Sark built boat, we have restored the Dorado as
-                        a tour boat once again! She is a 25ft GRP hull and comfortably carries up to 12 passengers. On board
-                        is a toilet and full safety equipment including life jackets and lifeboats for all passengers and
-                        crew.</p>
+                <dl className='tourFacts'>
+                    <div><dt>2½ hours</dt><dd>right round the island</dd></div>
+                    <div><dt>11am and 2pm</dt><dd>daily, weather permitting</dd></div>
+                    <div><dt>Max 12</dt><dd>people on board</dd></div>
+                    {prices ? <div><dt>{formatPounds(prices.adult)} adult</dt><dd>{formatPounds(prices.child)} child, under 4s free</dd></div> : null}
+                </dl>
+                <ul className='tourCards'>
+                    <li>
+                        <img src={guillemots} alt='Guillemots on the water beside the boat' loading='lazy' width='1920' height='1082' />
+                        <div><h3>Seabirds</h3><p>In season: puffins, guillemots, razorbills and cormorants.</p></div>
+                    </li>
+                    <li>
+                        <img src={gallery6} alt='Two dolphins swimming beside the boat' loading='lazy' width='1920' height='2560' />
+                        <div><h3>Dolphins and seals</h3><p>Keep a look out for them, and other marine life.</p></div>
+                    </li>
+                    <li>
+                        <img src={gallery9} alt='A narrow sea cave between orange rocks' loading='lazy' width='1920' height='1279' />
+                        <div><h3>Caves and gullies</h3><p>A 10m tide means every trip is different.</p></div>
+                    </li>
+                </ul>
+            </section>
+
+            <Reviews />
+
+            <section className='boatSection homeSection' aria-labelledby="boat-heading">
+                <img src={dorado} alt='The Dorado in the harbour, passengers on board' loading='lazy' width='1600' height='747' />
+                <div>
+                    <p className='eyebrow'>The boat</p>
+                    <h2 id="boat-heading">Meet the Dorado</h2>
+                    <p className='lead'>A 25ft Treeve Marine built in 1980, she ran tours round Sark until the 90s, when she
+                        was converted for fishing. After the loss of Non Pareil, our much loved wooden Sark-built boat, we
+                        rebuilt Dorado in 2024 as a tour boat once again.</p>
+                    <ul className='factChips' aria-label='On board'>
+                        <li>Max 12 passengers</li>
+                        <li>Toilet on board</li>
+                        <li>Full safety equipment</li>
+                    </ul>
                 </div>
-            </section >
+            </section>
             <Slideshow images={images} />
             {/* Charters (owner's choices, 1 Nov 2026): the basics up front, the price from the dashboard */}
             <section id='charters' className="charters chartersIntro" aria-labelledby="charters-heading">
-                <img src={charters} alt='A charter group inside a sea cave' loading='lazy' width='1920' height='1280' />
+                <img src={charters} alt='A charter group swimming and paddleboarding from the boat in a quiet bay' loading='lazy' width='1080' height='864' />
                 <div>
                     <p className='eyebrow'>Private charters</p>
                     <h2 id="charters-heading">Have the boat to yourselves</h2>
@@ -121,80 +151,42 @@ function Home() {
                     <Link to='/charters' className='goldButton'>Charter ideas and booking →</Link>
                 </div>
             </section>
-            <section id='sarkIsland' className="sarkIsland centered-section" aria-labelledby="island-heading">
-                <h2 id="island-heading">SARK ISLAND</h2>
-
-                <div className="grid1 textGrid">
-                    <div>
-                        <h3>Sark is the crown jewel of the Channel Islands, nestled in between Guernsey and Jersey.</h3>
-                        <p>Sark offers a truly unique holiday experience for those wanting to escape the bright lights and
-                            noise
-                            of
-                            the city. A visit to our car-free island is like a step back in time and visitors are sure to be
-                            blown
-                            away by the stunning scenery, bays, coastal paths and cliff top views.</p>
-                        <p>Sark is also the world&apos;s first &apos;Dark Sky&apos; Island, offering spectacular star gazing throughout the
-                            year
-                            and the Goliout headland is a world recognized Ramsar site</p>
-                        <p>The Island&apos;s 22 mile coastline is a treasure trove of small coves, creeks, caves, inlets and
-                            bays,
-                            all
-                            teaming with sea life both above and below the water. </p>
-                    </div>
-
-                    <div>
-                        <h3>Did you know?:</h3>
-                        <p>Sark has a tidal range of around 10m. which means no trip around the island will be the same, on
-                            some
-                            tides we can access caves, on others we can get within touching distance of some of the
-                            off-shore
-                            rocks.
-                        </p>
-                        <p>On a ‘Spring low’ tide we can show you some of the many scrambling routes on Sark.</p>
-                    </div>
+            {/* Sark Island, short and practical for day visitors (owner, 2 Nov 2026) */}
+            <section id='sarkIsland' className="sarkIsland homeSection" aria-labelledby="island-heading">
+                <div className='sectionIntro'>
+                    <p className='eyebrow'>Sark Island</p>
+                    <h2 id="island-heading">A car-free island, 50 minutes from Guernsey</h2>
+                    <p className='lead'>Sark is the world&apos;s first Dark Sky Island, with 22 miles of coves, caves and
+                        cliffs. Come for the day, or stay a night or two.</p>
                 </div>
-
-                <div className="grid1">
-                    <div>
-                        <h2>GETTING HERE</h2>
-                        <p>Just a 50 minute boat ride from Guernsey, Sark feels an entire world away. Several ferries run
-                            daily during summer with daily trips during off season.</p>
-
-                        <p>Visit the Isle of Sark shipping website for more info and online booking</p>
-                        <a href="https://www.sarkshipping.gg" target="_blank" rel="noopener noreferrer">
-                            <p>www.sarkshipping.gg (opens in new tab)</p>
-                        </a>
-                    </div>
-                    <div>
-                        <img src={sarkMap} alt='Map of Sark Island' loading='lazy' width='335' height='350' />
-                    </div>
-                </div>
-
-                <div className="grid1">
-                    <div><img src={suesbnb} alt='Sue&apos;s BnB' loading='lazy' width='1920' height='1280' /></div>
-                    <div>
-                        <h2>SUE&apos;S BNB</h2>
-                        <p>We also offer 4* accommodation on the island at Sue’s BnB,</p>
-                        <p>‘Sue&apos;s B&B is the perfect place for settling into Sark life. Relax in the award winning garden on
-                            sunny days or use it as a base to explore the sandy beaches and hidden caves and at night
-                            explore the galaxy with our telescope’</p>
-
-                        <p>Book by calling +44 1481 832107 or emailing suebnbsark@gmail.com</p>
-                    </div>
-
+                <div className='islandCards'>
+                    <article>
+                        <img src={ferry} alt='The Sark ferry under way' loading='lazy' width='1200' height='800' />
+                        <div>
+                            <h3>Coming for the day</h3>
+                            <p>Ferries run daily from Guernsey and take 50 minutes. Our trips leave from the Creux Harbour,
+                                a short walk from where the ferry comes in.</p>
+                            <p><a className='textLink' href="https://www.sarkshipping.gg" target="_blank" rel="noopener noreferrer">
+                                Ferry times and booking: sarkshipping.gg<span className='sr-only'> (opens in new tab)</span>
+                            </a></p>
+                        </div>
+                    </article>
+                    <article>
+                        <img src={suesbnb} alt='Sue&apos;s B&amp;B, a cottage with a large garden' loading='lazy' width='1920' height='1280' />
+                        <div>
+                            <h3>Staying over: Sue&apos;s B&amp;B</h3>
+                            <p>4-star rooms on the island, an award-winning garden, and a telescope for the dark skies.</p>
+                            <p>Book by calling <a className='textLink' href='tel:+441481832107'>+44 1481 832107</a> or emailing{' '}
+                                <a className='textLink' href='mailto:suebnbsark@gmail.com'>suebnbsark@gmail.com</a></p>
+                        </div>
+                    </article>
                 </div>
             </section>
 
-            <Reviews />
-            <section id='reservations' className="reservations centered-section" aria-labelledby="res-heading">
-                <h2 id="res-heading">RESERVATIONS</h2>
-                <p>Book online below: you save a card, and nothing is charged until your trip starts. If your plans change,
-                    the link in your confirmation email lets you change the number of people or cancel free of charge
-                    up to {FREE_CANCEL_HOURS.trip} hours before.
-                </p>
-            </section>
-
-            <Bookings />
+            {/* The booking section's own heading is "Book a trip"; this anchor is where Book now and the menu land */}
+            <div id='reservations' className='reservations'>
+                <Bookings />
+            </div>
 
             {/* Gift vouchers (owner, 2 Nov 2026): a small band after the booking form, linking to their page */}
             <section className='giftBand' aria-labelledby='gift-heading'>

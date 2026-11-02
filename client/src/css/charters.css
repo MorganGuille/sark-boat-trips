@@ -5,13 +5,15 @@
     color: #213547;
 }
 
+/* The photo (owner, 2 Nov 2026): the boat and paddleboarders are low down, so the title sits at the top,
+   over the dark cliff, with the shade at the top instead of the bottom */
 .charterHero {
     position: relative;
-    min-height: 28rem;
+    min-height: clamp(28rem, 30vw, 40rem); /* a little taller on wide screens, so the boat isn't cut off */
     display: flex;
-    align-items: flex-end;
+    align-items: flex-start;
     background-size: cover;
-    background-position: center;
+    background-position: center 55%;
     color: white;
 }
 
@@ -19,7 +21,7 @@
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, rgba(0, 0, 0, 0.05) 30%, rgba(0, 0, 0, 0.65));
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.15) 55%, rgba(0, 0, 0, 0) 75%);
 }
 
 .charterHeroText {
@@ -27,7 +29,7 @@
     width: 100%;
     max-width: 72rem;
     margin: 0 auto;
-    padding: 0 2rem 2.5rem;
+    padding: 2.5rem 2rem 2.5rem;
     text-align: left;
 }
 
@@ -225,8 +227,16 @@
         min-height: 24rem;
     }
 
+    /* Phone: the title at the top, Check dates at the bottom over the water, the boat clear between */
+    .charterHero {
+        align-items: stretch;
+    }
+
     .charterHeroText {
-        padding: 0 16px 1.5rem;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 1.5rem 16px;
     }
 
     .charterHero h1 {
@@ -240,6 +250,8 @@
     .charterHero .goldButton {
         width: 100%;
         box-sizing: border-box;
+        margin-top: auto;
+        text-align: center;
     }
 
     .charterFacts {

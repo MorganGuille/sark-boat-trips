@@ -157,7 +157,7 @@ test('the video fills its frame at 16:9 on a phone, with Watch a trip inside it 
 test('the review links are rows one under another on a phone, inside the screen and easy to tap', async ({ page }) => {
     await page.goto('/');
     const reviews = page.locator('#reviews');
-    await expect(reviews).toContainText('Rated 5 stars on every site');
+    await expect(reviews).toContainText('Rated 5 stars'); await expect(reviews).not.toContainText('on every site');
     let lastBottom = 0;
     for (const site of ['Google', 'Tripadvisor', 'Facebook']) {
         const row = reviews.getByRole('link', { name: `Read our reviews on ${site}, rated 5.0 out of 5` });
@@ -170,6 +170,17 @@ test('the review links are rows one under another on a phone, inside the screen 
         expect(top, `${site} is under the one before`).toBeGreaterThan(lastBottom - 1);
         lastBottom = top + box.height;
     }
+});
+
+test('the review quotes swipe sideways on a phone without making the page wider', async ({ page }) => {
+    await page.goto('/');
+    const quotes = page.locator('#reviews .reviewQuotes');
+    await quotes.scrollIntoViewIfNeeded();
+    const first = await quotes.locator('figure').first().boundingBox();
+    expect(first.x).toBeGreaterThanOrEqual(0);
+    expect(first.x + first.width, 'the first quote fits the screen').toBeLessThanOrEqual(WIDTH);
+    expect(await quotes.evaluate((el) => el.scrollWidth > el.clientWidth), 'the others are a swipe away').toBe(true);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
 });
 
 test('from any page, the menu goes to the home page sections, and closes when a link is tapped (it used to stay open over the page)', async ({ page }) => {
@@ -244,4 +255,33 @@ test('on a phone the dashboard shows each booking as a card, with its buttons on
         expect(button.height, `${name} is big enough to tap`).toBeGreaterThanOrEqual(40);
     }
     await check(page, '/dashboard');
+});
+
+test('the home page photos swipe sideways on a phone: none wider than the screen, and the page no wider', async ({ page }) => {
+    await page.goto('/');
+    const row = page.locator('.photoStripRow');
+    await row.scrollIntoViewIfNeeded();
+    const widths = await row.locator('img').evaluateAll((imgs) => imgs.map((img) => img.getBoundingClientRect().width));
+    for (const width of widths) expect(width).toBeLessThanOrEqual(WIDTH);
+    expect(await row.evaluate((el) => el.scrollWidth > el.clientWidth), 'more photos a swipe away').toBe(true);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
+});
+
+test('the charters photo on a phone: the title at the top, Check dates at the bottom, so the boat shows between', async ({ page }) => {
+    await page.goto('/charters');
+    const hero = await page.locator('.charterHero').boundingBox();
+    const button = await page.getByRole('link', { name: 'Check dates' }).boundingBox();
+    const title = await page.locator('.charterHero h1').boundingBox();
+    expect(title.y - hero.y, 'title near the top').toBeLessThan(60);
+    expect(hero.y + hero.height - (button.y + button.height), 'button near the bottom').toBeLessThan(40);
+});
+
+test('a phone held sideways: the home photo shows its heading and Book now, below the header and on the screen', async ({ page }) => {
+    await page.setViewportSize({ width: 863, height: 360 }); // a Pixel turned on its side
+    await page.goto('/');
+    const header = await page.locator('.siteHeader').boundingBox();
+    const heading = await page.locator('.hero-banner h1').boundingBox();
+    const button = await page.locator('.hero-banner a').boundingBox();
+    expect(heading.y, 'the heading is below the header').toBeGreaterThanOrEqual(header.y + header.height - 1);
+    expect(button.y + button.height, 'Book now is on the screen').toBeLessThanOrEqual(360);
 });

@@ -1,72 +1,127 @@
-.image-slider {
+/* The home page photos (components/slideshow.jsx): a clean row that scrolls sideways, on the page's
+   72rem column like the other sections. Every photo is the same height and its own width. */
+.photoStrip {
+    position: relative; /* keeps the hidden heading from widening the page */
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: 2.5rem 2rem;
+}
+
+.photoStripFrame {
     position: relative;
-    width: 100%;
-    height: 100vh;
-    overflow: hidden;
-    z-index: 1;
 }
 
-.slider-container {
-    position: relative;
-    width: 100%;
-    height: 100%;
-}
-
-.slide {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    transition: 0.5s ease-in-out;
-    visibility: hidden;
-    opacity: 0;
-}
-
-.slide.active {
-    visibility: visible;
-    opacity: 1;
-}
-
-.slider-controls {
-    width: 100%;
-    position: absolute;
-    bottom: 50%;
-    /* left: 5%; */
-    /* transform: translateX(-50%); */
+.photoStripRow {
     display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    z-index: 1;
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    cursor: grab;
+    user-select: none;
 }
 
-.slider-controls button {
-    font-size: 1.2em;
-    margin: 0 5px;
-    padding: 30px 15px;
-    border: none;
-    background-color: rgb(63, 78, 90, 0.8);
-    color: white;
+.photoStripRow::-webkit-scrollbar {
+    display: none;
+}
+
+/* while the mouse drags it: no snapping back to a photo's edge mid-drag */
+.photoStripRow.dragging {
+    scroll-snap-type: none;
+    cursor: grabbing;
+}
+
+.photoStripRow:focus-visible {
+    outline: 3px solid #0f6fb8;
+    outline-offset: 4px;
+}
+
+.photoStripRow li {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+}
+
+.photoStripRow img {
+    display: block;
+    height: 20rem;
+    width: auto;
+    border-radius: 14px;
+    background: #dde3e8; /* while it loads */
+}
+
+/* The arrows sit on the photos at either end, and go when there's nothing more that way */
+.photoArrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3rem;
+    height: 3rem;
+    padding: 0;
+    margin: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.92);
+    color: #213547;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
-@media (max-width: 1366px) {}
-
-.image-slider {
-    height: 80vh;
+.photoArrow[hidden] {
+    display: none;
 }
 
-.slider-controls {
-    visibility: hidden;
+.photoArrowBack {
+    left: 0.75rem;
 }
 
-@media (max-width: 1020px) {
+.photoArrowNext {
+    right: 0.75rem;
+}
 
-    .image-slider {
-        height: 60vh;
+.photoArrow svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.photoArrow:hover {
+    background: white;
+}
+
+.photoArrow:focus-visible {
+    outline: 3px solid #0f6fb8;
+    outline-offset: 2px;
+}
+
+/* Phone: swipe instead of arrows, the row running to the screen's edges so the next photo peeks in */
+@media (max-width: 800px) {
+    .photoStrip {
+        padding: 2rem 16px;
     }
 
+    .photoArrow {
+        display: none;
+    }
+
+    .photoStripRow {
+        gap: 0.6rem;
+        margin: 0 -16px;
+        padding: 0 16px;
+        scroll-padding: 0 16px;
+    }
+
+    /* low enough that a wide photo fits the screen; a very wide one is trimmed at its sides */
+    .photoStripRow img {
+        height: 14rem;
+        max-width: calc(100vw - 48px);
+        object-fit: cover;
+    }
 }
