@@ -114,3 +114,14 @@ test('Check dates on the charters page jumps to the booking form', async ({ page
     await expect(page).toHaveURL(/#book$/);
     await expect(page.getByRole('heading', { name: 'Book a private charter' })).toBeInViewport();
 });
+
+test('on a wide screen the charters facts line up with the page, not the edges of the screen', async ({ page }) => {
+    await page.setViewportSize({ width: 2000, height: 1000 });
+    await page.goto('/charters');
+    const heading = await page.locator('h1').boundingBox();
+    const ideas = await page.locator('.ideaCards').boundingBox();
+    const first = await page.locator('.charterFacts dt').first().boundingBox();
+    const last = await page.locator('.charterFacts div').last().boundingBox();
+    expect(Math.abs(first.x - heading.x)).toBeLessThan(2); // starts where the heading does
+    expect(last.x + last.width).toBeLessThanOrEqual(ideas.x + ideas.width + 40); // ends with the page, not at 2000px
+});

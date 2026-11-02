@@ -43,10 +43,12 @@
     max-width: 34rem;
 }
 
+/* The white band runs edge to edge, but the facts line up with the page's 72rem column (owner, 2 Nov 2026) */
 .charterFacts {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     margin: 0;
+    padding: 0 max(0px, calc((100% - 72rem) / 2));
     background: white;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
     text-align: left;
@@ -59,6 +61,13 @@
 
 .charterFacts div:first-child {
     border-left: 0;
+}
+
+/* the first fact starts where the heading above does */
+@media (min-width: 601px) {
+    .charterFacts div:first-child {
+        padding-left: 2rem;
+    }
 }
 
 .charterFacts dt {
