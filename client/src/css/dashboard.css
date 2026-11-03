@@ -64,7 +64,7 @@
 /* ---------- Buttons and inputs ---------- */
 
 .dashboard .btn {
-    background: #04BF8A;
+    background: #047857;
     color: #fff;
     border: 0;
     border-radius: 0.5rem;
@@ -75,7 +75,7 @@
 }
 
 .dashboard .btn:hover:not(:disabled) {
-    background: #0f7ae5;
+    background: #0b6bcc;
 }
 
 .dashboard .btn:disabled {
@@ -113,7 +113,7 @@
     border: 0;
     padding: 0;
     margin-left: 0.5rem;
-    color: #0f7ae5;
+    color: #0b6bcc;
     font-size: inherit;
     text-decoration: underline;
     cursor: pointer;
@@ -285,7 +285,7 @@
 .dashTab[aria-selected='true'] {
     color: #213547;
     font-weight: 600;
-    border-bottom-color: #04BF8A;
+    border-bottom-color: #047857;
 }
 
 .count {
@@ -294,7 +294,7 @@
     margin-left: 0.4rem;
     padding: 0 0.35rem;
     border-radius: 999px;
-    background: #04BF8A;
+    background: #047857;
     color: #fff;
     font-size: 0.75rem;
     text-align: center;

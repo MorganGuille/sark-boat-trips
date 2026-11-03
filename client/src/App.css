@@ -70,7 +70,7 @@ body {
   padding: 1em 1.5em;
   border-radius: 0.5em;
   border: none;
-  background-color: #04BF8A;
+  background-color: #047857;
   color: white;
   margin: 0.5em;
 
@@ -78,7 +78,7 @@ body {
 
 .btn:hover {
   cursor: pointer;
-  background-color: #0f7ae5;
+  background-color: #0b6bcc;
 }
 
 .btn:active {
@@ -237,7 +237,7 @@ body {
   padding: 0.7rem 1.5rem;
   border-radius: 999px;
   background: #d9a404;
-  color: white !important;
+  color: #213547 !important; /* dark words on the gold, readable (P3-7) */
   font-weight: 700;
   text-decoration: none;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
@@ -245,7 +245,7 @@ body {
 }
 
 .goldButton:hover {
-  background: #b98b00;
+  background: #e8b41c;
 }
 
 .goldButton:focus-visible {

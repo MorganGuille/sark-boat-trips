@@ -80,7 +80,7 @@
     width: 1.5rem;
     height: 1.5rem;
     margin-left: 0.2rem;
-    fill: white;
+    fill: #213547; /* dark on the gold, like the gold buttons (P3-7) */
 }
 
 .videoPlayText small {

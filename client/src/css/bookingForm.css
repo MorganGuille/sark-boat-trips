@@ -36,7 +36,7 @@ form:where(.bookingForm) button {
 
 form:where(.bookingForm) button:hover {
     cursor: pointer;
-    background-color: #0f7ae5;
+    background-color: #0b6bcc;
 }
 
 form:where(.bookingForm) button:active {

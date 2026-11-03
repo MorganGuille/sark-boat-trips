@@ -25,6 +25,12 @@ a {
     list-style: none;
 }
 
+/* It scrolls sideways on a phone, so keyboard users can reach it too (P3-7) */
+.reviewQuotes:focus-visible {
+    outline: 3px solid #0f7ae5;
+    outline-offset: 4px;
+}
+
 .reviewQuotes figure {
     height: 100%;
     box-sizing: border-box;

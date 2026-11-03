@@ -103,6 +103,12 @@
     background-color: lightblue;
 }
 
+/* Moving through the days with the keyboard shows a clear outline, not just a paler shade (P3-7) */
+.react-calendar button:enabled:focus-visible {
+    outline: 3px solid #1d4ed8;
+    outline-offset: -3px;
+}
+
 .react-calendar__tile--now {
     background: #a1f9a1;
 }

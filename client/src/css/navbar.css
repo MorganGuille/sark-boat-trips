@@ -4,7 +4,7 @@
 .siteHeader {
     --header-ink: #213547;
     --header-gold: #d9a404;
-    --header-gold-dark: #b98b00;
+    --header-gold-light: #e8b41c; /* hover: lighter, so the dark words stay readable */
     --header-navy: #1c2f3e;
     position: fixed;
     inset: 0 0 auto;
@@ -90,7 +90,7 @@
     align-items: center;
     justify-content: center;
     background: var(--header-gold);
-    color: white;
+    color: #213547; /* dark words on the gold: white scored 2.3 for contrast, this 5.6 (P3-7) */
     font-weight: 700;
     padding: 0.65rem 1.3rem;
     border-radius: 999px;
@@ -100,7 +100,7 @@
 }
 
 .siteHeader .bookButton:hover {
-    background: var(--header-gold-dark);
+    background: var(--header-gold-light);
     transform: translateY(-1px);
 }
 

@@ -96,9 +96,9 @@
 }
 
 .tripCard.selected {
-    border-color: #04BF8A;
+    border-color: #047857;
     background: #effaf6;
-    box-shadow: 0 0 0 1px #04BF8A;
+    box-shadow: 0 0 0 1px #047857;
 }
 
 .tripCard:has(input:focus-visible) {
@@ -130,8 +130,8 @@
 }
 
 .tripCard.selected .tripCardMain::before {
-    border-color: #04BF8A;
-    background: radial-gradient(#04BF8A 45%, transparent 50%);
+    border-color: #047857;
+    background: radial-gradient(#047857 45%, transparent 50%);
 }
 
 .tripCard.full .tripCardMain::before {
@@ -229,9 +229,9 @@
     margin: 0;
     padding: 0;
     border-radius: 50%;
-    border: 2px solid #04BF8A;
+    border: 2px solid #047857;
     background: #ffffff;
-    color: #04BF8A;
+    color: #047857;
     font-size: 1.5rem;
     line-height: 1;
 }
@@ -329,7 +329,7 @@
     padding: 1rem;
     border: none;
     border-radius: 0.5rem;
-    background: #04BF8A;
+    background: #047857;
     color: white;
     font-size: 1.1rem;
     font-weight: 700;
@@ -341,7 +341,7 @@
 }
 
 .customerBooking .continueBtn:hover:not(:disabled) {
-    background: #03a678;
+    background: #065f46;
 }
 
 .customerBooking .continueBtn:disabled {

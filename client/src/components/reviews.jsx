@@ -37,7 +37,7 @@ function Reviews() {
             <p className='eyebrow'>Reviews</p>
             <h2 id="reviews-heading">Rated 5 stars</h2>
 
-            <ul className='reviewQuotes' aria-label='What people say'>
+            <ul className='reviewQuotes' aria-label='What people say' tabIndex={0}>
                 {QUOTES.map((quote) => (
                     <li key={quote.name}>
                         <figure>

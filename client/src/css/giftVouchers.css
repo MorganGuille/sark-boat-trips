@@ -169,7 +169,7 @@
 }
 
 .giftToggle label:has(input:focus-visible) {
-    outline: 3px solid #04BF8A;
+    outline: 3px solid #047857;
     outline-offset: -3px;
 }
 

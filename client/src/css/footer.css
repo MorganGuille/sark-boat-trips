@@ -73,13 +73,13 @@
     padding: 0.6rem 1.3rem;
     border-radius: 999px;
     background: var(--footer-gold);
-    color: white;
+    color: #213547; /* dark words on the gold, readable (P3-7) */
     font-weight: 700;
     transition: background-color 0.2s;
 }
 
 .siteFooter .footerBook:hover {
-    background: #b98b00;
+    background: #e8b41c;
 }
 
 .siteFooter ul {
