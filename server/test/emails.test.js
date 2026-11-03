@@ -61,7 +61,8 @@ describe('a failed email never loses or hides a saved change', () => {
         const id = await customer({});
         mocks.mailMode = 'all';
         const cancelled = await post('/bookings/cancel', { _id: id });
-        assert.match(cancelled.body.data, /cancelled, but the email could not be sent/);
+        assert.match(cancelled.body.data, /cancelled\. The customer will be emailed in about a minute/);
+        for (let i = 0; i < 3; i++) await t.sendCancelEmails(); // tried three times, then given up
         assert.equal((await t.findBooking(id)).status, 'cancelled');
         const restored = await post('/bookings/restore', { _id: id });
         assert.match(restored.body.data, /restored, but the confirmation email could not be sent/);
@@ -95,6 +96,7 @@ describe('customers cannot inject markup or links into emails', () => {
         assert.equal(stored.message, EVIL.message, 'what the customer typed is kept exactly');
         assert.equal((await post(`/bookings/update/${stored._id}`, { phone: '07 <b>1</b>' })).body.ok, true);
         assert.equal((await post('/bookings/cancel', { _id: stored._id.toString() })).body.ok, true);
+        await t.sendCancelEmails();
         assert.equal((await post('/bookings/restore', { _id: stored._id.toString() })).body.ok, true);
         assert.equal((await t.webhook(app, t.cardSession('cs_test_evil', { ...EVIL, email }))).status, 200);
 

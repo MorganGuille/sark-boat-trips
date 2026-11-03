@@ -9,6 +9,7 @@ const { seatsFor, partyText } = require('../utils/party');
 const emails = require('../emails');
 const { withTrip, withTrips, getTrip, findTrip, getTripsForDay, tripsFor, tripOfBooking } = require('../utils/trips');
 const { isMonth, monthRange, buildReport, toCsv, voucherSummary } = require('../utils/report');
+const { emailsDue, sendCancelEmails } = require('../utils/cancelEmails');
 const { validatePublicBooking, validateAdminBooking, validateAvailabilitySetting, guernseyToday } = require('../utils/validateBooking');
 
 
@@ -108,13 +109,16 @@ const adminAddBooking = async (req, res) => {
     }
 };
 
+// The booking is cancelled at once; its emails wait about a minute (utils/cancelEmails.js), so the
+// dashboard's Undo can put it back before the customer hears anything
 const cancelBooking = async (req, res) => {
     const { _id } = req.body;
 
     try {
+        const now = new Date();
         const cancelledBooking = await Bookings.findOneAndUpdate(
             { _id, status: { $ne: 'cancelled' } },
-            { $set: { status: 'cancelled', cancelledAt: new Date() } },
+            { $set: { status: 'cancelled', cancelledAt: now, cancelEmailDueAt: emailsDue(now) }, $unset: { cancelEmailAttempts: '' } },
             { new: true }
         );
 
@@ -122,21 +126,8 @@ const cancelBooking = async (req, res) => {
             return res.status(404).send({ ok: false, data: `No active booking found for booking ID : ${_id}` });
         }
 
-        const forEmail = await withTrip(cancelledBooking);
-        const mailOptionsClient = emails.cancellationEmail(forEmail);
-        const mailOptionsAdmin = emails.cancelledOwnerEmail(forEmail);
-
-
-        const who = bookingName(cancelledBooking);
-        const at = forEmail.trip.label;
-        try {
-            if (cancelledBooking.email) await sendEmail(mailOptionsClient);
-            await sendEmail(mailOptionsAdmin);
-        } catch (emailError) {
-            // The booking is already cancelled, so report that and flag the email problem
-            return res.send({ ok: true, data: `Booking for ${who} on ${showDay(cancelledBooking.date)} at ${at} cancelled, but the email could not be sent` });
-        }
-        res.send({ ok: true, data: `Booking for ${who} on ${showDay(cancelledBooking.date)} at ${at} cancelled${cancelledBooking.email ? ' and email sent' : ''}` });
+        const told = cancelledBooking.email ? 'The customer will be emailed in about a minute.' : 'There is no email address, so the customer won\'t be told.';
+        res.send({ ok: true, data: `Booking for ${bookingName(cancelledBooking)} on ${showDay(cancelledBooking.date)} at ${await labelOf(cancelledBooking)} cancelled. ${told}` });
 
     } catch (error) {
         console.error("Error cancelling booking:", error);
@@ -144,6 +135,8 @@ const cancelBooking = async (req, res) => {
     }
 };
 
+// Also the dashboard's Undo: while the cancellation emails are still waiting, the booking goes back
+// quietly (nobody was told, so nobody is emailed); after that the customer gets a new confirmation
 const restoreBooking = async (req, res) => {
     const { _id } = req.body;
 
@@ -158,6 +151,7 @@ const restoreBooking = async (req, res) => {
             return res.send({ ok: false, data: `Can't restore: the trip this booking was on (${await labelOf(booking)}) no longer runs on ${showDay(booking.date)}. Make a new booking instead.` });
         }
         const at = trip.label;
+        let before;
         // Checked and saved inside the trip's lock, so a customer booking at the same moment can't also take the seats
         const refused = await withTripLock(booking.date, booking.timeslot, async () => {
             if (booking.charter === 'true' && !(await isSlotEmpty(booking.date, booking.timeslot))) {
@@ -167,18 +161,24 @@ const restoreBooking = async (req, res) => {
             if (availability < seatsFor(booking)) {
                 return `Can't restore: only ${availability} spaces left at ${at} on ${showDay(booking.date)}.`;
             }
-            booking.status = 'active';
-            booking.cancelledAt = undefined;
-            // validateBeforeSave is off because bookings made on the dashboard may be incomplete
-            await booking.save({ validateBeforeSave: false });
-            return null;
+            // One step, so the cancellation emails either went before this or never go
+            before = await Bookings.findOneAndUpdate(
+                { _id, status: 'cancelled' },
+                { $set: { status: 'active' }, $unset: { cancelledAt: '', cancelEmailDueAt: '', cancelEmailAttempts: '' } },
+                { new: false }
+            );
+            return before ? null : 'This booking has already been restored.';
         });
         if (refused) return res.send({ ok: false, data: refused });
 
         const who = bookingName(booking);
+        if (before.cancelEmailDueAt) {
+            return res.send({ ok: true, data: `Booking for ${who} on ${showDay(booking.date)} at ${at} put back. Nobody was emailed.` });
+        }
         if (!booking.email) {
             return res.send({ ok: true, data: `Booking for ${who} on ${showDay(booking.date)} at ${at} restored (no email address, so no confirmation was sent)` });
         }
+        booking.status = 'active';
         try {
             await sendEmail(emails.confirmationEmail(await withTrip(booking), bookingValue(booking, await readPrices())));
         } catch (emailError) {
@@ -200,6 +200,8 @@ const permanentlyDeleteBooking = async (req, res) => {
         if (!deleted) {
             return res.status(404).send({ ok: false, data: "Only cancelled bookings can be permanently deleted." });
         }
+        // Deleted before its cancellation emails went: send them now, or the customer is never told
+        if (deleted.cancelEmailDueAt) await sendCancelEmails(deleted);
         res.send({ ok: true, data: `Booking for ${bookingName(deleted)} on ${showDay(deleted.date)} at ${await labelOf(deleted)} permanently deleted` });
     } catch (error) {
         console.error("Error permanently deleting booking:", error);

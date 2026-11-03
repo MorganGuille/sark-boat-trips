@@ -678,6 +678,11 @@
     display: block;
     color: #5b6773;
     font-size: 0.8rem;
+}
+
+/* "Visa •••• 4242" and "(expires 08/27)" each stay whole, but may go on two lines, so a long card label
+   doesn't push the buttons off the side of the table */
+.payCardLabel span {
     white-space: nowrap;
 }
 
@@ -1443,5 +1448,74 @@
     .searchForm input[type='date'] {
         flex: 1 1 8rem;
         min-width: 0;
+    }
+}
+
+/* The Undo bar after Cancel (components/dashboard/undoBar.jsx), above everything at the bottom */
+.dashboard .undoBar {
+    position: fixed;
+    z-index: 50;
+    left: 50%;
+    bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: max-content;
+    max-width: calc(100% - 2rem);
+    padding: 0.5rem 0.5rem 0.5rem 1rem;
+    border-radius: 0.6rem;
+    background: #1c2f3e;
+    color: #fff;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    animation: undoBarIn 0.18s ease-out;
+}
+
+.dashboard .undoBar .undoCount {
+    color: #b8c6d1;
+    font-variant-numeric: tabular-nums;
+}
+
+.dashboard .undoBar button {
+    font: inherit;
+    font-weight: 700;
+    min-height: 2.75rem;
+    padding: 0.4em 1.1em;
+    border: 0;
+    border-radius: 0.5rem;
+    background: #f5c242;
+    color: #213547;
+    cursor: pointer;
+}
+
+.dashboard .undoBar button:hover {
+    background: #f8d06b;
+}
+
+.dashboard .undoBar button:focus-visible {
+    outline: 3px solid #fff;
+    outline-offset: 2px;
+}
+
+@keyframes undoBarIn {
+    from { opacity: 0; transform: translate(-50%, 8px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dashboard .undoBar { animation: none; }
+}
+
+@media (max-width: 600px) {
+    .dashboard .undoBar {
+        left: 0.75rem;
+        right: 0.75rem;
+        width: auto;
+        max-width: none;
+        transform: none;
+        animation: none;
+    }
+
+    .dashboard .undoBar span[role='status'] {
+        flex: 1;
     }
 }

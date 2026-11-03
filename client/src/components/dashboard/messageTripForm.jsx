@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { messageTrip, tripName } from '../../services.jsx/trips.jsx'
 import { prettyDate } from '../../utils/dates.js'
+import { useConfirm } from '../../hooks/useConfirm'
 
 // Emails the owner's own message to everyone booked on one trip ("bring a jacket, it's choppy").
 // trips: the day's trips as they are now (from the dashboard); bookings: the day's bookings.
 function MessageTripForm({ selectedDate, trips, bookings, onResult, onDone }) {
+    const confirm = useConfirm()
 
     const [timeslot, setTimeslot] = useState('11am')
     const [message, setMessage] = useState('')
@@ -18,7 +20,10 @@ function MessageTripForm({ selectedDate, trips, bookings, onResult, onDone }) {
 
     const submit = async () => {
         const missing = active.length - withEmail
-        if (!window.confirm(`Send this message to everyone on the ${tripName(trip)} on ${prettyDate(selectedDate)}?\n\n${withEmail} customer${withEmail === 1 ? '' : 's'} will be emailed.${missing ? ` ${missing} ha${missing === 1 ? 's' : 've'} no email address.` : ''}`)) return
+        if (!(await confirm({
+            title: 'Send this message?', details: [`Everyone on the ${tripName(trip)}`, prettyDate(selectedDate)], yes: 'Send it', no: 'Go back',
+            body: [`${withEmail} customer${withEmail === 1 ? '' : 's'} will be emailed.${missing ? ` ${missing} ha${missing === 1 ? 's' : 've'} no email address.` : ''}`],
+        }))) return
         setBusy(true)
         try {
             const res = await messageTrip({ date: selectedDate, timeslot: trip.timeslot, message })

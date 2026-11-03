@@ -4,6 +4,7 @@ import axios from 'axios'
 import { URL } from '../../config.js'
 import { formatPounds } from '../utils/money.js'
 import { CONTACT_EMAIL, CONTACT_PHONE, WHATSAPP_LINK } from '../utils/contact.js'
+import { useConfirm } from '../hooks/useConfirm'
 import '../css/manageBooking.css'
 
 // "Manage my booking" (spec P2-6): the page behind the link in every customer email. Up to the
@@ -42,6 +43,7 @@ const Contact = () => (
 )
 
 function ManageBooking() {
+    const confirm = useConfirm()
     const { token } = useParams()
     const [booking, setBooking] = useState(null)
     const [problem, setProblem] = useState(null) // the booking couldn't be loaded
@@ -105,13 +107,20 @@ function ManageBooking() {
     const newPrice = priceFor(booking, numbers)
     const what = booking.charter ? 'charter' : booking.tripName || 'trip'
 
-    const saveParty = () => {
-        const price = newPrice == null || booking.charter ? '' : `\n\nThe new price is ${pounds(newPrice)}.`
-        if (!window.confirm(`Change your booking to ${seats} ${seats === 1 ? 'person' : 'people'}?${price}`)) return
+    const saveParty = async () => {
+        if (!(await confirm({
+            title: `Change your booking to ${seats} ${seats === 1 ? 'person' : 'people'}?`, details: [booking.day],
+            body: [newPrice == null || booking.charter ? null : `The new price is ${pounds(newPrice)}.`],
+            yes: 'Yes, change it', no: 'Go back',
+        }))) return
         send('party', party)
     }
-    const cancel = () => {
-        if (!window.confirm(`Cancel your ${what} on ${booking.day}?\n\nThis can't be undone online. Your card won't be charged.`)) return
+    const cancel = async () => {
+        if (!(await confirm({
+            title: `Cancel your ${what}?`, details: [booking.day], danger: true,
+            body: ["This can't be undone online. Your card won't be charged."],
+            yes: 'Yes, cancel my booking', no: 'Keep my booking',
+        }))) return
         send('cancel', {})
     }
 

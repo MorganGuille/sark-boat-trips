@@ -70,4 +70,12 @@ const PUBLIC_PAGES = ['/', '/bookings', '/charters', '/gift-vouchers', '/terms',
 const BROWSER_PAGES = ['/dashboard', '/canceled?kind=trip', '/canceled?kind=charter', '/success?session_id=cs_test_nope', '/gift-vouchers/thanks', `/manage/${'z'.repeat(32)}`];
 const NOT_FOUND = '/no-such-page';
 
-module.exports = { asNewVisitor, USERNAME, PASSWORD, reset, mails, savedBookings, watch, pickDate, fillBooking, logIn, PUBLIC_PAGES, BROWSER_PAGES, NOT_FOUND };
+// Presses the yes button of every in-page "are you sure?" box (client/src/components/confirmDialog.jsx)
+// as soon as one blocks the next step, for tests about what happens afterwards. The browser's own
+// pop-up is no longer used: one turning up fails the test.
+const acceptConfirms = (page) => {
+    page.addLocatorHandler(page.locator('dialog.confirmDialog[open]'), (box) => box.locator('.confirmYes').click());
+    page.on('dialog', (dialog) => { dialog.dismiss(); throw new Error(`The browser's own pop-up appeared: ${dialog.message()}`); });
+};
+
+module.exports = { acceptConfirms, asNewVisitor, USERNAME, PASSWORD, reset, mails, savedBookings, watch, pickDate, fillBooking, logIn, PUBLIC_PAGES, BROWSER_PAGES, NOT_FOUND };

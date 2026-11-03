@@ -276,11 +276,12 @@ const PAYMENT_FOR_OWNER = {
 };
 
 // byCustomer: they cancelled it themselves, before the free-cancellation deadline (controllers/manage.js)
-const cancelledOwnerEmail = (booking, { byCustomer = false } = {}) =>
-    ownerEmail(`Cancelled${byCustomer ? ' by customer' : ''}: ${nameOf(booking)}, ${people(booking)}, ${when(booking)}`, {
+const cancelledOwnerEmail = (booking, { byCustomer = false, customerEmailFailed = false } = {}) =>
+    ownerEmail(`Cancelled${byCustomer ? ' by customer' : ''}: ${nameOf(booking)}, ${people(booking)}, ${when(booking)}${customerEmailFailed ? CUSTOMER_EMAIL_FAILED : ''}`, {
         heading: byCustomer ? 'The customer cancelled their booking' : 'Booking cancelled',
         blocks: [
             ...(byCustomer ? ['They cancelled it themselves from the link in their email, before the free-cancellation deadline. Their seats are free again.'] : []),
+            ...(customerEmailFailed ? ['The cancellation email to the customer could not be sent, so please let them know.'] : []),
             ownerDetails(booking, [['Payment', PAYMENT_FOR_OWNER[booking.paymentStatus] || 'unpaid, nothing to refund']]),
             dashboardButton(),
         ],

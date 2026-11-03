@@ -57,6 +57,7 @@ describe('every email', () => {
         const trip = (await t.bookOnline(app, t.booking({ date: t.day(10), email: 'trip@example.test' }))).booking;
         const charter = (await t.bookOnline(app, t.booking({ date: t.day(11), email: 'charter@example.test' }), { kind: 'charter' })).booking;
         await t.call(app, 'post', '/bookings/cancel', { token, body: { _id: String(trip._id) } });
+        await t.sendCancelEmails();
         mocks.stripe.cards[charter.stripePaymentMethodId] = 'declined';
         assert.equal((await runDueCharges(new Date(Date.now() + 12 * 86400000))).failed, 1);
 

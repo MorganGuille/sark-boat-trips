@@ -18,6 +18,7 @@ import VoucherThanks from "./views/voucherThanks";
 import NotFound from "./views/notfound";
 
 import Footer from './components/footer';
+import ConfirmProvider from './components/confirmDialog';
 
 const Wrapper = ({ children }) => {
   const location = useLocation();
@@ -36,7 +37,7 @@ const Wrapper = ({ children }) => {
 function App() {
 
   return (
-    <>
+    <ConfirmProvider>
 
       <Wrapper>
         <Navbar />
@@ -57,7 +58,7 @@ function App() {
       </Wrapper>
 
       <Footer />
-    </>
+    </ConfirmProvider>
   )
 }
 

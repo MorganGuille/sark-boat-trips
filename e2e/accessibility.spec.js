@@ -36,6 +36,10 @@ for (const [size, viewport] of Object.entries({ laptop: { width: 1280, height: 8
             await page.goto(`/manage/${code}`);
             await page.getByRole('button', { name: 'Cancel my booking' }).waitFor();
             await check(page, 'manage my booking');
+            await page.getByRole('button', { name: 'Cancel my booking' }).click();
+            await page.getByRole('dialog').waitFor();
+            await check(page, 'manage my booking: the "are you sure?" box');
+            await page.keyboard.press('Escape');
 
             if (size === 'phone') {
                 await page.goto('/');
@@ -53,6 +57,14 @@ for (const [size, viewport] of Object.entries({ laptop: { width: 1280, height: 8
             await page.getByRole('button', { name: /Edit season dates and prices/ }).click();
             await check(page, 'season and prices being edited');
             await page.getByRole('button', { name: /Done editing/ }).click();
+            await page.locator('tr:has-text("Walkup") button:has-text("Cancel")').first().click();
+            await page.getByRole('dialog').waitFor();
+            await check(page, 'the "are you sure?" box');
+            await page.getByRole('dialog').getByRole('button', { name: 'Yes, cancel it' }).click();
+            await page.locator('.undoBar').waitFor();
+            await check(page, 'the Undo bar');
+            await page.locator('.undoBar button').click();
+            await page.locator('.undoBar').waitFor({ state: 'detached' });
             await page.locator('tr:has-text("Walkup") button:has-text("Edit")').first().click();
             await check(page, 'editing a booking');
             await page.reload();

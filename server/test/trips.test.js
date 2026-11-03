@@ -225,6 +225,7 @@ describe('everything follows the trip\'s new time and harbour', () => {
         await change({ startTime: '15:00' });
         mocks.reset();
         await t.call(app, 'post', '/bookings/cancel', { token, body: { _id: id } });
+        await t.sendCancelEmails();
         assert.equal(mocks.sent('ann@example.test')[0].subject, `Your boat trip on ${t.short(DAY)} at 3pm has been cancelled`);
     });
 });

@@ -3,11 +3,13 @@ import { authAxios } from '../../services.jsx/auth.jsx'
 import { URL } from '../../../config.js'
 import { prettyDate } from '../../utils/dates.js'
 import { tripName } from '../../services.jsx/trips.jsx'
+import { useConfirm } from '../../hooks/useConfirm'
 const seats = (b) => (Number(b.adults) || 0) + (Number(b.children) || 0) + (Number(b.infants) || 0)
 
 // For a weather day: cancels every booking on one trip, emails everyone, charges nobody, and closes
 // the trip to new bookings. trips: the day's trips; bookings: the day's bookings as shown on the Bookings tab.
 function CancelTripForm({ selectedDate, trips, bookings, onResult, onDone }) {
+    const confirm = useConfirm()
 
     const [timeslot, setTimeslot] = useState('11am')
     const [reason, setReason] = useState('weather')
@@ -22,7 +24,10 @@ function CancelTripForm({ selectedDate, trips, bookings, onResult, onDone }) {
         const who = active.length
             ? `${active.length} booking${active.length === 1 ? '' : 's'} (${people} ${people === 1 ? 'person' : 'people'}) will be cancelled and emailed. Nobody's card will be charged.`
             : 'There are no bookings on it.'
-        if (!window.confirm(`Cancel the ${tripName(trip)} on ${prettyDate(selectedDate)}?\n\n${who}\nThe trip will be closed to new bookings (you can reopen it from the Availability tab).`)) return
+        if (!(await confirm({
+            title: `Cancel the ${tripName(trip)}?`, details: [prettyDate(selectedDate)], danger: true, yes: 'Yes, cancel the trip', no: 'Keep it',
+            body: [who, 'The trip will be closed to new bookings (you can reopen it from the Availability tab).'],
+        }))) return
         setBusy(true)
         try {
             const res = await authAxios.post(`${URL}/bookings/cancel-trip`, { date: selectedDate, timeslot: trip.timeslot, reason })

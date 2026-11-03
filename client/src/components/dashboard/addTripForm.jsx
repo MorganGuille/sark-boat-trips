@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { addTrip, editTrip, removeTrip } from '../../services.jsx/trips.jsx'
 import { prettyDate } from '../../utils/dates.js'
 import { formatPounds } from '../../utils/money.js'
+import { useConfirm } from '../../hooks/useConfirm'
 
 // Adds an extra trip to this day (a swim trip, a sunset trip) with its own name, time, harbour, seats,
 // length and prices. Customers can book it online straight away, by the seat. Also lists the day's extra
@@ -9,6 +10,7 @@ import { formatPounds } from '../../utils/money.js'
 // trips: the day's trips; bookings: the day's bookings (null if not loaded); prices: the normal prices in
 // pounds (to start from). Shown on the dashboard's Extra trips tab.
 function AddTripForm({ selectedDate, trips, bookings, prices, onResult, onDone }) {
+    const confirm = useConfirm()
 
     const blank = () => ({
         name: '', startTime: '17:00', hours: '2', capacity: '12', harbour: 'creux', note: '',
@@ -57,7 +59,11 @@ function AddTripForm({ selectedDate, trips, bookings, prices, onResult, onDone }
     }
 
     const add = async () => {
-        if (!window.confirm(`Add "${form.name.trim()}" on ${prettyDate(selectedDate)} at ${form.startTime}, ${form.capacity} seats, £${form.adultPrice} adults and £${form.childPrice} children?\n\nCustomers can book it online straight away.`)) return
+        if (!(await confirm({
+            title: 'Add this trip?', yes: 'Add it', no: 'Go back',
+            details: [form.name.trim(), `${prettyDate(selectedDate)} at ${form.startTime}`, `${form.capacity} seats, £${form.adultPrice} adults and £${form.childPrice} children`],
+            body: ['Customers can book it online straight away.'],
+        }))) return
         const added = await run(() => addTrip({ date: selectedDate, ...form }), 'Could not add the trip. Nothing was added, try again.')
         if (added) setForm({ ...form, name: '', note: '' }) // the time, seats and prices stay, for adding a similar trip
     }
@@ -72,7 +78,7 @@ function AddTripForm({ selectedDate, trips, bookings, prices, onResult, onDone }
         if (count !== 0 && (form.startTime !== editing.startTime || form.harbour !== editing.harbourKey)) {
             warnings.push(notify ? `${who} will be emailed the new time and harbour.` : `${who} will NOT be emailed the new time and harbour (you've told them yourself).`)
         }
-        if (!window.confirm(`Save the changes to the ${editing.label} on ${prettyDate(selectedDate)}?${warnings.length ? `\n\n${warnings.join('\n\n')}` : ''}`)) return
+        if (!(await confirm({ title: 'Save the changes?', details: [editing.label, prettyDate(selectedDate)], yes: 'Save', no: 'Go back', body: warnings }))) return
         const saved = await run(
             () => editTrip({ date: selectedDate, timeslot: editing.timeslot, ...form, notifyCustomers: notify }),
             'Could not save the changes. Nothing was changed, try again.'
@@ -80,8 +86,11 @@ function AddTripForm({ selectedDate, trips, bookings, prices, onResult, onDone }
         if (saved) stopEditing()
     }
 
-    const remove = (trip) => {
-        if (!window.confirm(`Delete the ${trip.label} on ${prettyDate(selectedDate)}?\n\nCustomers will no longer see it.`)) return
+    const remove = async (trip) => {
+        if (!(await confirm({
+            title: 'Delete this trip?', details: [trip.label, prettyDate(selectedDate)], danger: true, yes: 'Delete it', no: 'Keep it',
+            body: ['Customers will no longer see it.'],
+        }))) return
         run(() => removeTrip({ date: selectedDate, timeslot: trip.timeslot }), 'Could not delete the trip. Try again.')
         if (editing?.timeslot === trip.timeslot) stopEditing()
     }

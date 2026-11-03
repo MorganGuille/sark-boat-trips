@@ -2,6 +2,13 @@ import { showDay } from '../../utils/dates.js'
 import { formatPounds } from '../../utils/money.js'
 import { PAYMENT, partyOf, amountOf, nameOf } from './bookingDetails.js'
 
+// A long email address may go onto a second line at the @ (morgan_guille / @hotmail.com), so it doesn't
+// push the buttons off the side of the table on a laptop
+const withBreak = (email) => {
+    const at = email.indexOf('@')
+    return at > 0 ? <>{email.slice(0, at)}<wbr />{email.slice(at)}</> : email
+}
+
 function BookingsTable({ bookings, showDate, trips = [], onEdit, onCancel, onRestore, onDeletePermanently, onMarkPaid, onMarkUnpaid }) {
 
     // The day's trip may have moved: show its time that day (not in search results, which span days)
@@ -49,12 +56,12 @@ function BookingsTable({ bookings, showDate, trips = [], onEdit, onCancel, onRes
                             <td data-label='Payment'>
                                 <span className={`payBadge ${payment.className}`}>{payment.label}</span>
                                 {Number.isFinite(amount) ? <span className='payAmount'>{formatPounds(amount / 100)}</span> : null}
-                                {status === 'card_saved' && booking.cardLabel ? <span className='payCardLabel'>{booking.cardLabel}</span> : null}
+                                {status === 'card_saved' && booking.cardLabel ? <span className='payCardLabel'>{booking.cardLabel.split(/ (?=\()/).map((part) => <span key={part}>{part} </span>)}</span> : null}
                                 {booking.paymentNote ? <span className='payNote'>{booking.paymentNote}</span> : null}
                                 {booking.voucher?.code ? <span className='payNote'>Voucher {booking.voucher.code}: {formatPounds(booking.voucher.value / 100)} off</span> : null}
                             </td>
                             <td data-label='Contact'>
-                                {booking.email ? <a href={`mailto:${booking.email}`}>{booking.email}</a> : null}
+                                {booking.email ? <a href={`mailto:${booking.email}`}>{withBreak(booking.email)}</a> : null}
                                 {booking.email && booking.phone ? <br /> : null}
                                 {booking.phone ? <a href={`tel:${booking.phone}`}>{booking.phone}</a> : null}
                                 {!booking.email && !booking.phone ? '—' : null}

@@ -5,7 +5,7 @@ const h = require('./helpers');
 test.beforeEach(async ({ request, page }) => {
     await h.asNewVisitor(page); // the calendar is loaded a lot, and its requests are rate limited per visitor
     await h.reset(request);
-    page.on('dialog', (dialog) => dialog.accept()); // "are you sure?" boxes
+    h.acceptConfirms(page); // "are you sure?" boxes
 });
 
 const addBooking = async (page, fields = {}) => {
@@ -338,15 +338,16 @@ test('cancel, show cancelled, restore, cancel again, delete permanently', async 
     const row = page.locator('tr:has-text("Walkup")');
 
     await row.locator('button:has-text("Cancel")').click();
-    await notice(page, 'cancelled and email sent');
+    await notice(page, 'cancelled. The customer will be emailed in about a minute.');
     await expect(row).toHaveCount(0);
     await expect(page.locator('.calendarDisplay')).toContainText('12 spaces available');
 
     await page.check('.toggle input');
     await expect(row.locator('.badgeCancelled')).toBeVisible();
     await dismiss(page);
+    // Restored within the minute: the cancellation was never emailed, so nothing is sent now either
     await row.locator('button:has-text("Restore")').click();
-    await notice(page, 'restored and confirmation email sent');
+    await notice(page, 'put back. Nobody was emailed.');
     await expect(row.locator('.badgeCancelled')).toHaveCount(0);
     await expect(page.locator('.calendarDisplay')).toContainText('10 spaces available');
 
@@ -417,4 +418,104 @@ test('customer data: searching an email shows everything held for it, downloads 
     await expect(panel).toContainText('Nothing is held for ann@example.test.');
     const [saved] = await h.savedBookings(request);
     expect([saved.firstName, saved.email, saved.phone, saved.adults, saved.amountPaid]).toEqual(['Erased', '', '', 2, 8000]);
+});
+
+test('cancel asks in a box on the page: Keep it (or Escape, or outside the box) changes nothing', async ({ page, request }) => {
+    await h.logIn(page);
+    await addBooking(page);
+    await page.click('role=tab[name="Bookings"]');
+    const row = page.locator('tr:has-text("Walkup")');
+    const box = page.getByRole('dialog', { name: 'Cancel this booking?' });
+    page.removeAllListeners('dialog');
+    page.on('dialog', () => { throw new Error('the browser pop-up was used'); });
+    await page.removeLocatorHandler(page.locator('dialog.confirmDialog[open]'));
+
+    await row.locator('button:has-text("Cancel")').click();
+    await expect(box).toBeVisible();
+    await expect(box).toContainText('Walkup Visitor');
+    await expect(box).toContainText('emailed that it is cancelled in about a minute, unless you press Undo');
+    await expect(box.getByRole('button', { name: 'Keep it' })).toBeFocused(); // the safe choice, for a stray Enter
+    const shape = await box.boundingBox();
+    const screen = page.viewportSize();
+    expect(Math.abs(shape.x + shape.width / 2 - screen.width / 2)).toBeLessThan(2); // in the middle of the screen
+    expect(Math.abs(shape.y + shape.height / 2 - screen.height / 2)).toBeLessThan(2);
+    await box.getByRole('button', { name: 'Keep it' }).click();
+    await expect(box).toHaveCount(0);
+    await expect(row.locator('button:has-text("Cancel")')).toBeFocused(); // back where the owner was
+
+    await row.locator('button:has-text("Cancel")').click();
+    await page.keyboard.press('Escape');
+    await expect(box).toHaveCount(0);
+    await row.locator('button:has-text("Cancel")').click();
+    await page.mouse.click(5, 5); // the dimmed page outside the box
+    await expect(box).toHaveCount(0);
+    await expect(row).toHaveCount(1);
+    expect((await h.savedBookings(request))[0].status).toBe('active');
+});
+
+test('Undo after cancel puts the booking back and nobody is emailed; the bar goes after 30 seconds', async ({ page, request }) => {
+    await page.clock.install();
+    await h.logIn(page);
+    await addBooking(page);
+    await page.click('role=tab[name="Bookings"]');
+    const row = page.locator('tr:has-text("Walkup")');
+    const before = (await h.mails(request)).length;
+
+    await row.locator('button:has-text("Cancel")').click();
+    const bar = page.locator('.undoBar');
+    await expect(bar).toContainText('Booking cancelled');
+    await expect(bar).toContainText('30s');
+    await expect(row).toHaveCount(0);
+    await page.clock.runFor(5000);
+    await expect(bar).toContainText('25s');
+    await bar.getByRole('button', { name: 'Undo' }).click();
+    await expect(bar).toHaveCount(0);
+    await notice(page, 'put back. Nobody was emailed.');
+    await expect(row).toHaveCount(1);
+    expect((await h.savedBookings(request))[0].status).toBe('active');
+    expect((await h.mails(request)).length).toBe(before);
+
+    await dismiss(page);
+    await row.locator('button:has-text("Cancel")').click();
+    await expect(bar).toBeVisible();
+    await page.clock.runFor(31000);
+    await expect(bar).toHaveCount(0);
+    expect((await h.savedBookings(request))[0].status).toBe('cancelled');
+});
+
+test('the Undo bar keeps its place while it counts down (only the number changes)', async ({ page }) => {
+    await h.logIn(page);
+    await addBooking(page);
+    await page.click('role=tab[name="Bookings"]');
+    await page.locator('tr:has-text("Walkup") button:has-text("Cancel")').click();
+    const bar = page.locator('.undoBar');
+    await expect(bar).toContainText('30s');
+    await page.evaluate(() => { document.querySelector('.undoBar').dataset.first = 'yes'; });
+    await expect(bar).toContainText('28s', { timeout: 4000 });
+    await expect(bar).toHaveAttribute('data-first', 'yes'); // the same bar, not drawn again (it used to slide in every second in the mock-up)
+});
+
+test('logging out in one tab logs the other tabs out straight away', async ({ page, context }) => {
+    await h.logIn(page);
+    const other = await context.newPage();
+    await other.goto('/dashboard');
+    await expect(other.getByRole('button', { name: 'Log out' })).toBeVisible();
+    await page.getByRole('button', { name: 'Log out' }).click();
+    await expect(other.locator('#password, input[type=password]').first()).toBeVisible();
+    await expect(other.getByRole('button', { name: 'Log out' })).toHaveCount(0);
+});
+
+test('on a laptop the bookings table fits, buttons included, even with a long email address and card label', async ({ page, request }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    const d = new Date();
+    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    for (const firstName of ['Morgan', 'Puffin', 'Han']) {
+        await request.post('/__test/insert-booking', { data: { date: today, firstName, lastName: 'Guille', email: 'morgan_guille@hotmail.com', phone: '07781875428', accommodation: 'Suesbnb', message: 'Test booking', adults: 1, paymentStatus: 'card_saved', cardLabel: 'Visa •••• 4242 (expires 08/27)', reference: 'SBT-P2A7QB' } });
+    }
+    await h.logIn(page);
+    const wrap = page.locator('.tableWrap');
+    await expect(wrap.locator('tbody tr')).toHaveCount(3);
+    const { inside, needed } = await wrap.evaluate((el) => ({ inside: el.clientWidth, needed: el.scrollWidth }));
+    expect(needed).toBeLessThanOrEqual(inside); // it used to need 30px more, cutting off "Mark paid"
+    await expect(wrap.locator('.payCardLabel').first()).toContainText('Visa •••• 4242 (expires 08/27)');
 });

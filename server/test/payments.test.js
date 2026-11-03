@@ -139,6 +139,7 @@ describe('the cancellation email says what happens to the money', () => {
         it(name, async () => {
             const id = await t.insertBooking({ email: 'bob@example.test', firstName: 'Bob', ...fields });
             assert.equal((await cancel(id)).body.ok, true);
+            await t.sendCancelEmails();
             const decode = (html) => html.replace(/&#39;/g, "'");
             assert.match(decode(mailTo('bob@example.test').html), toCustomer);
             assert.match(decode(mailTo(t.OWNER).html), toOwner);

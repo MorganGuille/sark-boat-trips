@@ -61,6 +61,9 @@ const bookingsSchema = new mongoose.Schema({
     cancelledAt: {
         type: Date,
     },
+    // Cancelled on the dashboard: when its emails go, so Undo can stop them (utils/cancelEmails.js)
+    cancelEmailDueAt: { type: Date },
+    cancelEmailAttempts: { type: Number },
     // The prices (in pence) in force when the booking was made, so later price changes don't alter it
     prices: {
         adult: { type: Number, min: 0 },

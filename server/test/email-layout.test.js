@@ -28,6 +28,7 @@ const everyEmail = async () => {
     await t.bookOnline(app, t.booking({ date: t.day(11), email: who('charter') }), { kind: 'charter' });
     await t.call(app, 'post', `/bookings/update/${trip._id}`, { token, body: { timeslot: '2pm' } });
     await t.call(app, 'post', '/bookings/cancel', { token, body: { _id: String(trip._id) } });
+    await t.sendCancelEmails();
     await t.call(app, 'post', '/bookings/admin-add', { token, body: { date: t.day(12), timeslot: '11am', adults: '1', firstName: 'Dee', email: who('dashboard') } });
     return mocks.sent();
 };

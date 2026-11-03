@@ -6,7 +6,7 @@ const h = require('./helpers');
 test.beforeEach(async ({ request, page }) => {
     await h.asNewVisitor(page);
     await h.reset(request);
-    page.on('dialog', (dialog) => dialog.accept()); // "are you sure?" boxes
+    h.acceptConfirms(page); // "are you sure?" boxes
 });
 
 const dayFromNow = (days) => {
@@ -107,4 +107,25 @@ test('the owner sees the reference under the name and can search for it', async 
     await expect(page.locator('.byDayRow:has-text("Ann Jones") .bookingRef')).toHaveText('SBT-ABC234');
     await page.getByRole('button', { name: /^Open day/ }).click(); // and under the name in that day's table
     await expect(page.locator('tr:has-text("Ann Jones") .bookingRef')).toHaveText('SBT-ABC234');
+});
+
+test('cancelling asks in a box on the page, not the browser pop-up; on a phone it comes up from the bottom', async ({ page, request }) => {
+    await page.setViewportSize({ width: 360, height: 780 });
+    await page.removeLocatorHandler(page.locator('dialog.confirmDialog[open]'));
+    const code = await insert(request);
+    await page.goto(`/manage/${code}`);
+    await page.getByRole('button', { name: 'Cancel my booking' }).click();
+    const box = page.getByRole('dialog', { name: 'Cancel your trip?' });
+    await expect(box).toContainText("This can't be undone online. Your card won't be charged.");
+    const shape = await box.boundingBox();
+    expect(Math.round(shape.y + shape.height)).toBe(780); // sits on the bottom edge
+    expect(Math.round(shape.width)).toBe(360);
+
+    await box.getByRole('button', { name: 'Keep my booking' }).click();
+    await expect(box).toHaveCount(0);
+    expect((await h.savedBookings(request))[0].status).toBe('active');
+
+    await page.getByRole('button', { name: 'Cancel my booking' }).click();
+    await box.getByRole('button', { name: 'Yes, cancel my booking' }).click();
+    await expect(notice(page)).toContainText('Your booking has been cancelled');
 });

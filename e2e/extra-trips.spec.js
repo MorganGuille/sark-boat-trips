@@ -6,7 +6,7 @@ const h = require('./helpers');
 test.beforeEach(async ({ request, page }) => {
     await h.asNewVisitor(page);
     await h.reset(request);
-    page.on('dialog', (dialog) => dialog.accept()); // "are you sure?" boxes
+    h.acceptConfirms(page); // "are you sure?" boxes
 });
 
 const notice = (page, text) => expect(page.locator('.notice')).toContainText(text);

@@ -276,4 +276,7 @@ const voucherOrder = (overrides = {}) => ({
     buyerName: 'Tom Le Page', buyerEmail: `tom${++seq}@example.test`, sendTo: 'buyer', ...overrides,
 });
 
-module.exports = { buyVoucher, voucherOrder, dbUri, OWNER, MAIL_FROM, PASSWORD, USERNAME, WEBHOOK_SECRET, setEnv, installMocks, startDb, stopDb, resetDb, seedSeason, day, shown, long, short, call, login, booking, insertBooking, findBooking, seatsLeft, webhook, cardSession, bookOnline };
+// Sends the emails a dashboard cancel holds back for a minute (utils/cancelEmails.js), as the timer would
+const sendCancelEmails = () => require('../utils/cancelEmails').runDueCancelEmails(new Date(Date.now() + 2 * 60 * 1000));
+
+module.exports = { sendCancelEmails, buyVoucher, voucherOrder, dbUri, OWNER, MAIL_FROM, PASSWORD, USERNAME, WEBHOOK_SECRET, setEnv, installMocks, startDb, stopDb, resetDb, seedSeason, day, shown, long, short, call, login, booking, insertBooking, findBooking, seatsLeft, webhook, cardSession, bookOnline };

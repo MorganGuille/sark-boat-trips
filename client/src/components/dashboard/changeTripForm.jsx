@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { changeTrip, tripName } from '../../services.jsx/trips.jsx'
 import { prettyDate } from '../../utils/dates.js'
+import { useConfirm } from '../../hooks/useConfirm'
 
 const HARBOURS = [
     { key: 'creux', name: 'Creux Harbour' },
@@ -12,6 +13,7 @@ const HARBOURS = [
 // trips: the day's trips as they are now (from the dashboard, which gives this a new key when they
 // change, so it starts again from them); bookings: the day's bookings.
 function ChangeTripForm({ selectedDate, trips, bookings, onResult, onDone }) {
+    const confirm = useConfirm()
 
     const [timeslot, setTimeslot] = useState('11am')
     const trip = trips.find((t) => t.timeslot === timeslot) || trips[0]
@@ -40,7 +42,10 @@ function ChangeTripForm({ selectedDate, trips, bookings, onResult, onDone }) {
             : notify
                 ? `${active.length} booking${active.length === 1 ? '' : 's'} will be emailed the new details.`
                 : `${active.length} booking${active.length === 1 ? '' : 's'} will NOT be emailed (you've told them yourself).`
-        if (!window.confirm(`Move the ${tripName(trip)} on ${prettyDate(selectedDate)} to ${startTime} from the ${harbourName}?\n\n${told}`)) return
+        if (!(await confirm({
+            title: `Move the ${tripName(trip)}?`, details: [prettyDate(selectedDate), `To ${startTime} from the ${harbourName}`],
+            yes: 'Move it', no: 'Go back', body: [told],
+        }))) return
         setBusy(true)
         try {
             const res = await changeTrip({ date: selectedDate, timeslot: trip.timeslot, startTime, harbour, note, notifyCustomers: notify })

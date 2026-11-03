@@ -222,7 +222,8 @@ describe('cancelling, restoring and deleting', () => {
     it('cancelling keeps the booking, frees its seats, hides it from the day view, and emails the customer and the owner', async () => {
         const id = await withEmail({ adults: 5 });
         const res = await post('/bookings/cancel', { _id: id });
-        assert.match(res.body.data, /cancelled and email sent/);
+        assert.match(res.body.data, /cancelled\. The customer will be emailed in about a minute\.$/);
+        await t.sendCancelEmails();
         const b = await t.findBooking(id);
         assert.equal(b.status, 'cancelled');
         assert.ok(b.cancelledAt instanceof Date);
@@ -233,7 +234,8 @@ describe('cancelling, restoring and deleting', () => {
     });
     it('a booking with no email address is cancelled without a customer email', async () => {
         const id = await withEmail({ email: '' });
-        assert.match((await post('/bookings/cancel', { _id: id })).body.data, /cancelled$/);
+        assert.match((await post('/bookings/cancel', { _id: id })).body.data, /no email address, so the customer won't be told/);
+        await t.sendCancelEmails();
         assert.deepEqual(mocks.sent().map((m) => m.to), [t.OWNER]);
     });
     it('cancelling twice, or an unknown booking, is a 404', async () => {
@@ -242,9 +244,10 @@ describe('cancelling, restoring and deleting', () => {
         assert.equal((await post('/bookings/cancel', { _id: id })).status, 404);
         assert.equal((await post('/bookings/cancel', { _id: '64b000000000000000000000' })).status, 404);
     });
-    it('restoring brings the booking and its seats back and sends the confirmation again', async () => {
+    it('restoring (once the cancellation was emailed) brings the booking and its seats back and sends the confirmation again', async () => {
         const id = await withEmail({ adults: 4 });
         await post('/bookings/cancel', { _id: id });
+        await t.sendCancelEmails();
         mocks.reset();
         const res = await post('/bookings/restore', { _id: id });
         assert.match(res.body.data, /restored and confirmation email sent/);
@@ -288,6 +291,7 @@ describe('cancelling, restoring and deleting', () => {
         assert.equal((await post('/bookings/permanently-delete', { _id: id })).status, 404);
         assert.ok(await t.findBooking(id));
         await post('/bookings/cancel', { _id: id });
+        await t.sendCancelEmails();
         mocks.reset();
         const res = await post('/bookings/permanently-delete', { _id: id });
         assert.match(res.body.data, /permanently deleted/);

@@ -16,11 +16,13 @@ import BookingsTable from '../components/dashboard/bookingsTable'
 import AvailabilityForm from '../components/dashboard/availabilityForm'
 import NotesPanel from '../components/dashboard/notesPanel'
 import CustomerData from '../components/dashboard/customerData'
+import UndoBar from '../components/dashboard/undoBar'
+import { useConfirm } from '../hooks/useConfirm'
 import useSeasonDates from '../hooks/useSeasonDates'
 import usePrices from '../hooks/usePrices'
 import { URL } from '../../config.js'
-import { authAxios, setToken, clearToken, hasValidToken, LOGOUT_EVENT } from '../services.jsx/auth.jsx'
-import { toDay, showDay, prettyDate } from '../utils/dates.js'
+import { authAxios, setToken, clearToken, hasValidToken, LOGOUT_EVENT, TOKEN_KEY } from '../services.jsx/auth.jsx'
+import { toDay, prettyDate } from '../utils/dates.js'
 import { getDayTrips, USUAL_TRIPS } from '../services.jsx/trips.jsx'
 
 import '../css/dashboard.css'
@@ -71,11 +73,19 @@ function Dashboard() {
     const season = useSeasonDates()
     const { prices, updatePrices } = usePrices()
     const [editingSettings, setEditingSettings] = useState(false) // season dates and prices are locked until Edit is pressed
+    const [undo, setUndo] = useState(null) // the booking just cancelled, while its Undo bar shows
+    const confirm = useConfirm()
 
     useEffect(() => {
         const onLogout = () => setLoggedIn(false)
+        // Logging out in another tab logs this one out straight away, not at its next request
+        const onStorage = (e) => { if (e.key === null || (e.key === TOKEN_KEY && !e.newValue)) onLogout() }
         window.addEventListener(LOGOUT_EVENT, onLogout)
-        return () => window.removeEventListener(LOGOUT_EVENT, onLogout)
+        window.addEventListener('storage', onStorage)
+        return () => {
+            window.removeEventListener(LOGOUT_EVENT, onLogout)
+            window.removeEventListener('storage', onStorage)
+        }
     }, [])
 
     // Bookings for the selected day, the upcoming list, or search results
@@ -156,6 +166,7 @@ function Dashboard() {
 
     const logout = () => {
         clearToken()
+        setUndo(null)
         setLoggedIn(false)
     }
 
@@ -187,54 +198,73 @@ function Dashboard() {
         setSelectedDate(date)
     }
 
+    // Returns whether it worked, so Cancel knows to offer Undo
     const bookingAction = async (path, booking) => {
         try {
             const res = await authAxios.post(`${URL}/bookings/${path}`, { _id: booking._id })
             showNotice(res.data.data, res.data.ok === false ? 'error' : 'success')
+            return res.data.ok !== false
         } catch (error) {
-            if (error.response?.status === 401) return
+            if (error.response?.status === 401) return false
             showNotice(error.response?.data?.data || 'Something went wrong', 'error')
+            return false
         } finally {
             refreshBookings()
         }
     }
 
-    const describe = (booking) => {
-        const who = [booking.firstName, booking.lastName].filter(Boolean).join(' ') || 'this booking'
-        return `${who} on ${showDay(booking.date)} at ${booking.tripLabel || booking.timeslot}`
+    // The booking as the confirm box shows it: who, then the day and trip
+    const facts = (booking) => [
+        [booking.firstName, booking.lastName].filter(Boolean).join(' ') || 'No name',
+        `${prettyDate(booking.date)}, ${booking.tripLabel || booking.timeslot}${booking.reference ? ` · ${booking.reference}` : ''}`,
+    ]
+
+    // Cancelled at once; the emails wait about a minute, so Undo puts it back without anyone being told
+    const cancelBooking = async (booking) => {
+        const ok = await confirm({
+            title: 'Cancel this booking?', details: facts(booking), danger: true, yes: 'Yes, cancel it', no: 'Keep it',
+            body: [
+                booking.email ? 'The customer is emailed that it is cancelled in about a minute, unless you press Undo.' : 'There is no email address, so the customer won\'t be told.',
+                booking.paymentStatus === 'card_saved' ? 'Their card won\'t be charged.' : null,
+                'You can also restore it later under Show cancelled.',
+            ],
+        })
+        if (ok && await bookingAction('cancel', booking)) setUndo({ booking, at: Date.now() })
     }
 
-    const cancelBooking = (booking) => {
-        const emailNote = booking.email ? 'The customer will be emailed a cancellation.' : 'There is no email address, so no cancellation will be sent.'
-        if (window.confirm(`Cancel the booking for ${describe(booking)}?\n\n${emailNote}\nYou can restore it later using "Show cancelled".`)) {
-            bookingAction('cancel', booking)
-        }
+    const undoCancel = async () => {
+        const { booking } = undo
+        setUndo(null)
+        await bookingAction('restore', booking)
     }
 
-    const restoreBooking = (booking) => {
-        const emailNote = booking.email ? 'The customer will be sent a new confirmation email.' : 'There is no email address, so no confirmation will be sent.'
-        if (window.confirm(`Restore the booking for ${describe(booking)}?\n\n${emailNote}`)) {
-            bookingAction('restore', booking)
-        }
+    const restoreBooking = async (booking) => {
+        const ok = await confirm({
+            title: 'Restore this booking?', details: facts(booking), yes: 'Restore it', no: 'Go back',
+            body: [booking.email ? 'The customer will be sent a new confirmation email.' : 'There is no email address, so no confirmation will be sent.'],
+        })
+        if (ok) bookingAction('restore', booking)
     }
 
-    const markPaid = (booking) => {
-        const cardNote = booking.paymentStatus === 'card_saved' ? '\n\nTheir saved card will then not be charged.' : ''
-        if (window.confirm(`Mark ${describe(booking)} as paid in person (cash or card reader)?${cardNote}`)) {
-            bookingAction('mark-paid', booking)
-        }
+    const markPaid = async (booking) => {
+        const ok = await confirm({
+            title: 'Mark as paid in person?', details: facts(booking), yes: 'Mark paid', no: 'Go back',
+            body: ['Cash or the card reader.', booking.paymentStatus === 'card_saved' ? 'Their saved card will then not be charged.' : null],
+        })
+        if (ok) bookingAction('mark-paid', booking)
     }
 
-    const markUnpaid = (booking) => {
-        if (window.confirm(`Undo "paid" for ${describe(booking)}?`)) {
-            bookingAction('mark-unpaid', booking)
-        }
+    const markUnpaid = async (booking) => {
+        const ok = await confirm({ title: 'Undo "paid"?', details: facts(booking), yes: 'Undo paid', no: 'Go back' })
+        if (ok) bookingAction('mark-unpaid', booking)
     }
 
-    const deletePermanently = (booking) => {
-        if (window.confirm(`Permanently delete the booking for ${describe(booking)}?\n\nThis removes the booking record for good and cannot be undone.`)) {
-            bookingAction('permanently-delete', booking)
-        }
+    const deletePermanently = async (booking) => {
+        const ok = await confirm({
+            title: 'Delete this booking for good?', details: facts(booking), danger: true, yes: 'Delete for good', no: 'Keep it',
+            body: ['This removes the booking record for good and cannot be undone.'],
+        })
+        if (ok) bookingAction('permanently-delete', booking)
     }
 
     const addNote = async (content) => {
@@ -475,6 +505,7 @@ function Dashboard() {
                     </div>
                 </main>
             </div>
+            {undo ? <UndoBar key={undo.at} text='Booking cancelled' onUndo={undoCancel} onDone={() => setUndo(null)} /> : null}
         </div>
     </>)
 }

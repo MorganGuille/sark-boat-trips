@@ -55,4 +55,4 @@ authAxios.interceptors.response.use(
     }
 )
 
-export { authAxios, setToken, clearToken, hasValidToken, LOGOUT_EVENT }
+export { authAxios, setToken, clearToken, hasValidToken, LOGOUT_EVENT, TOKEN_KEY }
