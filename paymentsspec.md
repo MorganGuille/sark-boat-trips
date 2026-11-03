@@ -89,7 +89,7 @@ Recommendation: **A**, with the check also reachable through a protected address
 3. **Branding** (Settings → Branding): logo and colours, so Stripe's page looks like the business. Optional, but it helps trust.
 4. **Receipts** (Settings → Customer emails): switch on "Successful payments", so each customer gets a receipt from Stripe when they are charged on the day.
 5. **Payment methods** (Settings → Payment methods): cards on (they are by default). Apple Pay and Google Pay can stay on: they work for saving a card.
-6. **Webhook**: no new events needed. Setup-mode checkouts send the same `checkout.session.completed` event the charters already use. The webhook itself is set up at go-live (see the go-live checklist in `CLAUDE.md`). On a laptop, the Stripe CLI (`stripe listen --forward-to localhost:4040/charters/webhook`) forwards test events.
+6. **Webhook**: no new events needed. Setup-mode checkouts send the same `checkout.session.completed` event the charters already use. The webhook itself is set up at go-live (see the go-live checklist in `CLAUDE.md`). On a laptop, the Stripe CLI (`stripe listen --events checkout.session.completed --forward-to localhost:4040/charters/webhook`) forwards test events.
 7. **Nothing else:** the `PRICE_ID` price object is no longer used (amounts come from the dashboard prices) and the £80 deposit disappears. Saving a card costs nothing; Stripe's fee is taken only when a charge succeeds.
 
 ### What gets built (in the sandbox, with the Stripe test key)
