@@ -3,8 +3,8 @@
    page, where it is see-through over the photo (.overPhoto). */
 .siteHeader {
     --header-ink: #213547;
-    --header-gold: #d9a404;
-    --header-gold-light: #e8b41c; /* hover: lighter, so the dark words stay readable */
+    --header-gold: #f5c242;
+    --header-gold-light: #f8d06b; /* hover: lighter, so the dark words stay readable */
     --header-navy: #1c2f3e;
     position: fixed;
     inset: 0 0 auto;

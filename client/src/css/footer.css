@@ -6,7 +6,7 @@
     --footer-text: #dfe7ee;
     --footer-muted: #9fb3c4;
     --footer-line: rgba(255, 255, 255, 0.12);
-    --footer-gold: #d9a404;
+    --footer-gold: #f5c242;
     margin-top: auto;
     background: var(--footer-bg);
     color: var(--footer-text);
@@ -79,7 +79,7 @@
 }
 
 .siteFooter .footerBook:hover {
-    background: #e8b41c;
+    background: #f8d06b;
 }
 
 .siteFooter ul {

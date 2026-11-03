@@ -40,7 +40,7 @@
 
 /* From Uiverse.io by adamgiebl */
 .cssbuttons-io-button {
-    background: #D9A404;
+    background: #f5c242;
     color: #213547; /* dark words on the gold, readable (P3-7) */
     font-family: inherit;
     padding: 0.35em;
@@ -52,7 +52,7 @@
     letter-spacing: 0.05em;
     display: flex;
     align-items: center;
-    box-shadow: inset 0 0 1.6em -0.6em #D9A404;
+    box-shadow: inset 0 0 1.6em -0.6em #f5c242;
     overflow: hidden;
     position: relative;
     height: 2.8em;
@@ -70,7 +70,7 @@
     height: 2.2em;
     width: 2.2em;
     border-radius: 0.7em;
-    box-shadow: 0.1em 0.1em 0.6em 0.2em #D9A404;
+    box-shadow: 0.1em 0.1em 0.6em 0.2em #f5c242;
     right: 0.3em;
     transition: width 0.3s;
 }
@@ -82,7 +82,7 @@
 .cssbuttons-io-button .icon svg {
     width: 1.1em;
     transition: transform 0.3s;
-    color: #D9A404;
+    color: #213547;
 }
 
 .cssbuttons-io-button:hover .icon svg {
