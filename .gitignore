@@ -11,3 +11,7 @@ backups/
 playwright-report/
 test-results/
 .cache/
+
+# Website build output: made by `npm run build` (Heroku runs it on every deploy), never committed
+client/dist/
+client/dist-server/

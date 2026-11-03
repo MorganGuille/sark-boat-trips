@@ -1,5 +1,5 @@
 // Builds the website exactly as production does (build, server build, prerender), but in a
-// temporary copy so the tracked client/dist folder is never touched. Returns the dist folder.
+// temporary copy so a local client/dist folder is never touched. Returns the dist folder.
 const { execSync } = require('node:child_process');
 const fs = require('node:fs');
 const os = require('node:os');

@@ -53,6 +53,24 @@ describe('the page sent for each address', () => {
     });
 });
 
+describe('no build yet (P3-1: the build is not kept in git)', () => {
+    it('says the website needs building instead of a vague error, and the API still works', async () => {
+        const hide = (name) => fs.renameSync(path.join(dist, name), path.join(dist, `${name}.away`));
+        const back = (name) => fs.renameSync(path.join(dist, `${name}.away`), path.join(dist, name));
+        hide('index.html'); hide('app.html');
+        try {
+            for (const url of ['/', '/dashboard', '/no-such-page']) {
+                const res = await get(url);
+                assert.equal(res.status, 503, url);
+                assert.match(res.text, /hasn't been built yet.*npm run build/, url);
+            }
+            assert.equal((await get('/robots.txt')).status, 200);
+        } finally {
+            back('index.html'); back('app.html');
+        }
+    });
+});
+
 describe('robots.txt and sitemap.xml', () => {
     it('robots.txt keeps search engines out of the dashboard and manage links, and points to the sitemap', async () => {
         const res = await get('/robots.txt');

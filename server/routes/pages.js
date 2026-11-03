@@ -44,6 +44,10 @@ module.exports = (clientDist) => {
     const page = pagePath(req.path);
     const prebuilt = page === "/" ? "index.html" : `pages${page}.html`;
     if (PUBLIC_PAGES.includes(page) && exists(prebuilt)) return res.sendFile(file(prebuilt));
+    // The build isn't kept in git (P3-1): a fresh copy has none until `npm run build` (Heroku runs it)
+    if (!exists("app.html") && !exists("index.html")) {
+      return res.status(503).type("text/plain").send("The website hasn't been built yet. Run `npm run build`, or use `npm run dev:client` for the local site.\n");
+    }
     if (!PUBLIC_PAGES.includes(page) && !isBrowserPage(page)) res.status(404);
     // a build from before P2-9 has no app.html
     res.sendFile(file(exists("app.html") ? "app.html" : "index.html"));

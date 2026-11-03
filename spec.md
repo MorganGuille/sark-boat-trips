@@ -57,7 +57,7 @@ Written after reading the whole codebase and testing the booking and dashboard f
 | P2-13 | Owner | Customer data tools (find, export, erase by email) (**DONE**, on `version2`) | S |
 | P2-14 | Customer | Mobile-friendly pass over the whole website **DONE** | M |
 | P2-15 | Customer | Gift vouchers bought online, with a dashboard list (**DONE**, on `version2`) | M–L |
-| P3-1 | Build | Untrack committed build output | S |
+| P3-1 | Build | Untrack committed build output (**DONE**, on `version2`) | S |
 | P3-2 | Build | Lint baseline of 108 errors | S–M |
 | P3-3 | Server | Models: indexes and numeric defaults | S |
 | P3-4 | Server | Consistent response shape and status codes, a global error handler | M |
@@ -396,7 +396,7 @@ Booking checks availability and then creates the record, which isn't atomic. Two
 
 ## P3: tidy-up and later
 
-- **P3-1 `[Build]` Untrack build output.** `client/dist` and `client/dist-server` (31 files) are committed. Add them to `.gitignore` and `git rm --cached` them. First confirm that Heroku builds them itself (it does run `heroku-postbuild`).
+- **P3-1 `[Build]` Untrack build output: DONE** (3 Nov 2026, on `version2`). `client/dist` and `client/dist-server` (31 files, out of date: they still held a deleted photo) are no longer kept in git and are in `.gitignore`. Heroku already built them on every deploy (`heroku-postbuild`; vite is a normal dependency, so it is installed there), so nothing changes at deploy. Without a build the server's pages now say "The website hasn't been built yet" instead of a vague error (`pages.test.js`).
 - **P3-2 `[Build]` Lint baseline: DONE** (25 Oct 2026, as part of P1-8). Lint now shows 0 errors (it was 116 problems). Most were in generated build output (`dist-server`) that was being linted by mistake, plus 68 PropTypes complaints for a rule this project doesn't use (now off). The rest were unused `React` imports, a few unescaped apostrophes in page text, and one unused import; the deprecated `.eslintignore` was removed. 7 warnings remain on purpose (a calendar effect, a navbar effect, and four "only export components" hints). `npm run lint` is part of CI.
 - **P3-3 `[Server]` Models.** No indexes exist. Add one on `{date, timeslot, status}` for bookings and `{date, timeslot}` for availability. Default `adults` and `children` to 0 so a missing number can never turn the seat total into `NaN`.
 - **P3-4 `[Server]` Responses and errors.** Many endpoints return 200 with `ok: false`, and the response shape varies (`data`, `message`, `error`). Pick one shape, use real status codes, and add the global error handler from P0-1. Consider an `/api` prefix on the routes so API paths can't be confused with client routes.
