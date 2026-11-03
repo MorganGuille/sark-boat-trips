@@ -14,4 +14,7 @@ const NoteSchema = new mongoose.Schema({
     }
 })
 
+// Looked up by day (P3-3)
+NoteSchema.index({ date: 1 })
+
 module.exports = mongoose.model('Notes', NoteSchema)

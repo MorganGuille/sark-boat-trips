@@ -33,12 +33,15 @@ const bookingsSchema = new mongoose.Schema({
         type: Number,
         required: true,
     },
+    // Missing counts as none, so a seat total can never be NaN (P3-3)
     children: {
         type: Number,
+        default: 0,
     },
     // 3 and under: free, but they take a seat (see utils/party.js)
     infants: {
         type: Number,
+        default: 0,
     },
     accommodation: {
         type: String,
@@ -104,6 +107,9 @@ const bookingsSchema = new mongoose.Schema({
         sparse: true,
     }
 });
+
+// A day's bookings, one trip's, a month's (the day view, seat counting, the report: P3-3)
+bookingsSchema.index({ date: 1, timeslot: 1, status: 1 });
 
 // Every new booking gets its codes, however it is made (online, dashboard)
 bookingsSchema.pre('save', function () {

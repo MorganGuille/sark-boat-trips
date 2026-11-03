@@ -32,4 +32,7 @@ const availabilitySchema = new mongoose.Schema({
     removed: { type: Boolean },
 });
 
+// Looked up by day, and by day and trip (P3-3)
+availabilitySchema.index({ date: 1, timeslot: 1 });
+
 module.exports = mongoose.model('Availability', availabilitySchema);
