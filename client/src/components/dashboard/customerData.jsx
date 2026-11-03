@@ -97,7 +97,6 @@ function CustomerData({ email, onResult, onErased }) {
                         </div>
                         {data.eraseProblem ? <p className='muted' role='note'>Can&apos;t erase yet: {data.eraseProblem}</p> : null}
                         {confirming ? (
-                            // not a <form>: the site-wide form styles (bookingForm.css) would stretch its buttons
                             <div className='customerErase' role='group' aria-label='Erase their details'>
                                 <p>This blanks their name, email, phone and messages on every booking and gift voucher, and removes their saved card at Stripe. Dates, party sizes and amounts stay, so your reports don&apos;t change. It can&apos;t be undone.</p>
                                 <label htmlFor='eraseConfirm'>Type their email address to confirm</label>

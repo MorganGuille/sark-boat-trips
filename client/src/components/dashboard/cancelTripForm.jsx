@@ -37,7 +37,6 @@ function CancelTripForm({ selectedDate, trips, bookings, onResult, onDone }) {
     }
 
     return (
-        // Not a <form>: bookingForm.css styles every form on the site (form div, form select, form button)
         <section className='cancelTrip' aria-labelledby='cancelTripTitle'>
             <h3 id='cancelTripTitle'>Cancel a whole trip</h3>
             <p className='muted'>

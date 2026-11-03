@@ -36,7 +36,6 @@ function MessageTripForm({ selectedDate, trips, bookings, onResult, onDone }) {
     }
 
     return (
-        // Not a <form>: bookingForm.css styles every form on the site (form div, form select, form button)
         <section className='messageTrip' aria-labelledby='messageTripTitle'>
             <h3 id='messageTripTitle'>Message everyone on a trip</h3>
             <p className='muted'>

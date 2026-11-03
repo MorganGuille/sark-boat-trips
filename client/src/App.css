@@ -176,6 +176,8 @@ body {
 
   p {
     font-size: 1.2rem;
+    /* every page has been laid out with this margin on phones and laptops (it used to sit in bookingForm.css) */
+    margin: 0.7em 0.5em;
   }
 
 }

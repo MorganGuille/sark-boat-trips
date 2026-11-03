@@ -1,5 +1,5 @@
-/* Global on purpose: other forms on the site rely on this input spacing */
-input {
+/* Dashboard boxes only (it used to be a bare "input" rule reaching every page: P3-5) */
+:where(.dashboard) input {
     padding: 0.5em;
     margin: 0.5em;
 }

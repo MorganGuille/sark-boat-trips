@@ -6,7 +6,10 @@
     padding: 1em;
 }
 
-form div {
+/* The dashboard's booking form (components/bookingForm.jsx) only. These used to be bare "form div",
+   "form button" and so on, which reached every form on the site (P3-5). :where() keeps them exactly as
+   strong as before, so the dashboard's own rules still win. */
+form:where(.bookingForm) div {
     width: 350px;
     max-width: 100%;
     display: flex;
@@ -15,12 +18,12 @@ form div {
     margin: 0.5em 1em;
 }
 
-form select {
+form:where(.bookingForm) select {
     margin: 0.5em;
     padding: 0.5em;
 }
 
-form button {
+form:where(.bookingForm) button {
     padding: 1em 1.5em;
     border-radius: 0.3em;
     border: none;
@@ -31,16 +34,16 @@ form button {
     margin: 0.5em;
 }
 
-form button:hover {
+form:where(.bookingForm) button:hover {
     cursor: pointer;
     background-color: #0f7ae5;
 }
 
-form button:active {
+form:where(.bookingForm) button:active {
     transform: scale(0.95);
 }
 
-form textarea {
+form:where(.bookingForm) textarea {
     max-width: 100%;
     resize: none;
     margin: 0.5em;
@@ -67,11 +70,7 @@ form textarea {
         width: 300px;
     }
 
-    p {
-        margin: 0.7em 0.5em;
-    }
-
-    form p {
+    form:where(.bookingForm) p {
         width: 300px;
     }
 }

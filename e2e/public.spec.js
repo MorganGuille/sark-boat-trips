@@ -263,3 +263,25 @@ test('home page photos: every photo described, never moving by itself, moved by 
     await page.mouse.up();
     expect(await row.evaluate((el) => el.scrollLeft), 'dragged further along').toBeGreaterThan(before + 300);
 });
+
+test('a new form starts plain: the dashboard booking form\'s styles don\'t reach other forms (P3-5)', async ({ page }) => {
+    // they used to be bare "form div", "form button" and "input" rules that every form on every page picked up
+    const plainForm = () => {
+        const form = document.createElement('form');
+        form.innerHTML = '<div><input id="plainInput"></div><button id="plainButton">Go</button>';
+        document.querySelector('main, body').append(form);
+        const style = (el) => getComputedStyle(el);
+        return {
+            divWidth: style(form.querySelector('div')).width, divDisplay: style(form.querySelector('div')).display,
+            button: style(form.querySelector('button')).backgroundColor, inputMargin: style(form.querySelector('input')).marginTop,
+        };
+    };
+    for (const url of ['/', '/gift-vouchers']) {
+        await page.goto(url);
+        const seen = await page.evaluate(plainForm);
+        expect(seen.divDisplay, url).toBe('block');
+        expect(seen.divWidth, url).not.toBe('350px');
+        expect(seen.button, url).not.toBe('rgb(16, 135, 255)');
+        expect(seen.inputMargin, url).toBe('0px');
+    }
+});

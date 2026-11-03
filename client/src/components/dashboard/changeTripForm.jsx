@@ -58,7 +58,6 @@ function ChangeTripForm({ selectedDate, trips, bookings, onResult, onDone }) {
     }
 
     return (
-        // Not a <form>: bookingForm.css styles every form on the site (form div, form select, form button)
         <section className='changeTrip' aria-labelledby='changeTripTitle'>
             <h3 id='changeTripTitle'>Change trip details</h3>
             <p className='muted'>

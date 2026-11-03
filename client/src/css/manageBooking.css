@@ -1,5 +1,4 @@
-/* "Manage my booking" (views/manageBooking.jsx). Scoped under .manageBooking. No <form> on the page,
-   because bookingForm.css styles every form on the site. */
+/* "Manage my booking" (views/manageBooking.jsx). Scoped under .manageBooking. */
 .manageBooking {
     max-width: 40rem;
     margin: 0 auto;

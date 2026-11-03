@@ -89,7 +89,6 @@ function AddTripForm({ selectedDate, trips, bookings, prices, onResult, onDone }
     const incomplete = !form.name.trim() || !form.startTime || !form.hours || !form.capacity || form.adultPrice === '' || form.childPrice === ''
 
     return (
-        // Not a <form>: bookingForm.css styles every form on the site (form div, form select, form button)
         <section className='addTrip' aria-labelledby='addTripTitle'>
             <h2 id='addTripTitle'>Extra trips on {prettyDate(selectedDate)}</h2>
             <p className='muted'>
