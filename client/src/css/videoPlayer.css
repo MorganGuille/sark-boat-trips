@@ -1,19 +1,44 @@
-/* The home page video (components/videoPlayer.jsx): the cover picture at the video's shape (16:9) on
-   every screen, with a round gold Watch a trip button in the corner, clear of the title in the picture */
-.videoBlock {
-    width: 100%;
-    max-width: 64rem;
-    margin: 0 auto;
+/* The home page video (components/videoPlayer.jsx): in the photo row its cover picture, the same height as
+   the photos, and enlarged at the video's shape (16:9), as big as the screen allows. Both have a round
+   gold Watch a trip button in the corner, clear of the title in the picture. */
+.videoThumb {
+    position: relative;
+    display: block;
+}
+
+.videoThumb::after {
+    content: "";
+    position: absolute;
+    inset: 40% 0 0;
+    border-radius: 0 0 14px 14px;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.6));
+    pointer-events: none;
+}
+
+.videoThumbLabel {
+    position: absolute;
+    left: 1rem;
+    bottom: 1rem;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: white;
+    font-weight: 700;
+    font-size: 1.1rem;
+    text-align: left;
 }
 
 .videoFrame {
     position: relative;
+    flex: none;
     width: 100%;
+    max-width: calc((100vh - 2rem) * 16 / 9);
+    max-width: calc((100dvh - 2rem) * 16 / 9);
     aspect-ratio: 16 / 9;
     overflow: hidden;
-    border-radius: 14px;
+    border-radius: 6px;
     background: #0b1a24;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
 }
 
 .videoCover {
@@ -66,7 +91,8 @@
     transition: transform 0.2s;
 }
 
-.videoPlay:hover .videoPlayCircle {
+.videoPlay:hover .videoPlayCircle,
+.photoStripRow button:hover .videoPlayCircle {
     transform: scale(1.06);
 }
 
@@ -106,19 +132,9 @@
     height: 100% !important;
 }
 
-.videoNote {
-    margin: 0.6rem 0.25rem 0 !important;
-    font-size: 0.85rem;
-    color: #4a5d6e;
-    text-align: left;
-}
-
 @media (max-width: 600px) {
-    .videoFrame {
-        border-radius: 10px;
-    }
-
-    .videoPlay {
+    .videoPlay,
+    .videoThumbLabel {
         left: 0.75rem;
         bottom: 0.75rem;
         font-size: 1rem;

@@ -1,7 +1,6 @@
 import Slideshow from '../components/slideshow'
 import Reviews from '../components/reviews'
 import Bookings from '../components/bookings'
-import VideoPlayer from '../components/videoPlayer'
 
 import { Link } from 'react-router'
 import usePrices from '../hooks/usePrices'
@@ -82,9 +81,8 @@ function Home() {
                     </button>
                 </a>
             </section>
-            <section className="centered-section" aria-label="Introduction Video">
-                <VideoPlayer />
-            </section>
+            {/* The video and the photos, one row (owner, 5 Nov 2026) */}
+            <Slideshow images={images} />
             {/* The tour, the reviews and the boat (owner, 2 Nov 2026): the facts and price up front, in the
                 same style as the charters section. The trip prices come from the dashboard. */}
             <section id='theTour' className='theTour homeSection' aria-labelledby="tour-heading">
@@ -103,7 +101,7 @@ function Home() {
                 <ul className='tourCards'>
                     <li>
                         <img src={guillemots} alt='Guillemots on the water beside the boat' loading='lazy' width='1920' height='1082' />
-                        <div><h3>Seabirds</h3><p>In season: puffins, guillemots, razorbills and Fulmar.</p></div>
+                        <div><h3>Seabirds</h3><p>In season: puffins, guillemots, razorbills and fulmars.</p></div>
                     </li>
                     <li>
                         <img src={gallery6} alt='Two dolphins swimming beside the boat' loading='lazy' width='1920' height='2560' />
@@ -133,7 +131,6 @@ function Home() {
                     </ul>
                 </div>
             </section>
-            <Slideshow images={images} />
             {/* Charters (owner's choices, 1 Nov 2026): the basics up front, the price from the dashboard */}
             <section id='charters' className="charters chartersIntro" aria-labelledby="charters-heading">
                 <img src={charters} alt='A charter group swimming and paddleboarding from the boat in a quiet bay' loading='lazy' width='1080' height='864' />

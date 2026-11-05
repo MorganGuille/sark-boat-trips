@@ -86,19 +86,6 @@ body {
   transform: scale(0.95);
 }
 
-.centered-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  max-width: 60%;
-  margin: 2em auto;
-}
-
-.centered-section p {
-  text-align: left;
-}
-
 /* The success and "Booking not made" pages. The box grows with its text (a fixed height cut the
    text off on phones, spec P2-14), and the top padding clears the navbar. */
 .stripe-landing {

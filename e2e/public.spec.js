@@ -161,34 +161,31 @@ test('a bot that fills in the hidden field is not seen by people, and gets nothi
     expect(await h.savedBookings(request)).toHaveLength(0);
 });
 
-test('the video: nothing from Vimeo loads until Watch a trip is tapped, then Vimeo\'s player starts with its controls and no tracking', async ({ page }) => {
-    // Vimeo blocks automated browsers, so its pages are stood in for; what matters is when they are asked for
-    const vimeo = [];
+test('the video: nothing from Vimeo until tapped, then it plays in the photo row with its controls and no tracking', async ({ page }) => {
+    const vimeo = await h.fakeVimeo(page);
     const scripts = []; // the site's own code files, as the page fetches them
-    page.on('request', (req) => {
-        if (/vimeo/i.test(req.url())) vimeo.push(req.url());
-        if (req.resourceType() === 'script' && !/vimeo\.com/.test(req.url())) scripts.push(req.url());
-    });
-    // The player first asks Vimeo for the video's details (oEmbed), sending its settings; answer as Vimeo does
-    await page.route(/vimeo\.com/, (route) => {
-        const url = new URL(route.request().url());
-        if (!url.pathname.endsWith('/oembed.json')) return route.fulfill({ status: 200, contentType: 'text/html', body: '<html></html>' });
-        url.searchParams.delete('url');
-        const html = `<iframe src="https://player.vimeo.com/video/331613265?${url.searchParams}" allow="autoplay; fullscreen"></iframe>`;
-        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ type: 'video', html, width: 1280, height: 720, video_id: 331613265 }) });
-    });
+    page.on('request', (req) => { if (req.resourceType() === 'script' && !/vimeo\.com/.test(req.url())) scripts.push(req.url()); });
+    await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto('/');
     const play = page.getByRole('button', { name: /Watch a trip/ });
     await play.scrollIntoViewIfNeeded();
     await expect(play).toContainText('About 1 minute');
+    // First in the photo row, and the same height as the photos (owner, 5 Nov 2026)
+    const row = page.locator('.photoStripRow');
+    await expect(row.locator('li').first().getByRole('button', { name: /Watch a trip/ })).toBeVisible();
+    const heights = await row.locator('img').evaluateAll((imgs) => imgs.map((img) => Math.round(img.getBoundingClientRect().height)));
+    expect(new Set(heights).size, 'video and photos all one height').toBe(1);
     await page.waitForLoadState('networkidle');
     expect(vimeo, 'nothing from Vimeo, not even its code, before the tap').toEqual([]);
-    await expect(page.locator('.videoFrame iframe')).toHaveCount(0);
+    await expect(page.locator('iframe')).toHaveCount(0);
 
     const scriptsBefore = scripts.length;
     await play.click();
-    const iframe = page.locator('.videoFrame iframe');
+    // It plays where it is: no lightbox, and just as tall as before
+    const iframe = row.locator('.videoInRow iframe');
     await expect(iframe).toHaveAttribute('src', /player\.vimeo\.com\/video\/331613265/);
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    expect(Math.round((await row.locator('.videoInRow').boundingBox()).height)).toBe(heights[0]);
     // the settings sent to Vimeo
     const asked = new URL(vimeo.find((u) => u.includes('/oembed.json'))).searchParams;
     const on = (name) => ['1', 'true'].includes(asked.get(name)); // Vimeo takes either
@@ -197,9 +194,119 @@ test('the video: nothing from Vimeo loads until Watch a trip is tapped, then Vim
     expect(['0', 'false'].includes(asked.get('controls')), 'the normal player, with controls').toBe(false);
     expect(on('background'), 'not the silent background mode').toBe(false);
     expect(on('muted'), 'with its music').toBe(false);
-    await expect(play).toHaveCount(0);
     // the player's code was a separate file, fetched by the tap (not part of every visit)
     expect(scripts.length, 'a new code file was fetched when play was tapped').toBeGreaterThan(scriptsBefore);
+    // The see-through button stops above the player's control bar
+    const video = await row.locator('.videoInRow').boundingBox();
+    const layer = await page.getByRole('button', { name: 'Enlarge the video' }).boundingBox();
+    expect(video.y + video.height - (layer.y + layer.height), 'room for the controls').toBeGreaterThanOrEqual(56);
+});
+
+test('the video: a second click opens it from the same moment, closing carries on small, and it pauses out of sight', async ({ page }) => {
+    const problems = h.watch(page);
+    await h.fakeVimeo(page);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/');
+    const row = page.locator('.photoStripRow');
+    const box = page.getByRole('dialog', { name: 'Enlarged photos' });
+    const count = box.locator('.lightboxCount');
+    const small = '.videoInRow iframe';
+    const big = '.lightboxSlide iframe';
+    const player = (where, change) => page.frameLocator(where).locator('body').evaluate(`() => { ${change} }`.replace('() => ', '(() => ') + ')()');
+    const paused = (where) => page.frameLocator(where).locator('body').evaluate(() => window.fake.paused);
+    const told = (where, method) => h.vimeoCalls(page, where, method);
+
+    await page.getByRole('button', { name: /Watch a trip/ }).click();
+    await expect(page.locator(small)).toHaveCount(1);
+    const enlargeIt = page.getByRole('button', { name: 'Enlarge the video' });
+    await expect.poll(() => told('row', 'setCurrentTime').then((c) => c.length)).toBeGreaterThan(0); // the player is ready
+    await player(small, 'fake.time = 12');
+
+    // A drag across the playing video moves the row and opens nothing
+    const area = await enlargeIt.boundingBox();
+    await page.mouse.move(area.x + area.width - 20, area.y + 60);
+    await page.mouse.down();
+    await page.mouse.move(area.x + 60, area.y + 60, { steps: 8 });
+    await expect.poll(() => row.evaluate((el) => el.scrollLeft)).toBeGreaterThan(200);
+    await page.mouse.up();
+    await expect(box).toHaveCount(0);
+    await row.evaluate((el) => { el.scrollLeft = 0; });
+    await expect.poll(() => row.evaluate((el) => el.scrollLeft)).toBe(0);
+    await page.waitForTimeout(200); // the row is back in sight
+    await player(small, 'fake.paused = false');
+
+    // The second click: the lightbox, the small one paused so only one makes a sound, the big one from 12 seconds
+    await enlargeIt.click();
+    await expect(count).toHaveText('1 of 13');
+    await expect.poll(() => paused(small)).toBe(true);
+    await expect(box.locator('iframe')).toHaveCount(1);
+    await expect.poll(() => told('big', 'setCurrentTime')).toContainEqual(expect.objectContaining({ value: 12 }));
+
+    // Closing: it carries on small from where the big one got to
+    await player(big, 'fake.time = 20');
+    await box.getByRole('button', { name: 'Close' }).click();
+    await expect(box).toHaveCount(0);
+    await expect.poll(() => paused(small)).toBe(false);
+    await expect.poll(() => told('row', 'setCurrentTime')).toContainEqual(expect.objectContaining({ value: 20 }));
+    await expect(enlargeIt).toBeFocused();
+
+    // Paused in the lightbox with the player's own button: it stays paused after closing
+    await enlargeIt.click();
+    await expect(box.locator('iframe')).toHaveCount(1);
+    await expect.poll(() => told('big', 'setCurrentTime').then((c) => c.at(-1).value)).toBe(20);
+    await player(big, 'fake.paused = true; fake.time = 25');
+    await box.getByRole('button', { name: 'Close' }).click();
+    await expect(box).toHaveCount(0);
+    await expect.poll(() => told('row', 'setCurrentTime')).toContainEqual(expect.objectContaining({ value: 25 }));
+    expect(await paused(small), 'not started again').toBe(true);
+
+    // Paused small: the second click opens it waiting for a tap, not playing
+    await enlargeIt.click();
+    await expect(count).toHaveText('1 of 13');
+    await expect(box.locator('iframe')).toHaveCount(0);
+    await expect(box.getByRole('button', { name: /Watch a trip/ })).toBeVisible();
+    await box.getByRole('button', { name: 'Close' }).click();
+    await expect(box).toHaveCount(0);
+    await player(small, 'fake.paused = false');
+
+    // Moving on in the lightbox stops it; coming back it waits for a tap, from the same moment
+    await enlargeIt.click();
+    await expect(box.locator('iframe')).toHaveCount(1);
+    await expect.poll(() => told('big', 'setCurrentTime').then((c) => c.at(-1).value)).toBe(25);
+    await page.waitForTimeout(100); // the new player is ready
+    await player(big, 'fake.time = 30');
+    await box.getByRole('button', { name: 'Next photo' }).click();
+    await expect(count).toHaveText('2 of 13');
+    await expect(box.locator('iframe')).toHaveCount(0);
+    await box.getByRole('button', { name: 'Previous photo' }).click();
+    await expect(count).toHaveText('1 of 13');
+    await expect(box.locator('iframe')).toHaveCount(0);
+    await box.getByRole('button', { name: /Watch a trip/ }).click();
+    await expect(box.locator('iframe')).toHaveCount(1);
+    await expect.poll(() => told('big', 'setCurrentTime').then((c) => c.at(-1).value)).toBe(30);
+    await box.getByRole('button', { name: 'Close' }).click();
+    await expect(box).toHaveCount(0);
+
+    // Out of sight it pauses: along the row, and off the screen. It doesn't start again by itself.
+    await expect.poll(() => paused(small)).toBe(false);
+    await row.evaluate((el) => { el.scrollLeft = el.scrollWidth; });
+    await expect.poll(() => paused(small)).toBe(true);
+    await row.evaluate((el) => { el.scrollLeft = 0; });
+    await page.waitForTimeout(300);
+    expect(await paused(small), 'waits for someone to press play').toBe(true);
+
+    await player(small, 'fake.paused = false');
+    await page.evaluate(() => window.scrollTo(0, document.querySelector('#reviews').getBoundingClientRect().top + window.scrollY));
+    await expect.poll(() => paused(small)).toBe(true);
+    await page.evaluate(() => window.scrollTo(0, document.querySelector('.photoStrip').getBoundingClientRect().top + window.scrollY - 80));
+
+    // Keyboard: Enter on the second-click button opens it
+    await enlargeIt.focus();
+    await page.keyboard.press('Enter');
+    await expect(count).toHaveText('1 of 13');
+    await page.keyboard.press('Escape');
+    await expect(box).toHaveCount(0);
+    expect(problems).toEqual([]);
 });
 
 // The home page below the photo (owner, 2 Nov 2026): the wording and photos the owner chose, the order of
@@ -241,7 +348,7 @@ test('home page photos: every photo described, never moving by itself, moved by 
     await page.goto('/');
     const row = page.locator('.photoStripRow');
     await row.scrollIntoViewIfNeeded();
-    const photos = row.locator('img');
+    const photos = page.getByRole('button', { name: /^Enlarge photo/ }).locator('img');
     await expect(photos).toHaveCount(12);
     for (const alt of await photos.evaluateAll((imgs) => imgs.map((img) => img.alt))) expect(alt.length).toBeGreaterThan(10);
     await expect(page.locator('.photoStrip h2')).toHaveClass(/sr-only/); // a clean row: the heading is only for screen readers
@@ -307,30 +414,30 @@ test('home page photos: a click enlarges one, the arrows and keys move on, Escap
     await expect(box).toHaveCount(0);
     await row.evaluate((el) => { el.scrollLeft = 0; });
 
-    const description = await row.locator('img').nth(1).getAttribute('alt');
+    const description = await photos.nth(1).locator('img').getAttribute('alt');
     await photos.nth(1).click();
     await expect(box).toBeVisible();
-    await expect(count).toHaveText('2 of 12');
-    expect(await shown()).toBe(1);
-    await expect(box.locator('.lightboxSlide').nth(1).locator('img')).toHaveAttribute('alt', description);
+    await expect(count).toHaveText('3 of 13'); // the video is first
+    expect(await shown()).toBe(2);
+    await expect(box.locator('.lightboxSlide').nth(2).locator('img')).toHaveAttribute('alt', description);
     await expect(box).not.toContainText(description); // photo only, the owner's choice: the description is for screen readers
-    const photo = await box.locator('.lightboxSlide').nth(1).locator('img').boundingBox();
+    const photo = await box.locator('.lightboxSlide').nth(2).locator('img').boundingBox();
     expect(photo.width).toBeGreaterThan(area.width * 0.6); // really bigger than in the row
     expect(photo.height).toBeLessThanOrEqual(800);
 
     await box.getByRole('button', { name: 'Next photo' }).click();
-    await expect(count).toHaveText('3 of 12');
+    await expect(count).toHaveText('4 of 13');
     await page.keyboard.press('ArrowRight');
-    await expect(count).toHaveText('4 of 12');
+    await expect(count).toHaveText('5 of 13');
     await page.keyboard.press('ArrowLeft');
-    await expect(count).toHaveText('3 of 12');
+    await expect(count).toHaveText('4 of 13');
 
     // No arrow past either end
     await box.locator('.lightboxRow').evaluate((el) => { el.scrollLeft = 0; });
-    await expect(count).toHaveText('1 of 12');
+    await expect(count).toHaveText('1 of 13');
     await expect(box.getByRole('button', { name: 'Previous photo' })).toBeHidden();
     await box.locator('.lightboxRow').evaluate((el) => { el.scrollLeft = el.scrollWidth; });
-    await expect(count).toHaveText('12 of 12');
+    await expect(count).toHaveText('13 of 13');
     await expect(box.getByRole('button', { name: 'Next photo' })).toBeHidden();
 
     // Escape: back in the row, on the photo last looked at, with the keyboard there
@@ -342,7 +449,7 @@ test('home page photos: a click enlarges one, the arrows and keys move on, Escap
 
     // The keyboard opens one too, and a click on the dark area closes it
     await page.keyboard.press('Enter');
-    await expect(count).toHaveText('12 of 12');
+    await expect(count).toHaveText('13 of 13');
     await page.mouse.click(20, 200);
     await expect(box).toHaveCount(0);
     expect(problems).toEqual([]);

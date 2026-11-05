@@ -137,16 +137,69 @@ test('the hero fills the screen and keeps its size as the address bar slides awa
     expect(Math.abs(hero.height - hero.screen), 'the hero fills the screen').toBeLessThan(2);
 });
 
-test('the video fills its frame at 16:9 on a phone, with Watch a trip inside it and big enough to tap', async ({ page }) => {
+test('the video on a phone: the first tap plays it in the row, a swipe still moves the row, the second tap enlarges it', async ({ page, browserName, context }) => {
+    await h.fakeVimeo(page);
     await page.goto('/');
-    const frame = page.locator('.videoFrame');
-    await frame.scrollIntoViewIfNeeded();
-    const box = await frame.boundingBox();
-    expect(Math.abs(box.width / box.height - 16 / 9), 'the video\'s own shape (no black bars)').toBeLessThan(0.02);
-    expect(box.x + box.width).toBeLessThanOrEqual(WIDTH);
-    const play = await page.getByRole('button', { name: /Watch a trip/ }).boundingBox();
+    const row = page.locator('.photoStripRow');
+    await row.scrollIntoViewIfNeeded();
+    const watch = row.locator('li').first().getByRole('button', { name: /Watch a trip/ });
+    await expect(watch).toBeInViewport();
+    const dialog = page.getByRole('dialog', { name: 'Enlarged photos' });
+
+    // Reached from a photo, so nothing starts playing: its own shape, with Watch a trip inside and big enough to tap
+    await page.getByRole('button', { name: /^Enlarge photo/ }).first().click();
+    await dialog.locator('.lightboxRow').evaluate((el) => { el.scrollLeft = 0; });
+    await expect(dialog.locator('.lightboxCount')).toHaveText('1 of 13');
+    const frame = await dialog.locator('.videoFrame').boundingBox();
+    expect(Math.abs(frame.width / frame.height - 16 / 9), 'the video\'s own shape (no black bars)').toBeLessThan(0.02);
+    expect(frame.x + frame.width).toBeLessThanOrEqual(WIDTH);
+    expect(frame.width, 'nearly the phone\'s whole width').toBeGreaterThan(WIDTH * 0.9);
+    const play = await dialog.getByRole('button', { name: /Watch a trip/ }).boundingBox();
     expect(play.height).toBeGreaterThanOrEqual(44);
-    expect(play.y + play.height, 'inside the frame').toBeLessThanOrEqual(box.y + box.height);
+    expect(play.y + play.height, 'inside the frame').toBeLessThanOrEqual(frame.y + frame.height);
+    await expect(dialog.getByRole('button', { name: 'Next photo' })).toBeHidden(); // a swipe instead
+    await dialog.getByRole('button', { name: 'Close' }).click();
+    await expect(dialog).toHaveCount(0);
+    await row.evaluate((el) => { el.scrollLeft = 0; });
+
+    // The first tap: it plays where it is, inside the screen
+    await watch.click();
+    await expect(row.locator('.videoInRow iframe')).toHaveCount(1);
+    await expect(dialog).toHaveCount(0);
+    const small = await row.locator('.videoInRow').boundingBox();
+    expect(small.x + small.width).toBeLessThanOrEqual(WIDTH);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
+    const enlargeIt = page.getByRole('button', { name: 'Enlarge the video' });
+
+    // A real finger swiping across the playing video moves the row (Chrome's phone mode can make one)
+    if (browserName === 'chromium' && test.info().project.use.isMobile) {
+        const area = await enlargeIt.boundingBox();
+        const cdp = await context.newCDPSession(page);
+        const x = area.x + area.width - 30;
+        const y = area.y + 50;
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+        for (let i = 1; i <= 10; i++) {
+            await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x - i * 25, y }] });
+            await page.waitForTimeout(16);
+        }
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+        await expect.poll(() => row.evaluate((el) => el.scrollLeft)).toBeGreaterThan(50);
+        await expect(dialog).toHaveCount(0);
+        // Swiped mostly out of sight it paused, as it should; back in view someone presses play
+        await expect.poll(() => page.frameLocator('.videoInRow iframe').locator('body').evaluate(() => window.fake.paused)).toBe(true);
+        await row.evaluate((el) => { el.scrollLeft = 0; });
+        await page.waitForTimeout(200);
+        await page.frameLocator('.videoInRow iframe').locator('body').evaluate(() => { window.fake.paused = false; });
+    }
+
+    // The second tap: the lightbox, and while it plays a button to move on, in case the player keeps a swipe
+    await enlargeIt.click();
+    await expect(dialog.locator('iframe')).toHaveCount(1);
+    const next = dialog.getByRole('button', { name: 'Next photo' });
+    await expect(next).toBeVisible();
+    await next.click();
+    await expect(dialog.locator('.lightboxCount')).toHaveText('2 of 13');
+    await expect(next).toBeHidden(); // back to swiping once it has stopped
 });
 
 test('the review links are rows one under another on a phone, inside the screen and easy to tap', async ({ page }) => {
@@ -305,17 +358,17 @@ test('a tapped photo fills the phone, a swipe moves on, and pinching still zooms
     await row.scrollIntoViewIfNeeded();
     await page.getByRole('button', { name: /^Enlarge photo/ }).first().click();
     const box = page.getByRole('dialog', { name: 'Enlarged photos' });
-    await expect(box.locator('.lightboxCount')).toHaveText('1 of 12');
+    await expect(box.locator('.lightboxCount')).toHaveText('2 of 13'); // the video is first
 
     const size = page.viewportSize();
     const frame = await box.boundingBox();
     expect([frame.width, frame.height]).toEqual([size.width, size.height]);
-    const photo = await box.locator('.lightboxSlide').first().locator('img').boundingBox();
+    const photo = await box.locator('.lightboxSlide').nth(1).locator('img').boundingBox();
     expect(photo.width).toBeGreaterThan(size.width * 0.9); // nearly the phone's whole width, nothing cropped
     await expect(box.getByRole('button', { name: 'Next photo' })).toBeHidden(); // a swipe instead
     await expect(box.getByRole('button', { name: 'Close' })).toBeVisible();
-    await box.locator('.lightboxRow').evaluate((el) => el.scrollTo({ left: el.clientWidth }));
-    await expect(box.locator('.lightboxCount')).toHaveText('2 of 12');
+    await box.locator('.lightboxRow').evaluate((el) => el.scrollTo({ left: 2 * el.clientWidth }));
+    await expect(box.locator('.lightboxCount')).toHaveText('3 of 13');
 
     await box.getByRole('button', { name: 'Close' }).click();
     await expect(box).toHaveCount(0);
@@ -323,7 +376,7 @@ test('a tapped photo fills the phone, a swipe moves on, and pinching still zooms
 
     // Nothing asks the browser to turn pinching off
     expect(await page.locator('meta[name=viewport]').getAttribute('content')).not.toMatch(/user-scalable|maximum-scale/);
-    for (const el of [box, box.locator('.lightboxRow'), box.locator('.lightboxSlide').first(), box.locator('.lightboxSlide img').first()]) {
+    for (const el of [box, box.locator('.lightboxRow'), box.locator('.lightboxSlide').nth(1), box.locator('.lightboxSlide').nth(1).locator('img')]) {
         expect(await el.evaluate((node) => getComputedStyle(node).touchAction)).toBe('auto');
     }
     // A real two-finger pinch, where the browser can make one (Chrome's phone mode)

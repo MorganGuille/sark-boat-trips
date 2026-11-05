@@ -71,6 +71,46 @@
     outline-offset: -3px;
 }
 
+/* The video playing in the row, the same height as the photos. The see-through button catches a second
+   tap (Vimeo's player keeps clicks to itself) and lets a swipe move the row; it stops above the player's
+   control bar so pause, sound and full screen still work. */
+.videoInRow {
+    position: relative;
+    height: 20rem;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border-radius: 14px;
+    background: #000;
+}
+
+.photoStripRow .videoEnlarge {
+    position: absolute;
+    inset: 0 0 3.75rem;
+    width: 100%;
+    height: auto;
+    border-radius: 14px 14px 0 0;
+    color: #fff;
+}
+
+.photoStripRow.dragging .videoEnlarge {
+    cursor: grabbing;
+}
+
+.videoEnlarge svg {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.6rem;
+    box-sizing: content-box;
+    padding: 0.45rem;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.55);
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
 /* The arrows sit on the photos at either end, and go when there's nothing more that way */
 .photoArrow {
     position: absolute;
@@ -142,6 +182,12 @@
         height: 14rem;
         max-width: calc(100vw - 48px);
         object-fit: cover;
+    }
+
+    /* the player keeps the video's own shape inside this, with thin dark bands above and below */
+    .videoInRow {
+        height: 14rem;
+        max-width: calc(100vw - 48px);
     }
 }
 
@@ -273,11 +319,28 @@ html:has(.photoLightbox[open]) {
     right: 1rem;
 }
 
-/* Phone: swipe instead of arrows, the photo using the whole width below the close button */
+/* Phone: swipe instead of arrows, the photo using the whole width below the close button. While the video
+   plays the next arrow stays, up beside the close button, as the player may keep a swipe for itself. */
 @media (max-width: 800px) {
     .lightboxBack,
     .lightboxNext {
         display: none;
+    }
+
+    .lightboxNext.overVideo {
+        display: flex;
+        top: 0.75rem;
+        right: 4.25rem;
+        transform: none;
+    }
+
+    .lightboxNext.overVideo[hidden] {
+        display: none;
+    }
+
+    .lightboxSlide .videoFrame {
+        max-width: calc((100vh - 5rem) * 16 / 9);
+        max-width: calc((100dvh - 5rem) * 16 / 9);
     }
 
     .lightboxSlide {

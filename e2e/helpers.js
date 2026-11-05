@@ -78,4 +78,49 @@ const acceptConfirms = (page) => {
     page.on('dialog', (dialog) => { dialog.dismiss(); throw new Error(`The browser's own pop-up appeared: ${dialog.message()}`); });
 };
 
-module.exports = { acceptConfirms, asNewVisitor, USERNAME, PASSWORD, reset, mails, savedBookings, watch, pickDate, fillBooking, logIn, PUBLIC_PAGES, BROWSER_PAGES, NOT_FOUND };
+
+// Stands in for Vimeo (it blocks automated browsers): its details page, and a player that answers the
+// site's messages the way Vimeo's does. Returns the addresses asked for. window.__vimeo in the page lists
+// what the site told each player to do ({ where: 'row' | 'big', method, value }). In a test,
+// frame.locator('body').evaluate(() => { fake.time = 12; fake.paused = true; }) is the video moving on, or
+// someone pressing the player's own pause button.
+const fakeVimeo = async (page) => {
+    const asked = [];
+    page.on('request', (req) => { if (/vimeo/i.test(req.url())) asked.push(req.url()); });
+    await page.addInitScript(() => {
+        window.__vimeo = [];
+        window.addEventListener('message', (e) => {
+            if (!e.data || !e.data.fakeVimeo) return;
+            const row = document.querySelector('.videoInRow iframe');
+            window.__vimeo.push({ where: row && row.contentWindow === e.source ? 'row' : 'big', ...e.data.fakeVimeo });
+        });
+    });
+    const player = `<!doctype html><script>
+        window.fake = { time: 0, paused: false };
+        const send = (m) => parent.postMessage(JSON.stringify(m), '*');
+        addEventListener('message', (e) => {
+            const d = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
+            let value = d.value;
+            if (d.method === 'play') fake.paused = false;
+            if (d.method === 'pause') fake.paused = true;
+            if (d.method === 'setCurrentTime') fake.time = d.value;
+            if (d.method === 'getCurrentTime') value = fake.time;
+            if (d.method === 'getPaused') value = fake.paused;
+            if (['play', 'pause', 'setCurrentTime'].includes(d.method)) parent.postMessage({ fakeVimeo: { method: d.method, value: d.value } }, '*');
+            send({ method: d.method, value });
+        });
+        send({ event: 'ready' });
+    </script>`;
+    await page.route(/vimeo\.com/, (route) => {
+        const url = new URL(route.request().url());
+        if (!url.pathname.endsWith('/oembed.json')) return route.fulfill({ status: 200, contentType: 'text/html', body: player });
+        url.searchParams.delete('url');
+        const html = `<iframe src="https://player.vimeo.com/video/331613265?${url.searchParams}" allow="autoplay; fullscreen"></iframe>`;
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ type: 'video', html, width: 1280, height: 720, video_id: 331613265 }) });
+    });
+    return asked;
+};
+const vimeoCalls = (page, where, method) => page.evaluate(([w, m]) => window.__vimeo.filter((c) => c.where === w && c.method === m), [where, method]);
+
+module.exports = {
+    fakeVimeo, vimeoCalls, acceptConfirms, asNewVisitor, USERNAME, PASSWORD, reset, mails, savedBookings, watch, pickDate, fillBooking, logIn, PUBLIC_PAGES, BROWSER_PAGES, NOT_FOUND };

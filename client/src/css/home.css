@@ -167,10 +167,6 @@
 
 @media (max-width: 1366px) {
 
-    .centered-section {
-        max-width: 80%;
-    }
-
     .hero-banner {
         gap: 20em;
         background-position: 0% 0%;
@@ -186,10 +182,6 @@
 
 
 @media (max-width: 1020px) {
-
-    .centered-section {
-        max-width: 90%;
-    }
 
 }
 
