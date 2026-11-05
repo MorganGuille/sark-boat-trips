@@ -116,21 +116,6 @@ function Home() {
 
             <Reviews />
 
-            <section className='boatSection homeSection' aria-labelledby="boat-heading">
-                <img src={dorado} alt='The Dorado in the harbour, passengers on board' loading='lazy' width='1600' height='747' />
-                <div>
-                    <p className='eyebrow'>The boat</p>
-                    <h2 id="boat-heading">Meet the Dorado</h2>
-                    <p className='lead'>A 25ft Treeve Marine built in 1980, she ran tours round Sark until the 90s, when she
-                        was converted for fishing. After the loss of Non Pareil, our much loved wooden Sark-built boat, we
-                        rebuilt Dorado in 2024 as a tour boat once again.</p>
-                    <ul className='factChips' aria-label='On board'>
-                        <li>Max 12 passengers</li>
-                        <li>Toilet on board</li>
-                        <li>Full safety equipment</li>
-                    </ul>
-                </div>
-            </section>
             {/* Charters (owner's choices, 1 Nov 2026): the basics up front, the price from the dashboard */}
             <section id='charters' className="charters chartersIntro" aria-labelledby="charters-heading">
                 <img src={charters} alt='A charter group swimming and paddleboarding from the boat in a quiet bay' loading='lazy' width='1080' height='864' />
@@ -146,6 +131,21 @@ function Home() {
                         {charterPrice ? <li>{charterPrice} for the boat</li> : null}
                     </ul>
                     <Link to='/charters' className='goldButton'>Charter ideas and booking →</Link>
+                </div>
+            </section>
+            <section className='boatSection homeSection' aria-labelledby="boat-heading">
+                <img src={dorado} alt='The Dorado in the harbour, passengers on board' loading='lazy' width='1600' height='747' />
+                <div>
+                    <p className='eyebrow'>The boat</p>
+                    <h2 id="boat-heading">Meet the Dorado</h2>
+                    <p className='lead'>A 25ft Treeve Marine built in 1980, she ran tours round Sark until the 90s, when she
+                        was converted for fishing. After the loss of Non Pareil, our much loved wooden Sark-built boat, we
+                        rebuilt Dorado in 2024 as a tour boat once again.</p>
+                    <ul className='factChips' aria-label='On board'>
+                        <li>Max 12 passengers</li>
+                        <li>Toilet on board</li>
+                        <li>Full safety equipment</li>
+                    </ul>
                 </div>
             </section>
             {/* Sark Island, short and practical for day visitors (owner, 2 Nov 2026) */}
