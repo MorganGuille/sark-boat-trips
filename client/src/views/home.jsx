@@ -33,18 +33,18 @@ function Home() {
 
     // The photos row: every photo with a description for people who can't see it, and its size
     const images = [
-        { src: gallery1, alt: 'Boats moored in the Creux Harbour', width: 1299, height: 974 },
-        { src: gallery2, alt: 'Non Pareil, our old boat, leaving the harbour with passengers', width: 1299, height: 974 },
-        { src: gallery3, alt: 'The boat beside a sea cave in orange cliffs', width: 1920, height: 1440 },
-        { src: gallery4, alt: 'Looking out from inside a dark sea cave', width: 1920, height: 2560 },
-        { src: gallery5, alt: 'Passengers on the boat in a narrow gully between rocks', width: 1920, height: 2550 },
-        { src: gallery6, alt: 'Two dolphins swimming beside the boat', width: 1920, height: 2560 },
-        { src: gallery7, alt: 'Seabirds on the rocks above the sea', width: 1920, height: 1080 },
-        { src: gallery8, alt: 'Swimmers in a green bay beside the boat', width: 1920, height: 1423 },
-        { src: gallery9, alt: 'A narrow sea cave between orange rocks', width: 1920, height: 1279 },
-        { src: gallery10, alt: 'Cliffs and clear water along the coast', width: 1920, height: 1279 },
-        { src: gallery11, alt: 'Passengers on the boat close to the rocks', width: 1920, height: 2550 },
-        { src: cave, alt: 'A charter group inside a sea cave', width: 1920, height: 1280 },
+        { src: gallery1, alt: 'Non Pareil in the Creux Harbour', width: 1299, height: 974 },
+        { src: gallery2, alt: 'Non Pareil, our old boat, returning to the harbour, kayaks in front', width: 1299, height: 974 },
+        { src: gallery3, alt: 'Entering Moie du Mouton sea cave', width: 1920, height: 1440 },
+        { src: gallery4, alt: 'Looking out from inside the Moie du Mouton sea cave', width: 1920, height: 2560 },
+        { src: gallery5, alt: 'Private charter swimming in sheltered gully', width: 1920, height: 2550 },
+        { src: gallery6, alt: 'Two bottlenose dolphins swimming beside the boat', width: 1920, height: 2560 },
+        { src: gallery7, alt: 'Razorbills on the Grande Moie, an offshore rock', width: 1920, height: 1080 },
+        { src: gallery8, alt: 'Private charter tour to Derrible bay', width: 1920, height: 1423 },
+        { src: gallery9, alt: 'Inside the Moie du Mouton sea cave', width: 1920, height: 1279 },
+        { src: gallery10, alt: 'Drone view of Les Autelets', width: 1920, height: 1279 },
+        { src: gallery11, alt: 'Private charter tour to a sheltered bay', width: 1920, height: 2550 },
+        { src: cave, alt: 'Tour group inside the Moie du Mouton sea cave', width: 1920, height: 1280 },
     ]
 
     // The charter price the owner set on the dashboard (none until it is set or while it loads)
@@ -110,7 +110,7 @@ function Home() {
                         <div><h3>Dolphins and seals</h3><p>Keep a look out for them, and other marine life.</p></div>
                     </li>
                     <li>
-                        <img src={gallery9} alt='A narrow sea cave between orange rocks' loading='lazy' width='1920' height='1279' />
+                        <img src={gallery9} alt='Inside the Moie du Mouton sea cave' loading='lazy' width='1920' height='1279' />
                         <div><h3>Caves and gullies</h3><p>A 10m tide means every trip is different.</p></div>
                     </li>
                 </ul>
