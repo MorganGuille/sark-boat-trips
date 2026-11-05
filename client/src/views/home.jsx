@@ -103,7 +103,7 @@ function Home() {
                 <ul className='tourCards'>
                     <li>
                         <img src={guillemots} alt='Guillemots on the water beside the boat' loading='lazy' width='1920' height='1082' />
-                        <div><h3>Seabirds</h3><p>In season: puffins, guillemots, razorbills and cormorants.</p></div>
+                        <div><h3>Seabirds</h3><p>In season: puffins, guillemots, razorbills and Fulmar.</p></div>
                     </li>
                     <li>
                         <img src={gallery6} alt='Two dolphins swimming beside the boat' loading='lazy' width='1920' height='2560' />
