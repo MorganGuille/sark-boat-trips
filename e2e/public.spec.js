@@ -285,3 +285,65 @@ test('a new form starts plain: the dashboard booking form\'s styles don\'t reach
         expect(seen.inputMargin, url).toBe('0px');
     }
 });
+
+test('home page photos: a click enlarges one, the arrows and keys move on, Escape goes back, and a drag does not open it', async ({ page }) => {
+    const problems = h.watch(page);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/');
+    const row = page.locator('.photoStripRow');
+    await row.scrollIntoViewIfNeeded();
+    const box = page.getByRole('dialog', { name: 'Enlarged photos' });
+    const count = box.locator('.lightboxCount');
+    const shown = () => box.locator('.lightboxRow').evaluate((el) => Math.round(el.scrollLeft / el.clientWidth));
+    const photos = page.getByRole('button', { name: /^Enlarge photo/ }); // by position: the owner rewords the descriptions
+
+    // A drag only moves the row
+    const area = await row.boundingBox();
+    await page.mouse.move(area.x + 700, area.y + 150);
+    await page.mouse.down();
+    await page.mouse.move(area.x + 400, area.y + 150, { steps: 8 });
+    await page.mouse.up();
+    await expect.poll(() => row.evaluate((el) => el.scrollLeft)).toBeGreaterThan(200);
+    await expect(box).toHaveCount(0);
+    await row.evaluate((el) => { el.scrollLeft = 0; });
+
+    const description = await row.locator('img').nth(1).getAttribute('alt');
+    await photos.nth(1).click();
+    await expect(box).toBeVisible();
+    await expect(count).toHaveText('2 of 12');
+    expect(await shown()).toBe(1);
+    await expect(box.locator('.lightboxSlide').nth(1).locator('img')).toHaveAttribute('alt', description);
+    await expect(box).not.toContainText(description); // photo only, the owner's choice: the description is for screen readers
+    const photo = await box.locator('.lightboxSlide').nth(1).locator('img').boundingBox();
+    expect(photo.width).toBeGreaterThan(area.width * 0.6); // really bigger than in the row
+    expect(photo.height).toBeLessThanOrEqual(800);
+
+    await box.getByRole('button', { name: 'Next photo' }).click();
+    await expect(count).toHaveText('3 of 12');
+    await page.keyboard.press('ArrowRight');
+    await expect(count).toHaveText('4 of 12');
+    await page.keyboard.press('ArrowLeft');
+    await expect(count).toHaveText('3 of 12');
+
+    // No arrow past either end
+    await box.locator('.lightboxRow').evaluate((el) => { el.scrollLeft = 0; });
+    await expect(count).toHaveText('1 of 12');
+    await expect(box.getByRole('button', { name: 'Previous photo' })).toBeHidden();
+    await box.locator('.lightboxRow').evaluate((el) => { el.scrollLeft = el.scrollWidth; });
+    await expect(count).toHaveText('12 of 12');
+    await expect(box.getByRole('button', { name: 'Next photo' })).toBeHidden();
+
+    // Escape: back in the row, on the photo last looked at, with the keyboard there
+    await page.keyboard.press('Escape');
+    await expect(box).toHaveCount(0);
+    const last = photos.last();
+    await expect(last).toBeFocused();
+    await expect(last).toBeInViewport();
+
+    // The keyboard opens one too, and a click on the dark area closes it
+    await page.keyboard.press('Enter');
+    await expect(count).toHaveText('12 of 12');
+    await page.mouse.click(20, 200);
+    await expect(box).toHaveCount(0);
+    expect(problems).toEqual([]);
+});

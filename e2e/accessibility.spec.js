@@ -41,6 +41,11 @@ for (const [size, viewport] of Object.entries({ laptop: { width: 1280, height: 8
             await check(page, 'manage my booking: the "are you sure?" box');
             await page.keyboard.press('Escape');
 
+            await page.goto('/');
+            await page.getByRole('button', { name: /^Enlarge photo/ }).first().click();
+            await page.getByRole('dialog').waitFor();
+            await check(page, 'a photo enlarged');
+
             if (size === 'phone') {
                 await page.goto('/');
                 await page.locator('.menuButton, [aria-controls="mobile-menu"]').first().click();

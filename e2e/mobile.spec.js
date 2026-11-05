@@ -298,3 +298,38 @@ test('a phone held sideways: the home photo shows its heading and Book now, belo
     expect(heading.y, 'the heading is below the header').toBeGreaterThanOrEqual(header.y + header.height - 1);
     expect(button.y + button.height, 'Book now is on the screen').toBeLessThanOrEqual(360);
 });
+
+test('a tapped photo fills the phone, a swipe moves on, and pinching still zooms', async ({ page, browserName, context }) => {
+    await page.goto('/');
+    const row = page.locator('.photoStripRow');
+    await row.scrollIntoViewIfNeeded();
+    await page.getByRole('button', { name: /^Enlarge photo/ }).first().click();
+    const box = page.getByRole('dialog', { name: 'Enlarged photos' });
+    await expect(box.locator('.lightboxCount')).toHaveText('1 of 12');
+
+    const size = page.viewportSize();
+    const frame = await box.boundingBox();
+    expect([frame.width, frame.height]).toEqual([size.width, size.height]);
+    const photo = await box.locator('.lightboxSlide').first().locator('img').boundingBox();
+    expect(photo.width).toBeGreaterThan(size.width * 0.9); // nearly the phone's whole width, nothing cropped
+    await expect(box.getByRole('button', { name: 'Next photo' })).toBeHidden(); // a swipe instead
+    await expect(box.getByRole('button', { name: 'Close' })).toBeVisible();
+    await box.locator('.lightboxRow').evaluate((el) => el.scrollTo({ left: el.clientWidth }));
+    await expect(box.locator('.lightboxCount')).toHaveText('2 of 12');
+
+    await box.getByRole('button', { name: 'Close' }).click();
+    await expect(box).toHaveCount(0);
+    await page.getByRole('button', { name: /^Enlarge photo/ }).first().click();
+
+    // Nothing asks the browser to turn pinching off
+    expect(await page.locator('meta[name=viewport]').getAttribute('content')).not.toMatch(/user-scalable|maximum-scale/);
+    for (const el of [box, box.locator('.lightboxRow'), box.locator('.lightboxSlide').first(), box.locator('.lightboxSlide img').first()]) {
+        expect(await el.evaluate((node) => getComputedStyle(node).touchAction)).toBe('auto');
+    }
+    // A real two-finger pinch, where the browser can make one (Chrome's phone mode)
+    if (browserName === 'chromium' && test.info().project.use.isMobile) {
+        const cdp = await context.newCDPSession(page);
+        await cdp.send('Input.synthesizePinchGesture', { x: size.width / 2, y: size.height / 2, scaleFactor: 2 });
+        await expect.poll(() => page.evaluate(() => window.visualViewport.scale)).toBeGreaterThan(1.5);
+    }
+});
