@@ -11,6 +11,51 @@ const submitCharter = async (page) => {
     await page.click('button:has-text("Continue to card details")');
 };
 
+// The address the owner's email link goes to, and the subject it starts with, as a person reads them
+const otherTimeLink = async (page) => {
+    const link = page.locator('.otherTime a');
+    await expect(link).toHaveText('Contact us');
+    const href = decodeURIComponent(await link.getAttribute('href'));
+    return href;
+};
+const written = (daysFromToday) => {
+    const d = new Date();
+    d.setDate(d.getDate() + daysFromToday);
+    return d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).replace(',', '');
+};
+
+test('under the times, a charter customer can email to ask for a different time, with the day in the subject', async ({ page }) => {
+    await page.goto('/charters');
+    await h.pickDate(page, 20);
+    await expect(page.locator('.otherTime')).toHaveText('Looking for a different time? Contact us');
+    expect(await otherTimeLink(page)).toMatch(new RegExp(`^mailto:[^?]+@[^?]+\\?subject=Charter on ${written(20)}, another time$`));
+    // right underneath the times, in the same step
+    await expect(page.locator('.tripCards + .otherTime')).toBeVisible();
+
+    // the subject follows the day they choose
+    await h.pickDate(page, 21);
+    await expect.poll(() => otherTimeLink(page)).toContain(`Charter on ${written(21)}, another time`);
+});
+
+test('the different time line is still there on a day with no time free for a charter', async ({ page, request }) => {
+    const d = new Date();
+    d.setDate(d.getDate() + 20);
+    const day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    await request.post('/__test/insert-booking', { data: { date: day, timeslot: '11am', adults: 1 } });
+    await request.post('/__test/insert-booking', { data: { date: day, timeslot: '2pm', adults: 1 } });
+    await page.goto('/charters');
+    await h.pickDate(page, 20);
+    await expect(page.locator('.customerBooking')).toContainText('No timeslots available today, please choose another day.');
+    expect(await otherTimeLink(page)).toContain(`Charter on ${written(20)}, another time`);
+});
+
+test('normal trips do not offer a different time', async ({ page }) => {
+    await page.goto('/bookings');
+    await h.pickDate(page, 20);
+    await expect(page.locator('.tripCard').first()).toBeVisible();
+    await expect(page.locator('.otherTime')).toHaveCount(0);
+});
+
 test('when Stripe is unavailable the customer is told clearly that nothing was charged', async ({ page, request }) => {
     await request.post('/__test/stripe-fail', { data: { fail: true } });
     await submitCharter(page);

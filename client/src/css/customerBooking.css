@@ -64,6 +64,18 @@
     color: #5b6b78;
 }
 
+/* Under the times on the charter page */
+.customerBooking .otherTime {
+    margin: 0.75rem 0 0;
+    color: #4a5d6e;
+}
+
+.customerBooking .otherTime a {
+    color: #0b6bcc;
+    font-weight: 600;
+    text-decoration: underline;
+}
+
 /* ---------- Trip cards ---------- */
 
 .customerBooking .tripCards {

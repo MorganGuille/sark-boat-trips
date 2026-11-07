@@ -6,6 +6,7 @@ import { FREE_CANCEL_HOURS } from '../utils/policy.js'
 import { getDayTrips } from '../services.jsx/trips.jsx'
 import { formatPounds } from '../utils/money.js'
 import { remembered, remember } from '../utils/rememberBooking.js'
+import { CONTACT_EMAIL } from '../utils/contact.js'
 import '../css/customerBooking.css'
 
 // The booking form customers use, on the booking page and the charter page (the dashboard has its own,
@@ -163,7 +164,14 @@ function CustomerBookingForm({ selectedDate, charter = false, prices }) {
                     </div>
                     {chosen?.extra && chosen.note ? <p className='tripNote extraTripNote'><strong>{chosen.name}:</strong> {chosen.note}</p> : null}
                     {Array.isArray(trips) && offered.length && !chosen ? (
-                        <p className='muted'>{charter ? 'No time is free for a charter on this day.' : 'Every trip on this day is full or closed.'} Please choose another day, or contact us.</p>
+                        <p className='muted'>{charter ? 'No timeslots available today, please choose another day.' :'Every trip on this day is full or closed. Please choose another day, or contact us.'}</p>
+                    ) : null}
+                    {/* Charters can run at other times by arrangement (owner, 7 Nov 2026): the email starts with the day */}
+                    {charter && Array.isArray(trips) ? (
+                        <p className='otherTime'>
+                            Looking for a different time?{' '}
+                            <a href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(`Charter on ${longDate(selectedDate).replace(',', '')}, another time`)}`}>Contact us</a>
+                        </p>
                     ) : null}
                 </fieldset>
 
