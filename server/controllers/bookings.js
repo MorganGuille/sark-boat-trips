@@ -2,15 +2,16 @@ const mongoose = require('mongoose');
 const Bookings = require("../models/bookings");
 const Availability = require('../models/availability');
 const { sendEmail, trySend } = require('../utils/mailer');
-const { getAvailability, isSlotEmpty, withTripLock, noRoomMessage } = require('../utils/availability');
+const { getAvailability, getDaysAvailability, isSlotEmpty, withTripLock, noRoomMessage } = require('../utils/availability');
 const { isDay, showDay } = require('../utils/dates');
 const { readPrices, bookingValue, pricesFor } = require('../utils/prices');
 const { seatsFor } = require('../utils/party');
 const emails = require('../emails');
-const { withTrip, withTrips, getTrip, findTrip, getTripsForDay, tripsFor, tripOfBooking } = require('../utils/trips');
+const { withTrip, withTrips, getTrip, findTrip, tripsFor, tripOfBooking } = require('../utils/trips');
 const { isMonth, monthRange, buildReport, toCsv, voucherSummary } = require('../utils/report');
 const { emailsDue, sendCancelEmails } = require('../utils/cancelEmails');
-const { validateAdminBooking, validateAvailabilitySetting, guernseyToday } = require('../utils/validateBooking');
+const { reapplyVoucher } = require('../utils/vouchers');
+const { validateAdminBooking, validateAvailabilitySetting, guernseyToday, MAX_CAPACITY } = require('../utils/validateBooking');
 
 
 const updateAvailability = async (req, res) => {
@@ -83,10 +84,12 @@ const adminAddBooking = async (req, res) => {
         if (!trip) return res.status(400).send({ ok: false, data: 'That trip is not running on that day.' });
         if (trip.extra && charter === 'true') return res.status(400).send({ ok: false, data: NO_EXTRA_CHARTER });
         // Checked and saved inside the trip's lock, so a customer booking at the same moment can't also take the seats
-        let left;
+        let left, taken = false;
         const saved = await withTripLock(date, timeslot, async () => {
             left = await getAvailability(date, timeslot);
             if (left < adults + children + infants) return null;
+            // A charter needs the whole trip: open, and nobody else on it
+            if (charter === 'true' && !(await isSlotEmpty(date, timeslot))) { taken = true; return null; }
             // validateBeforeSave is off because the model requires the customer details
             return new Bookings({
                 date, timeslot, firstName, lastName, phone, email, adults, children, infants, accommodation, message, charter,
@@ -94,7 +97,9 @@ const adminAddBooking = async (req, res) => {
             }).save({ validateBeforeSave: false });
         });
         if (!saved) {
-            return res.send({ ok: false, data: noRoomMessage({ trip, date, left, booking: { adults, children, infants }, owner: true }) });
+            return res.send({ ok: false, data: taken
+                ? `Can't add this charter: the ${trip.named} on ${showDay(date)} already has other bookings (or is closed), and a charter needs the whole trip.`
+                : noRoomMessage({ trip, date, left, booking: { adults, children, infants }, owner: true }) });
         }
 
         const who = [firstName, lastName].filter(Boolean).join(' ') || 'the booking';
@@ -238,24 +243,8 @@ const checkMonthAvail = async (req, res) => {
     }
 
     try {
-        const availabilityData = await Promise.all(
-            dates.map(async (date) => {
-                try {
-                    // The usual trips by name, and the extra trips that day (seats left on each)
-                    const extras = (await getTripsForDay(date)).filter((trip) => trip.extra);
-                    return {
-                        '11am': await getAvailability(date, '11am'),
-                        '2pm': await getAvailability(date, '2pm'),
-                        ...(extras.length && { extras: await Promise.all(extras.map(async (trip) => ({ timeslot: trip.timeslot, spaces: await getAvailability(date, trip.timeslot) }))) }),
-                    };
-                } catch (error) {
-                    console.error(`Error fetching availability for ${showDay(date)}:`, error);
-                    return null;
-                }
-            })
-        );
-
-        res.send({ ok: true, data: availabilityData });
+        // The usual trips by name, and the extra trips that day (seats left on each)
+        res.send({ ok: true, data: await getDaysAvailability(dates) });
     } catch (error) {
         console.error("Error fetching batch availability:", error);
         res.status(500).send({ ok: false, data: "An error occurred." });
@@ -391,6 +380,9 @@ const updateBooking = async (req, res) => {
     const roomProblem = async () => {
         const trip = `the ${newTrip?.named || `${booking.timeslot} trip`} on ${showDay(booking.date)}`;
         if (booking.charter === 'true') {
+            if (seatsFor(booking) > MAX_CAPACITY) {
+                return `Can't make that change: a charter can take up to ${MAX_CAPACITY} people, infants included.`;
+            }
             if (!(await isSlotEmpty(booking.date, booking.timeslot, booking._id))) {
                 return `Can't make that change: ${trip} already has other bookings (or is closed), and a charter needs the whole trip.`;
             }
@@ -408,6 +400,18 @@ const updateBooking = async (req, res) => {
     if (moved) {
         const oldTrip = await getTrip(before.date, before.timeslot);
         if (oldTrip.extra || newTrip.extra) booking.prices = pricesFor(newTrip, await readPrices()) || undefined;
+    }
+
+    // A gift voucher on it covers its people at its prices, so that is worked out again (utils/vouchers.js)
+    let voucherNote = '';
+    if (booking.voucher?.code && ['voucher', 'unpaid', 'card_saved', undefined, null].includes(booking.paymentStatus)) {
+        const was = { value: booking.voucher.value, status: booking.paymentStatus };
+        const now = await reapplyVoucher(booking, await readPrices());
+        if (now && (now.value !== was.value || booking.paymentStatus !== was.status)) {
+            voucherNote = now.value === 0
+                ? ` Gift voucher ${now.code} no longer covers anyone on this booking: press Undo on the Vouchers tab so it can be used again.`
+                : ` Gift voucher ${now.code} now covers ${pounds(now.value)}: ${now.left ? `${pounds(now.left)} is still to pay${booking.paymentStatus === 'card_saved' ? ', charged to their saved card at the trip time' : ''}` : 'nothing more to pay'}.`;
+        }
     }
 
     // Moved to another day: it gets a reminder the evening before the new day
@@ -435,7 +439,7 @@ const updateBooking = async (req, res) => {
     if (booking.email && !notify) emailNote = ' (customer not emailed, as you asked)';
     else if (customerEmailed === true) emailNote = ' and email sent';
     else if (customerEmailed === false) emailNote = ', but the email to the customer could not be sent';
-    res.send({ ok: true, data: `Booking for ${bookingName(booking)} on ${showDay(booking.date)} updated successfully${emailNote}` });
+    res.send({ ok: true, data: `Booking for ${bookingName(booking)} on ${showDay(booking.date)} updated successfully${emailNote}${voucherNote ? `.${voucherNote}` : ''}` });
 };
 
 // Passenger and income totals for one month (?format=csv for a download). Dashboard only.

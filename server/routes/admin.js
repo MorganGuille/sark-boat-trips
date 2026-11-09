@@ -8,6 +8,8 @@ const express = require("express"),
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 5,
+  // Only wrong guesses count, so the owner logging in and out a few times is never locked out
+  skipSuccessfulRequests: true,
   standardHeaders: true,
   legacyHeaders: false,
   message: { ok: false, data: "Too many login attempts, try again later" },

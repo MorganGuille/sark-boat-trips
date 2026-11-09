@@ -26,7 +26,7 @@ const at = (booking) => tripOf(booking).time;
 const harbourOf = (booking) => tripOf(booking).harbour;
 
 const customerEmail = (booking, subject, content, extraAttachments = []) => {
-    const { html, text, attachments } = renderEmail({ signoff: 'Thank you so much,', ...content });
+    const { html, text, attachments } = renderEmail({ signoff: 'Thank you so much,', harbour: harbourOf(booking), ...content });
     return { from: settings.mail.sender, to: booking.email, subject, html, text, attachments: [...attachments, ...extraAttachments.filter(Boolean)] };
 };
 

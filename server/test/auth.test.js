@@ -33,6 +33,14 @@ describe('logging in', () => {
             assert.equal(res.body.token, undefined);
         }
     });
+    it('only wrong guesses count: the owner logging in again and again is never locked out', async () => {
+        const ip = '203.0.113.60';
+        const login = (password) => t.call(app, 'post', '/admin/login', { body: { userName: t.USERNAME, password }, ip });
+        for (let i = 0; i < 8; i++) assert.equal((await login(t.PASSWORD)).status, 200, `login ${i + 1}`);
+        const wrong = [];
+        for (let i = 0; i < 6; i++) wrong.push((await login('a wrong guess')).status);
+        assert.deepEqual(wrong, [401, 401, 401, 401, 401, 429], 'and five wrong guesses still lock that visitor out');
+    });
     it('the 6th attempt from one visitor in 15 minutes is blocked, but another visitor is not', async () => {
         const ip = '203.0.113.50';
         const codes = [];

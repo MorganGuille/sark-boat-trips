@@ -1,4 +1,5 @@
-// The monthly passenger and income report. One row per day that had bookings, then a total row, then
+// The monthly passenger and income report. One row per day that had bookings (with how much of its
+// income isn't marked paid yet), then a total row, then
 // the gift vouchers sold and used that month (owner, 2 Nov 2026). A voucher's money counts when it is
 // sold, so a booking it pays for only counts what was still to pay (bookingValue takes it off).
 // Cancelled bookings never count. Adults, children and infants include the people on charters (as in the
@@ -14,7 +15,12 @@ const isMonth = (value) => typeof value === 'string' && MONTH.test(value);
 // month" is just a range of text.
 const monthRange = (month) => ({ first: `${month}-01`, last: `${month}-31` });
 
-const empty = () => ({ adults: 0, children: 0, infants: 0, charters: 0, income: 0 });
+const empty = () => ({ adults: 0, children: 0, infants: 0, charters: 0, income: 0, unpaid: 0, unpaidBookings: 0 });
+
+// Income counts what every booking is worth (so cash the owner took without pressing Mark paid still
+// counts). unpaid is the part of it on bookings that aren't marked paid: a card still to be charged, a
+// card that failed, or money to collect (owner's choice, 9 Nov 2026).
+const SETTLED = ['paid', 'paid_in_person', 'voucher'];
 
 // bookings: the active bookings in the month. current: today's prices (for bookings with none saved).
 // Returns { days, total } with income in pence, or null if some booking's price can't be worked out.
@@ -31,6 +37,10 @@ const buildReport = (bookings, current) => {
             to.infants += Number(booking.infants) || 0;
             to.charters += booking.charter === 'true' ? 1 : 0;
             to.income += value;
+            if (value > 0 && !SETTLED.includes(booking.paymentStatus)) {
+                to.unpaid += value;
+                to.unpaidBookings += 1;
+            }
         };
         add(day);
         add(total);
@@ -58,16 +68,16 @@ const voucherSummary = async (month) => {
 // Dates read day-month-year, and money has two decimals, so it opens neatly in a spreadsheet. The gift
 // voucher rows only appear in a month that had any.
 const toCsv = ({ days, total }, vouchers) => {
-    const row = (label, n) => [label, n.adults, n.children, n.infants, n.adults + n.children + n.infants, n.charters, pounds(n.income)].join(',');
+    const row = (label, n) => [label, n.adults, n.children, n.infants, n.adults + n.children + n.infants, n.charters, pounds(n.income), pounds(n.unpaid || 0)].join(',');
     return [
-        'Date,Adults,Children,Infants,Passengers,Charters,Income (GBP)',
+        'Date,Adults,Children,Infants,Passengers,Charters,Income (GBP),Not yet paid (GBP)',
         ...days.map((day) => row(showDay(day.date), day)),
         row('Total', total),
         ...(vouchers?.sold || vouchers?.used ? [
             '',
-            'Gift vouchers,Sold,Used,,,,Income (GBP)',
-            ['Gift vouchers', vouchers.sold, vouchers.used, '', '', '', pounds(vouchers.income)].join(','),
-            ['Total with vouchers', '', '', '', '', '', pounds(total.income + vouchers.income)].join(','),
+            'Gift vouchers,Sold,Used,,,,Income (GBP),',
+            ['Gift vouchers', vouchers.sold, vouchers.used, '', '', '', pounds(vouchers.income), ''].join(','),
+            ['Total with vouchers', '', '', '', '', '', pounds(total.income + vouchers.income), ''].join(','),
         ] : []),
     ].join('\r\n') + '\r\n';
 };

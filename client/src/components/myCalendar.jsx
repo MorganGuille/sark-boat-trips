@@ -42,7 +42,8 @@ function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate, refreshKe
         return parseDay(seasonEndDate);
     }, [page, seasonEndDate]);
 
-    const fetchMonthAvailability = async (date) => {
+    // stillWanted: false once another month has been asked for, so a slow answer can't replace a newer one
+    const fetchMonthAvailability = async (date, stillWanted) => {
         const year = date.getFullYear();
         const month = date.getMonth();
         const firstDayOfMonth = new Date(year, month, 1);
@@ -69,31 +70,37 @@ function MyCalendar({ setSelectedDate, seasonStartDate, seasonEndDate, refreshKe
                     newAvailability[formattedDate] = null;
                 }
             })
-            setAvailability(newAvailability);
+            if (stillWanted()) setAvailability(newAvailability);
         } catch (error) {
             console.error(error);
             const newAvailability = {};
             dates.forEach((formattedDate) => {
                 newAvailability[formattedDate] = null;
             });
-            setAvailability(newAvailability);
+            if (stillWanted()) setAvailability(newAvailability);
         }
     }
 
-    useEffect(() => {
-        fetchMonthAvailability(date);
-    }, [date, refreshKey]);
-
     const day = toDay(date);
+    // The month's seats are asked for when the month changes (or the dashboard saves something), not on
+    // every tap on a day: one tap used to cost the whole month again
+    const month = day.slice(0, 7);
+    useEffect(() => {
+        let current = true;
+        fetchMonthAvailability(parseDay(`${month}-01`), () => current);
+        return () => { current = false; };
+    }, [month, refreshKey]);
+
     // Extra trips are sold by the seat, so the charter page leaves them out
     const charterPage = page === '/charters';
     useEffect(() => {
+        if (!dayPanel) return undefined; // the customer pages show the day's trips in the booking form, which asks for them itself
         let current = true;
         getDayTrips(day)
             .then((dayTrips) => { if (current && Array.isArray(dayTrips)) setTrips(dayTrips); })
             .catch(() => { if (current) setTrips(USUAL_TRIPS); });
         return () => { current = false; };
-    }, [day, refreshKey]);
+    }, [day, refreshKey, dayPanel]);
     // A moved trip shows its new time with the usual one crossed out underneath, like a departures board,
     // and an extra trip its name underneath. The harbour isn't shown here (no room, and the two harbours
     // are 100m apart): the booking form says it.

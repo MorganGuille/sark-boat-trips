@@ -32,9 +32,25 @@ if (database.problem) {
 }
 
 // Connect to MongoDB. MONGODB_URI overrides the Atlas address (for another database or host).
+// If the database can't be reached when the server starts (Atlas down for a moment, a wrong password),
+// the reason is logged and it tries again until it connects: the pages stay up meanwhile, and the
+// charges and reminders start as soon as it does. (It used to give up without saying why, and stay
+// without a database until someone restarted it.)
+const RETRY_SECONDS = Number(process.env.DB_RETRY_SECONDS) || 15;
+// The reason as the database gives it, with any user name and password in an address taken out
+const reasonFor = (error) => String(error?.message || error).replace(/\/\/[^@\s/]+@/g, "//");
+
 async function connecting() {
+  for (;;) {
+    try {
+      await mongoose.connect(database.uri);
+      break;
+    } catch (error) {
+      console.error(`ERROR: Could not connect to the database (${reasonFor(error)}). Nothing can be booked until it connects: trying again in ${RETRY_SECONDS} seconds.`);
+      await new Promise((resolve) => setTimeout(resolve, RETRY_SECONDS * 1000));
+    }
+  }
   try {
-    await mongoose.connect(database.uri);
     console.log(`Connected to ${dbname || "the database"}${database.user ? ` as ${database.user}` : ""}`);
     // The reminder email the evening before each trip (utils/reminders.js)
     startReminderTimer();
@@ -52,7 +68,7 @@ async function connecting() {
       console.log("Card charges: checking every minute for trips that have started");
     }
   } catch (error) {
-    console.log("ERROR: Could not connect to DB");
+    console.error("ERROR: Could not start the timers (card charges, reminders):", error);
   }
 }
 connecting();

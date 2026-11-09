@@ -143,16 +143,39 @@ describe('the monthly report', () => {
         const res = await report('2030-06');
         assert.equal(res.status, 200);
         assert.deepEqual(res.body.days, [
-            { date: '2030-06-10', adults: 7, children: 1, infants: 0, charters: 0, income: 7 * 4000 + 2500 },
-            { date: '2030-06-20', adults: 10, children: 0, infants: 0, charters: 0, income: 40000 },
+            { date: '2030-06-10', adults: 7, children: 1, infants: 0, charters: 0, income: 7 * 4000 + 2500, unpaid: 7 * 4000 + 2500, unpaidBookings: 2 },
+            { date: '2030-06-20', adults: 10, children: 0, infants: 0, charters: 0, income: 40000, unpaid: 40000, unpaidBookings: 1 },
         ]);
-        assert.deepEqual(res.body.total, { adults: 17, children: 1, infants: 0, charters: 0, income: 17 * 4000 + 2500 });
+        // (nothing here is marked paid, so all of the income is still to pay)
+        assert.deepEqual(res.body.total, { adults: 17, children: 1, infants: 0, charters: 0, income: 17 * 4000 + 2500, unpaid: 17 * 4000 + 2500, unpaidBookings: 3 });
+    });
+    it('says how much of the income is not marked paid yet: a card still to charge, a failed card, cash to collect', async () => {
+        await put('2030-06-10', 2, 0, { paymentStatus: 'paid', amountPaid: 8000 });
+        await put('2030-06-10', 1, 0, { paymentStatus: 'paid_in_person', amountPaid: 4000 });
+        await put('2030-06-10', 1, 1, { paymentStatus: 'card_saved' }); // £65, charged when the trip starts
+        await put('2030-06-11', 1, 0, { paymentStatus: 'unpaid', paymentNote: 'The card was declined.' }); // £40
+        await put('2030-06-11', 3, 0); // a phone booking, no status at all: £120
+        await put('2030-06-11', 2, 0, { paymentStatus: 'voucher', voucher: { code: 'GIFT-AAAA-AA', value: 8000 } }); // nothing left to pay
+        await put('2030-06-12', 2, 0, { paymentStatus: 'card_saved', status: 'cancelled' }); // cancelled: never counts
+        const { body } = await report('2030-06');
+        assert.deepEqual(body.days.map((d) => [d.date, d.income, d.unpaid, d.unpaidBookings]), [
+            ['2030-06-10', 12000 + 6500, 6500, 1],
+            ['2030-06-11', 4000 + 12000, 16000, 2],
+        ]);
+        assert.deepEqual([body.total.income, body.total.unpaid, body.total.unpaidBookings], [34500, 22500, 3]);
+        const csv = (await report('2030-06', '?format=csv')).text.split('\r\n');
+        assert.deepEqual(csv.slice(0, 4), [
+            'Date,Adults,Children,Infants,Passengers,Charters,Income (GBP),Not yet paid (GBP)',
+            '10-06-2030,4,1,0,5,0,185.00,65.00',
+            '11-06-2030,6,0,0,6,0,160.00,160.00',
+            'Total,10,1,0,11,0,345.00,225.00',
+        ]);
     });
     it('counts a charter once, at the flat price, with its people included in adults and children', async () => {
         await put('2030-06-15', 11, 0, { charter: 'true' });
         await put('2030-06-15', 4, 1);
         const { body } = await report('2030-06');
-        assert.deepEqual(body.total, { adults: 15, children: 1, infants: 0, charters: 1, income: 40000 + 4 * 4000 + 2500 });
+        assert.deepEqual(body.total, { adults: 15, children: 1, infants: 0, charters: 1, income: 40000 + 4 * 4000 + 2500, unpaid: 40000 + 4 * 4000 + 2500, unpaidBookings: 2 });
     });
     it('only counts the month asked for, including its first and last day', async () => {
         await put('2030-05-31', 1);
@@ -180,7 +203,7 @@ describe('the monthly report', () => {
         await db.collection('admins').updateOne({}, { $unset: { adultPrice: '', childPrice: '', charterPrice: '' } });
         const res = await report('2030-06');
         assert.equal(res.status, 200);
-        assert.deepEqual(res.body.total, { adults: 0, children: 0, infants: 0, charters: 0, income: 0 });
+        assert.deepEqual(res.body.total, { adults: 0, children: 0, infants: 0, charters: 0, income: 0, unpaid: 0, unpaidBookings: 0 });
     });
     it('with bookings but no prices anywhere, it says to set the prices rather than show a wrong income', async () => {
         await db.collection('admins').updateOne({}, { $unset: { adultPrice: '', childPrice: '', charterPrice: '' } });
@@ -210,20 +233,20 @@ describe('the CSV download', () => {
         assert.match(res.headers['content-type'], /^text\/csv/);
         assert.equal(res.headers['content-disposition'], 'attachment; filename="sark-boat-trips-2030-06.csv"');
         assert.equal(res.text, [
-            'Date,Adults,Children,Infants,Passengers,Charters,Income (GBP)',
-            '13-06-2030,10,0,0,10,0,400.00',
-            '14-06-2030,5,1,2,8,0,225.00',
-            '15-06-2030,11,0,0,11,1,400.00',
-            'Total,26,1,2,29,1,1025.00',
+            'Date,Adults,Children,Infants,Passengers,Charters,Income (GBP),Not yet paid (GBP)',
+            '13-06-2030,10,0,0,10,0,400.00,400.00',
+            '14-06-2030,5,1,2,8,0,225.00,225.00',
+            '15-06-2030,11,0,0,11,1,400.00,400.00',
+            'Total,26,1,2,29,1,1025.00,1025.00',
             '',
         ].join('\r\n'));
     });
     it('an empty month is just the header and a zero total', async () => {
         const res = await report('2030-06', '?format=csv');
-        assert.equal(res.text, 'Date,Adults,Children,Infants,Passengers,Charters,Income (GBP)\r\nTotal,0,0,0,0,0,0.00\r\n');
+        assert.equal(res.text, 'Date,Adults,Children,Infants,Passengers,Charters,Income (GBP),Not yet paid (GBP)\r\nTotal,0,0,0,0,0,0.00,0.00\r\n');
     });
     it('toCsv writes pence as pounds without rounding errors', () => {
         const csv = toCsv({ days: [{ date: '2030-06-01', adults: 1, children: 0, infants: 0, charters: 0, income: 1005 }], total: { adults: 1, children: 0, infants: 0, charters: 0, income: 1005 } });
-        assert.match(csv, /01-06-2030,1,0,0,1,0,10\.05\r\n/);
+        assert.match(csv, /01-06-2030,1,0,0,1,0,10\.05,0\.00\r\n/);
     });
 });

@@ -125,6 +125,8 @@ const changeTrip = async (req, res) => {
     const unset = {};
     // (an extra trip has no usual time, so it always keeps its own)
     if (!before.extra && startTime === usualStart(timeslot)) unset.startTime = ''; else set.startTime = startTime;
+    // When the time changed: whoever booked before now can cancel free until it leaves (utils/manage.js)
+    if (startTime !== before.startTime) set.timeMovedAt = now;
     if (harbour === USUAL_HARBOUR) unset.harbour = ''; else set.harbour = harbour;
     await Availability.findOneAndUpdate(
         { date, timeslot },
@@ -241,8 +243,11 @@ const editTrip = async (req, res) => {
     if (moved && before.startsAt <= now) return res.send({ ok: false, data: `The ${before.named} has already started, so its time and harbour can't be changed.` });
     if (moved && after.startsAt <= now) return res.send({ ok: false, data: `${after.time} on ${showDay(date)} has already passed. Please choose a later time.` });
 
-    // Saved first; the new prices, then the emails, follow
-    await Availability.updateOne({ date, timeslot }, rowUpdate(details));
+    // Saved first; the new prices, then the emails, follow. When the time changed is remembered, so
+    // whoever booked before now can cancel free until it leaves, as the terms say.
+    const update = rowUpdate(details);
+    if (details.startTime !== before.startTime) update.$set.timeMovedAt = new Date();
+    await Availability.updateOne({ date, timeslot }, update);
     const parts = [`${after.label} on ${showDay(date)} saved.`];
 
     if (repriced) {

@@ -59,7 +59,7 @@ describe('every email', () => {
 
     it('customer emails end with how to reach us; the owner\'s own emails don\'t need it', async () => {
         for (const mail of await everyEmail()) {
-            const footer = /\+44 7911 764 246 \| hello@sarkboattrips\.test$/.test(mail.text);
+            const footer = /--\nSark Boat Trips, Creux Harbour, Sark\n\+44 7911 764 246 \| hello@sarkboattrips\.test$/.test(mail.text);
             assert.equal(footer, mail.to !== t.OWNER, mail.subject);
         }
     });

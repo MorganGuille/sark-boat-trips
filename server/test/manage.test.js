@@ -246,4 +246,17 @@ describe('the rules (fixed clock)', () => {
         assert.equal(whatCanChange(booking, { ...trip, timeChanged: true }, new Date('2033-06-15T09:59:00Z')).canChange, true);
         assert.equal(whatCanChange(booking, { ...trip, timeChanged: true }, new Date('2033-06-15T10:00:00Z')).why, 'started');
     });
+    it('a moved trip: free until it leaves for those who booked before the move; the usual deadline for those who booked after', () => {
+        const { ObjectId } = require('mongoose').Types;
+        const madeAt = (iso) => ({ ...booking, _id: ObjectId.createFromTime(new Date(iso).getTime() / 1000) }); // a booking's id records when it was made
+        const moved = { ...trip, timeChanged: true, timeMovedAt: new Date('2033-06-01T12:00:00Z') };
+        const anHourBefore = new Date('2033-06-15T09:00:00Z');
+        assert.equal(whatCanChange(madeAt('2033-05-20T08:00:00Z'), moved, anHourBefore).canChange, true, 'booked the old time');
+        assert.deepEqual(whatCanChange(madeAt('2033-06-01T12:05:00Z'), moved, anHourBefore), { canChange: false, why: 'deadline' }, 'booked the new time');
+        assert.deepEqual(freeUntil(madeAt('2033-06-01T12:05:00Z'), moved), new Date('2033-06-14T10:00:00Z'));
+        // moved and later put back: someone who booked while it was moved has had their time changed too
+        const putBack = { ...trip, timeChanged: false, timeMovedAt: new Date('2033-06-03T12:00:00Z') };
+        assert.equal(whatCanChange(madeAt('2033-06-02T08:00:00Z'), putBack, anHourBefore).canChange, true);
+        assert.equal(whatCanChange(madeAt('2033-06-04T08:00:00Z'), putBack, anHourBefore).canChange, false);
+    });
 });

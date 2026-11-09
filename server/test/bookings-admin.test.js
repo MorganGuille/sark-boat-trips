@@ -45,6 +45,16 @@ describe('adding a booking on the dashboard', () => {
         assert.match(res.body.data, /^Only 1 space left on the 11am trip on .*, and this booking is for 2\./);
         assert.equal((await all()).length, 1);
     });
+    it('a charter needs the whole trip: refused while anyone else is on it, fine on an empty one', async () => {
+        await t.insertBooking({ date: t.day(10), adults: 4 });
+        const charter = { date: t.day(10), timeslot: '11am', firstName: 'Charter', adults: '6', charter: 'true' };
+        const refused = await post('/bookings/admin-add', charter);
+        assert.equal(refused.body.ok, false);
+        assert.match(refused.body.data, /^Can't add this charter: the 11am trip on .* already has other bookings \(or is closed\), and a charter needs the whole trip\.$/);
+        assert.equal((await all()).length, 1);
+        assert.equal((await post('/bookings/admin-add', { ...charter, timeslot: '2pm' })).body.ok, true);
+        assert.deepEqual(await t.seatsLeft(app, t.day(10)), { '11am': 8, '2pm': 0 });
+    });
     it('a missing party size is stored as 0 and uses no seats', async () => {
         await post('/bookings/admin-add', { date: t.day(10), timeslot: '11am', firstName: 'Unknown size' });
         const [b] = await all();
@@ -150,6 +160,14 @@ describe('editing a booking', () => {
             assert.equal((await t.seatsLeft(app, t.day(10)))['11am'], 0);
             assert.equal((await edit(id, { charter: 'false' })).body.ok, true);
             assert.equal((await t.seatsLeft(app, t.day(10)))['11am'], 11);
+        });
+        it('a charter is never more than the boat takes: 12 people in all', async () => {
+            const id = await withEmail({ date: t.day(10), adults: 10, charter: 'true' });
+            const refused = await edit(id, { children: '2', infants: '1' });
+            assert.equal(refused.body.ok, false);
+            assert.match(refused.body.data, /a charter can take up to 12 people, infants included/);
+            assert.deepEqual([(await t.findBooking(id)).children, (await t.findBooking(id)).infants], [0, undefined]);
+            assert.equal((await edit(id, { children: '2' })).body.ok, true, 'exactly 12 is fine');
         });
         it('moving a booking onto a chartered trip is refused', async () => {
             await t.insertBooking({ date: t.day(10), adults: 2, charter: 'true' });

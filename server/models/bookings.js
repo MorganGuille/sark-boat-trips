@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { newManageToken, newReference } = require("../utils/bookingCodes");
+const { newManageToken, unusedReference } = require("../utils/bookingCodes");
 
 const bookingsSchema = new mongoose.Schema({
     // A day as 'YYYY-MM-DD' (see utils/dates.js)
@@ -115,10 +115,10 @@ const bookingsSchema = new mongoose.Schema({
 bookingsSchema.index({ date: 1, timeslot: 1, status: 1 });
 
 // Every new booking gets its codes, however it is made (online, dashboard)
-bookingsSchema.pre('save', function () {
+bookingsSchema.pre('save', async function () {
     if (this.isNew && !this.manageToken) {
         this.manageToken = newManageToken();
-        this.reference = newReference();
+        this.reference = await unusedReference((reference) => this.constructor.exists({ reference }));
     }
 });
 

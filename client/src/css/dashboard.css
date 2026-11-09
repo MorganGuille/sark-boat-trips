@@ -221,6 +221,14 @@
     font-weight: 600;
 }
 
+/* under a figure: how many bookings it is made of */
+.reportStats .reportNote {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: normal;
+    color: #5b6773;
+}
+
 /* a label and its £ box stay together when the header row wraps on a phone */
 .priceField {
     display: inline-flex;

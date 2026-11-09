@@ -95,13 +95,13 @@ const startCheckout = (kind) => async (req, res) => {
 
     const amount = bookingValue(booking, pricesFor(trip, prices));
     try {
-        const customer = await stripe.customers.create({
-            email: booking.email, name: `${booking.firstName} ${booking.lastName}`, phone: booking.phone,
-        });
+        // Stripe makes the customer record itself, and only once the card is saved: someone who gives up
+        // on Stripe's page leaves no name, email or phone behind there (the Erase tool couldn't find those)
         const session = await stripe.checkout.sessions.create({
             mode: 'setup',
             currency: 'gbp',
-            customer: customer.id,
+            customer_creation: 'always',
+            customer_email: booking.email,
             success_url: `${settings.publicUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${settings.publicUrl}/canceled?kind=${kind}`, // so that page's Try again goes back to the right booking page
             metadata: toMetadata(details, kind),
@@ -132,6 +132,9 @@ const fulfillCheckoutSession = async (session, now = new Date()) => {
     const details = fromMetadata(session.metadata);
     const setupIntent = await stripe.setupIntents.retrieve(session.setup_intent, { expand: ['payment_method'] });
     const card = setupIntent.payment_method;
+    // The customer Stripe made when the card was saved (the card belongs to it)
+    const idOf = (customer) => (typeof customer === 'string' ? customer : customer?.id);
+    const customerId = idOf(session.customer) || idOf(setupIntent.customer);
 
     // Someone may have taken the last places while this customer was entering their card, or be
     // saving theirs at this very moment (hence the lock). Nothing has been charged, so the trip is
@@ -150,7 +153,7 @@ const fulfillCheckoutSession = async (session, now = new Date()) => {
             booking = await Bookings.create({
                 ...details,
                 stripeSessionId: session.id,
-                stripeCustomerId: session.customer,
+                stripeCustomerId: customerId,
                 stripePaymentMethodId: typeof card === 'string' ? card : card?.id,
                 cardLabel: describeCard(card),
                 paymentStatus: 'card_saved',
@@ -164,6 +167,13 @@ const fulfillCheckoutSession = async (session, now = new Date()) => {
             return { booking: await Bookings.findOne({ stripeSessionId: session.id }), created: false };
         }
         throw error;
+    }
+
+    // Stripe's customer only has the email so far: add the name and phone, so the owner can find them in
+    // Stripe. A failure here changes nothing about the booking or its card.
+    if (customerId) {
+        await stripe.customers.update(customerId, { name: [details.firstName, details.lastName].filter(Boolean).join(' '), phone: details.phone })
+            .catch((error) => console.error('Could not add the name to the Stripe customer:', error.message));
     }
 
     // The booking is saved, so a failed email must not undo it

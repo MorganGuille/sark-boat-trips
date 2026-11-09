@@ -54,6 +54,7 @@ const installMocks = () => {
         // saved cards (setup intents) it knows, and whether creating a session should fail
         stripe: {
             keys: [], created: [], customers: [], sessions: {}, setupIntents: {}, fail: false,
+            updated: [], // customers given a name and phone once their card was saved: [id, details]
             deleted: [], // customers removed (erasing a customer's data); fail makes that fail too
             // card charges: every request made, the answers given per idempotency key, and how a
             // saved card behaves: 'ok' (default), 'declined', 'insufficient_funds',
@@ -64,7 +65,7 @@ const installMocks = () => {
     currentMocks = mocks;
     mocks.sent = (to) => mocks.mails.filter((m) => m.result === 'sent' && (!to || m.to === to));
     mocks.reset = () => {
-        mocks.mails.length = 0; mocks.mailMode = 'none'; mocks.failTo.clear(); mocks.stripe.created.length = 0; mocks.stripe.customers.length = 0; mocks.stripe.charges.length = 0; mocks.stripe.deleted.length = 0; mocks.stripe.fail = false;
+        mocks.mails.length = 0; mocks.mailMode = 'none'; mocks.failTo.clear(); mocks.stripe.created.length = 0; mocks.stripe.customers.length = 0; mocks.stripe.updated.length = 0; mocks.stripe.charges.length = 0; mocks.stripe.deleted.length = 0; mocks.stripe.fail = false;
         for (const store of [mocks.stripe.sessions, mocks.stripe.setupIntents, mocks.stripe.intents, mocks.stripe.cards]) for (const key of Object.keys(store)) delete store[key];
     };
 
@@ -96,6 +97,10 @@ const installMocks = () => {
             client.customers.create = async (params) => {
                 mocks.stripe.customers.push(params);
                 return { id: `cus_test_${mocks.stripe.customers.length}` };
+            };
+            client.customers.update = async (id, params) => {
+                mocks.stripe.updated.push([id, params]);
+                return { id, ...params };
             };
             client.customers.del = async (id) => {
                 if (mocks.stripe.fail) throw Object.assign(new Error('fake Stripe unreachable'), { type: 'StripeConnectionError' });
@@ -245,7 +250,8 @@ const bookOnline = async (app, body, { kind = 'trip', ip } = {}) => {
     if (!res.body.url) return { res, session: null, booking: null };
     const params = currentMocks.stripe.created.at(-1);
     const id = res.body.url.split('/').pop();
-    const session = { id, object: 'checkout.session', mode: 'setup', status: 'complete', customer: params.customer, setup_intent: `seti_${id}`, metadata: params.metadata };
+    // Stripe makes the customer when the card is saved
+    const session = { id, object: 'checkout.session', mode: 'setup', status: 'complete', customer: `cus_for_${id}`, setup_intent: `seti_${id}`, metadata: params.metadata };
     currentMocks.stripe.sessions[id] = session;
     const delivered = await webhook(app, session);
     assert.equal(delivered.status, 200, 'the webhook should be accepted');

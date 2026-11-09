@@ -44,3 +44,31 @@ describe('party size defaults', () => {
         assert.deepEqual([booking.children, booking.infants], [0, 0]);
     });
 });
+
+describe('booking references', () => {
+    const { unusedReference } = require('../utils/bookingCodes');
+
+    it('a reference another booking has is never given out: it draws again until one is free', async () => {
+        const asked = [];
+        const reference = await unusedReference(async (candidate) => { asked.push(candidate); return asked.length <= 2; });
+        assert.equal(asked.length, 3);
+        assert.equal(reference, asked[2]);
+        assert.equal(new Set(asked).size, 3);
+        assert.match(reference, /^SBT-[2-9A-HJKMNP-Z]{6}$/);
+    });
+
+    it('a new booking checks its reference against the others before it is saved', async () => {
+        const exists = Bookings.exists;
+        const asked = [];
+        // the first reference it draws is "taken"
+        Bookings.exists = (filter) => { asked.push(filter.reference); return asked.length === 1 ? Promise.resolve({ _id: 1 }) : exists.call(Bookings, filter); };
+        try {
+            const booking = await new Bookings({ date: t.day(10), timeslot: '11am', adults: 2 }).save({ validateBeforeSave: false });
+            assert.equal(asked.length, 2);
+            assert.equal(booking.reference, asked[1]);
+            assert.notEqual(booking.reference, asked[0]);
+        } finally {
+            Bookings.exists = exists;
+        }
+    });
+});

@@ -7,6 +7,7 @@ const Admin = require('../models/admin');
 const Vouchers = require('../models/vouchers');
 const { isDay, dayNumber, longDay } = require('./dates');
 const { partyText } = require('./party');
+const { fullValue, hasPrices } = require('./prices');
 const { guernseyNow, guernseyToday } = require('./validateBooking');
 const { trySend } = require('./mailer');
 const { repeat } = require('./timer');
@@ -82,6 +83,31 @@ const coverFor = (voucher, booking, prices) => {
     const children = Math.min(voucher.children, Number(booking.children) || 0);
     if (!adults && !children) return { problem: `That booking has nobody this voucher covers (it covers ${coversText(voucher)}).` };
     return { value: adults * prices.adult + children * prices.child };
+};
+
+// After the owner edits a booking that has a voucher on it (more or fewer people, another kind of
+// booking, other prices): what the voucher covers is worked out again, so people it covers aren't
+// charged and people it doesn't cover are. A booking it paid for in full that now has something left
+// to pay goes back to how it was paid before (a saved card is charged at the trip time), and one it
+// now pays for in full becomes 'voucher'. Changes the booking (not saved here) and returns
+// { code, value, left } in pence, or null if nothing can be worked out. Only for a booking that isn't
+// paid or being charged.
+const reapplyVoucher = async (booking, currentPrices) => {
+    const prices = hasPrices(booking.prices) ? booking.prices : currentPrices;
+    const full = fullValue(booking, currentPrices);
+    const voucher = await Vouchers.findOne({ code: booking.voucher.code });
+    if (!voucher || full === null) return null;
+    const cover = coverFor(voucher, booking, prices);
+    const value = cover.problem ? 0 : Math.min(cover.value, full); // it may no longer cover anyone on the booking
+    booking.voucher.value = value;
+    const paysAll = full > 0 && value >= full;
+    if (paysAll && booking.paymentStatus !== 'voucher') {
+        booking.voucher.previousStatus = booking.paymentStatus || 'unpaid';
+        booking.paymentStatus = 'voucher';
+    } else if (!paysAll && booking.paymentStatus === 'voucher') {
+        booking.paymentStatus = booking.voucher.previousStatus === 'card_saved' && booking.stripePaymentMethodId ? 'card_saved' : 'unpaid';
+    }
+    return { code: voucher.code, value, left: full - value };
 };
 
 const count = (value) => (value === undefined || value === null || String(value).trim() === '' ? 0 : Number(value));
@@ -202,6 +228,6 @@ const validUntil = (voucher) => longDay(voucher.expiresOn);
 
 module.exports = {
     SEASON_ENDS, SEND_HOUR, MAX_SEND_ATTEMPTS, newVoucherCode, tidyCode, voucherExpiry, expiryForToday, isExpired,
-    coversText, coversShort, voucherPrice, coverFor, voucherProblem, fromOrder, createVoucher, isDue, deliverVoucher,
+    coversText, coversShort, voucherPrice, coverFor, reapplyVoucher, voucherProblem, fromOrder, createVoucher, isDue, deliverVoucher,
     runDueVoucherEmails, startVoucherTimer, validUntil,
 };

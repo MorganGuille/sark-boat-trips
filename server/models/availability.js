@@ -30,6 +30,9 @@ const availabilitySchema = new mongoose.Schema({
     hours: { type: Number },
     prices: { adult: { type: Number }, child: { type: Number } }, // pence
     removed: { type: Boolean },
+    // When the owner last changed this trip's time (a usual trip or an extra one): customers who booked
+    // before then may cancel free until it starts, as the terms say (utils/manage.js freeUntil)
+    timeMovedAt: { type: Date },
 });
 
 // Looked up by day, and by day and trip (P3-3)

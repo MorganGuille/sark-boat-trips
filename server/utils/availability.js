@@ -2,8 +2,20 @@ const Bookings = require('../models/bookings');
 const Availability = require('../models/availability');
 const { seatsFor } = require('./party');
 const { showDay } = require('./dates');
+const { tripsOfDay, USUAL_TIMESLOTS } = require('./trips');
 
 const DEFAULT_CAPACITY = 12;
+
+// The one rule for a trip's seats, from its Availability row (if it has one) and its bookings that
+// aren't cancelled
+const slotState = (settings, bookings) => ({
+    capacity: settings && Number.isFinite(settings.capacity) ? settings.capacity : DEFAULT_CAPACITY,
+    bookedSeats: bookings.reduce((sum, b) => sum + seatsFor(b), 0),
+    bookingCount: bookings.length,
+    hasCharter: bookings.some((b) => b.charter === 'true'),
+});
+// Seats left (everyone takes a seat, infants too). A private charter takes the whole trip, whatever its party size.
+const seatsLeft = ({ capacity, bookedSeats, hasCharter }) => (hasCharter ? 0 : capacity - bookedSeats);
 
 // What is booked on one trip (a date and a timeslot). Cancelled bookings never count.
 // excludeId leaves one booking out, for checking whether an edit to that booking would fit.
@@ -12,22 +24,31 @@ const getSlotState = async (date, timeslot, excludeId) => {
         Availability.findOne({ date, timeslot }),
         Bookings.find({ date, timeslot, status: { $ne: 'cancelled' }, ...(excludeId && { _id: { $ne: excludeId } }) }),
     ]);
-
-    const capacity = settings && Number.isFinite(settings.capacity) ? settings.capacity : DEFAULT_CAPACITY;
-    const bookedSeats = bookings.reduce((sum, b) => sum + seatsFor(b), 0);
-
-    return {
-        capacity,
-        bookedSeats,
-        bookingCount: bookings.length,
-        hasCharter: bookings.some((b) => b.charter === 'true'),
-    };
+    return slotState(settings, bookings);
 };
 
-// Seats left on a trip (everyone takes a seat, infants too). A private charter takes the whole trip, whatever its party size.
-const getAvailability = async (date, timeslot, excludeId) => {
-    const { capacity, bookedSeats, hasCharter } = await getSlotState(date, timeslot, excludeId);
-    return hasCharter ? 0 : capacity - bookedSeats;
+const getAvailability = async (date, timeslot, excludeId) => seatsLeft(await getSlotState(date, timeslot, excludeId));
+
+// Seats left on every trip of each of these days, for the calendar: one answer per day, in the order
+// asked, as { '11am': 12, '2pm': 8 } plus extras: [{ timeslot, spaces }] (in time order) on a day
+// that has extra trips. Two database reads however many days, where asking trip by trip took about
+// five a day.
+const getDaysAvailability = async (dates) => {
+    const [rows, bookings] = await Promise.all([
+        Availability.find({ date: { $in: dates } }),
+        Bookings.find({ date: { $in: dates }, status: { $ne: 'cancelled' } }, { date: 1, timeslot: 1, adults: 1, children: 1, infants: 1, charter: 1 }),
+    ]);
+    const left = (date, timeslot) => seatsLeft(slotState(
+        rows.find((r) => r.date === date && r.timeslot === timeslot),
+        bookings.filter((b) => b.date === date && b.timeslot === timeslot),
+    ));
+    return dates.map((date) => {
+        const extras = tripsOfDay(date, rows.filter((r) => r.date === date)).filter((trip) => trip.extra);
+        return {
+            ...Object.fromEntries(USUAL_TIMESLOTS.map((timeslot) => [timeslot, left(date, timeslot)])),
+            ...(extras.length && { extras: extras.map((trip) => ({ timeslot: trip.timeslot, spaces: left(date, trip.timeslot) })) }),
+        };
+    });
 };
 
 // A charter needs the whole trip: it must be open (capacity above 0) and have no other bookings
@@ -68,4 +89,4 @@ const noRoomMessage = ({ trip, date, left, booking, owner = false }) => {
         : `Sorry, there ${left === 1 ? 'is' : 'are'} only ${spaces} left on ${on}, and you asked for ${wanted}${infants}. Please book fewer people or choose another trip.`;
 };
 
-module.exports = { getAvailability, isSlotEmpty, withTripLock, noRoomMessage };
+module.exports = { getAvailability, getDaysAvailability, isSlotEmpty, withTripLock, noRoomMessage };

@@ -149,7 +149,7 @@ describe('a customer booking an extra trip online', () => {
         assert.equal((await post('/bookings/remove-trip', { date: DAY, timeslot: swim.timeslot })).body.ok, true);
         const params = mocks.stripe.created.at(-1);
         const id = res.body.url.split('/').pop();
-        const session = { id, object: 'checkout.session', mode: 'setup', status: 'complete', customer: params.customer, setup_intent: `seti_${id}`, metadata: params.metadata };
+        const session = { id, object: 'checkout.session', mode: 'setup', status: 'complete', customer: `cus_for_${id}`, setup_intent: `seti_${id}`, metadata: params.metadata };
         mocks.stripe.sessions[id] = session;
         await t.webhook(app, session);
         const booking = await require('mongoose').connection.db.collection('bookings').findOne({ stripeSessionId: id });
@@ -226,6 +226,48 @@ describe('extra trips on the dashboard', () => {
         const cancelled = await post('/bookings/cancel-trip', { date: DAY, timeslot: swim.timeslot, reason: 'weather' });
         assert.match(cancelled.body.data, /^The Swim trip \(5pm\) on .* is cancelled and closed to new bookings: 1 booking cancelled/);
         assert.match(mocks.sent(t.OWNER).at(-1).text, /You cancelled the Swim trip \(5pm\) on /);
+    });
+});
+
+describe('an extra trip whose time the owner changes', () => {
+    const { whatCanChange } = require('../utils/manage');
+    const { getTrip } = require('../utils/trips');
+    // What a customer could do themselves an hour before it leaves (long after the usual 24 hour deadline)
+    const anHourBefore = async (id, timeslot) => {
+        const trip = await getTrip(DAY, timeslot);
+        return whatCanChange(await t.findBooking(id), trip, new Date(trip.startsAt.getTime() - 3600000));
+    };
+    const booked = async () => {
+        const swim = await addSwim();
+        const id = await t.insertBooking({ date: DAY, timeslot: swim.timeslot, email: 'ann@example.test', paymentStatus: 'card_saved' });
+        return { swim, id };
+    };
+    // A booking made a minute from now, so after any move made in the test (a booking's id records when it was made)
+    const bookedLater = (timeslot) => t.insertBooking({
+        _id: require('mongoose').Types.ObjectId.createFromTime(Math.floor(Date.now() / 1000) + 60),
+        date: DAY, timeslot, email: 'late@example.test', paymentStatus: 'card_saved',
+    });
+
+    it('its customers can cancel free until it leaves, as the terms say (Edit on the Extra trips tab)', async () => {
+        const { swim, id } = await booked();
+        assert.deepEqual(await anHourBefore(id, swim.timeslot), { canChange: false, why: 'deadline' });
+        await post('/bookings/edit-trip', { ...SWIM, timeslot: swim.timeslot, name: 'Evening swim', notifyCustomers: false });
+        assert.equal((await anHourBefore(id, swim.timeslot)).canChange, false, 'a new name is not a new time');
+        const res = await post('/bookings/edit-trip', { ...SWIM, timeslot: swim.timeslot, name: 'Evening swim', startTime: '18:00', notifyCustomers: false });
+        assert.equal(res.body.ok, true, res.body.data);
+        assert.deepEqual(await anHourBefore(id, swim.timeslot), { canChange: true, why: null });
+        // someone who books after the move chose the new time: the usual deadline
+        assert.deepEqual(await anHourBefore(await bookedLater(swim.timeslot), swim.timeslot), { canChange: false, why: 'deadline' });
+    });
+
+    it('the same when it is moved with Change trip details', async () => {
+        const { swim, id } = await booked();
+        await post('/bookings/change-trip', { date: DAY, timeslot: swim.timeslot, startTime: '16:30', harbour: 'maseline', notifyCustomers: false });
+        assert.equal((await anHourBefore(id, swim.timeslot)).canChange, false, 'a new harbour is not a new time');
+        await post('/bookings/change-trip', { date: DAY, timeslot: swim.timeslot, startTime: '17:15', harbour: 'maseline', notifyCustomers: false });
+        assert.equal((await anHourBefore(id, swim.timeslot)).canChange, true);
+        assert.equal((await anHourBefore(await bookedLater(swim.timeslot), swim.timeslot)).canChange, false, 'booked after the move');
+        assert.equal((await dayTrips()).body.data.find((trip) => trip.extra).timeChanged, false, 'the booking page still has no usual time to cross out');
     });
 });
 

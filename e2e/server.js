@@ -34,7 +34,7 @@ process.env.CLIENT_DIST = process.env.CLIENT_DIST || require('./build-client')()
     test.post('/complete-checkout', (req, res) => {
         const params = mocks.stripe.created.at(-1);
         const id = `cs_test_created_${mocks.stripe.created.length}`;
-        mocks.stripe.sessions[id] = { id, object: 'checkout.session', mode: 'setup', status: 'complete', customer: params.customer, setup_intent: `seti_${id}`, metadata: params.metadata };
+        mocks.stripe.sessions[id] = { id, object: 'checkout.session', mode: 'setup', status: 'complete', customer: `cus_for_${id}`, setup_intent: `seti_${id}`, metadata: params.metadata };
         res.json({ id });
     });
     // Plays the buyer paying for a gift voucher on Stripe's page: the last checkout started becomes a

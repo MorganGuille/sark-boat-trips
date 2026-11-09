@@ -29,7 +29,13 @@ function BookingForm({ selectedDate, booking, onResult, onDone }) {
             .catch(() => { if (current) setTrips(USUAL_TRIPS) })
         return () => { current = false }
     }, [tripsDate])
-    const offered = trips
+    // When editing, the booking's own trip is always in the list, even before the day's trips have loaded
+    // or if they can't be loaded. Without it the box fell back to the first trip (11am), and saving any
+    // other change moved a booking on an extra trip to 11am, re-priced it and emailed the customer.
+    const ownTrip = updating && !trips.some((trip) => trip.timeslot === booking.timeslot)
+        ? { timeslot: booking.timeslot, time: booking.tripLabel || booking.timeslot, extra: false, timeChanged: false, harbourChanged: false }
+        : null
+    const offered = ownTrip ? [ownTrip, ...trips] : trips
     // The chosen trip, or the first one if it isn't running on this day
     const chosenTrip = offered.find((trip) => trip.timeslot === timeslot) || offered[0]
 

@@ -7,7 +7,7 @@ const { FREE_CANCEL_HOURS } = require('./policy');
 const { guernseyNow } = require('./validateBooking');
 const { longDay } = require('./dates');
 const { settings } = require('./settings');
-const { newManageToken, newReference } = require('./bookingCodes');
+const { newManageToken, unusedReference } = require('./bookingCodes');
 
 // A paid booking (or one being charged right now, or one a gift voucher pays towards) is never changed
 // by the customer: the owner sorts it out
@@ -17,11 +17,20 @@ const changeablePayment = { paymentStatus: { $in: [...CHANGEABLE, null] }, 'vouc
 const manageUrl = (booking) => (booking.manageToken && settings.publicUrl ? `${settings.publicUrl}/manage/${booking.manageToken}` : null);
 
 // When free cancellation ends: 24 hours before a trip starts, 48 before a charter (utils/policy.js).
-// If the owner has moved the trip to another time, the terms let customers who can't make it cancel
-// free, so then it lasts until the trip starts. trip: from getTrip (it knows the time that day).
+// If the owner has moved the trip to another time since the customer booked, the terms let a customer
+// who can't make it cancel free, so for them it lasts until the trip starts. Someone who booked after
+// the move chose the new time, so they keep the usual deadline (owner's choice, 9 Nov 2026).
+// trip: from getTrip (it knows the time that day, and when it was last moved).
+const movedSinceBooked = (booking, trip) => {
+    // a trip moved before that date was kept only says that it was moved: then everyone on it counts
+    if (!trip.timeMovedAt) return Boolean(trip.timeChanged);
+    // a booking's id records when it was made
+    const made = typeof booking._id?.getTimestamp === 'function' ? booking._id.getTimestamp() : null;
+    return !made || made.getTime() < new Date(trip.timeMovedAt).getTime();
+};
 const freeUntil = (booking, trip) => {
     if (!trip?.startsAt) return null;
-    if (trip.timeChanged) return trip.startsAt;
+    if (movedSinceBooked(booking, trip)) return trip.startsAt;
     const hours = booking.charter === 'true' ? FREE_CANCEL_HOURS.charter : FREE_CANCEL_HOURS.trip;
     return new Date(trip.startsAt.getTime() - hours * 60 * 60 * 1000);
 };
@@ -51,7 +60,7 @@ const ensureManageLinks = async (bookings) => {
         if (booking.manageToken || !booking._id) continue;
         const saved = await Bookings.findOneAndUpdate(
             { _id: booking._id, manageToken: { $exists: false } },
-            { $set: { manageToken: newManageToken(), reference: newReference() } },
+            { $set: { manageToken: newManageToken(), reference: await unusedReference((reference) => Bookings.exists({ reference })) } },
             { new: true }
         ) || await Bookings.findById(booking._id);
         if (!saved) continue;

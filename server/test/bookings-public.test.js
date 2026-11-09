@@ -131,6 +131,37 @@ describe('a booking that is refused is never saved and never emailed', () => {
 });
 
 describe('seats', () => {
+    it('a whole month for the calendar is right for every kind of day, and takes two database reads, not five a day', async () => {
+        const month = Array.from({ length: 31 }, (_, i) => t.day(10 + i));
+        const [plain, charter, small, swim] = [month[0], month[3], month[7], month[30]];
+        await t.insertBooking({ date: plain, adults: 2, children: 1, infants: 1 });
+        await t.insertBooking({ date: plain, adults: 5, status: 'cancelled' }); // never counts
+        await t.insertBooking({ date: plain, timeslot: '2pm', adults: 12 });
+        await t.insertBooking({ date: charter, timeslot: '2pm', adults: 3, charter: 'true' }); // takes the whole trip
+        await db.collection('availabilities').insertOne({ date: small, timeslot: '11am', capacity: 5 });
+        await t.insertBooking({ date: small, adults: 2 });
+        await db.collection('availabilities').insertMany([
+            { date: swim, timeslot: 'xbbbbbb', extra: true, name: 'Sunset trip', startTime: '19:00', hours: 1, capacity: 6, prices: { adult: 3000, child: 2000 } },
+            { date: swim, timeslot: 'xaaaaaa', extra: true, name: 'Swim trip', startTime: '16:30', hours: 1.5, capacity: 8, prices: { adult: 3000, child: 2000 } },
+            { date: swim, timeslot: 'xcccccc', extra: true, removed: true, name: 'Deleted trip', startTime: '09:00', hours: 1, capacity: 0, prices: { adult: 1, child: 1 } },
+        ]);
+        await t.insertBooking({ date: swim, timeslot: 'xaaaaaa', adults: 3 });
+
+        const mongoose = require('mongoose');
+        let reads = 0;
+        mongoose.set('debug', () => { reads++; });
+        const res = await t.call(app, 'post', '/bookings/monthAvailability', { body: { dates: month } });
+        mongoose.set('debug', false);
+
+        const days = res.body.data;
+        assert.equal(days.length, 31);
+        assert.deepEqual(days[0], { '11am': 8, '2pm': 0 });
+        assert.deepEqual(days[1], { '11am': 12, '2pm': 12 }, 'a day with nothing on it');
+        assert.deepEqual(days[3], { '11am': 12, '2pm': 0 });
+        assert.deepEqual(days[7], { '11am': 3, '2pm': 12 });
+        assert.deepEqual(days[30], { '11am': 12, '2pm': 12, extras: [{ timeslot: 'xaaaaaa', spaces: 5 }, { timeslot: 'xbbbbbb', spaces: 6 }] }, 'extra trips in time order, a deleted one left out');
+        assert.ok(reads <= 2, `${reads} database reads for one month`);
+    });
     it('a trip with no bookings has 12 seats on each trip, and the two trips are counted separately', async () => {
         assert.deepEqual(await t.seatsLeft(app, t.day(10)), { '11am': 12, '2pm': 12 });
         await add(t.booking({ timeslot: '11am', adults: '4' }));

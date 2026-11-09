@@ -19,15 +19,17 @@ const verify = (id) => t.call(app, 'get', `/charters/verify-payment${id === unde
 const bookingsFor = (id) => db.collection('bookings').find({ stripeSessionId: id }).toArray();
 
 describe('starting a checkout', () => {
-    it('a trip opens Stripe in "save a card" mode, in pounds, for a new Stripe customer, and returns to PUBLIC_URL', async () => {
+    it('a trip opens Stripe in "save a card" mode, in pounds, and returns to PUBLIC_URL; Stripe makes the customer only when the card is saved', async () => {
         const res = await tripCheckout();
         assert.equal(res.status, 200);
         assert.match(res.body.url, /^https:\/\/checkout\.stripe\.test\//);
         const [params] = mocks.stripe.created;
         assert.equal(params.mode, 'setup', 'nothing is charged at booking');
         assert.equal(params.currency, 'gbp');
-        assert.equal(params.customer, 'cus_test_1');
-        assert.deepEqual(mocks.stripe.customers[0], { email: params.metadata.email, name: 'Alice Smith', phone: '07123 456789' });
+        // someone who gives up on Stripe's page must leave no name, email or phone behind at Stripe
+        assert.equal(mocks.stripe.customers.length, 0, 'no customer is made before the card is saved');
+        assert.equal(params.customer, undefined);
+        assert.deepEqual([params.customer_creation, params.customer_email], ['always', params.metadata.email]);
         assert.equal(params.success_url, 'http://localhost:5173/success?session_id={CHECKOUT_SESSION_ID}');
         assert.equal(params.cancel_url, 'http://localhost:5173/canceled?kind=trip');
         assert.equal(params.metadata.kind, 'trip');
@@ -74,6 +76,13 @@ describe('starting a checkout', () => {
         }
         assert.equal(mocks.stripe.created.length, 0);
         assert.ok((await charterCheckout({ adults: '6', children: '4', infants: '2' })).body.url, 'a charter of exactly 12 is fine');
+    });
+    it('once the card is saved, the customer Stripe made is kept on the booking and given the name and phone', async () => {
+        const { booking, session } = await t.bookOnline(app, t.booking({ date: t.day(15) }));
+        assert.equal(booking.stripeCustomerId, session.customer);
+        assert.deepEqual(mocks.stripe.updated, [[session.customer, { name: 'Alice Smith', phone: '07123 456789' }]]);
+        await t.webhook(app, session); // Stripe sends it twice: nothing more happens
+        assert.equal(mocks.stripe.updated.length, 1);
     });
     it('applies the booking rules, and never reaches Stripe when it refuses', async () => {
         const refused = [{ email: 'nope' }, { adults: '13' }, { date: t.day(-1) }, { date: t.day(250) }, { phone: '' }, { timeslot: '3pm' }];
@@ -195,7 +204,7 @@ describe('the trip fills up while the customer is entering their card', () => {
         assert.ok(res.body.url);
         await t.insertBooking({ date: t.day(15), adults: 10 }); // someone else took most of the seats meanwhile
         const params = mocks.stripe.created[0];
-        const session = { ...t.cardSession('cs_test_full'), metadata: params.metadata, customer: params.customer };
+        const session = { ...t.cardSession('cs_test_full'), metadata: params.metadata };
         await t.webhook(app, session);
         const [b] = await bookingsFor('cs_test_full');
         assert.equal(b.status, 'cancelled');

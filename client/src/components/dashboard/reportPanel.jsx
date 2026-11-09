@@ -4,7 +4,7 @@ import { formatPounds } from '../../utils/money.js'
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
-// Passenger and income totals for one month, with a CSV download. selectedDate is the day picked
+// Passenger and income totals for one month (and how much of the income isn't marked paid yet), with a CSV download. selectedDate is the day picked
 // on the calendar ('YYYY-MM-DD'); the report starts on that day's month.
 function ReportPanel({ selectedDate }) {
 
@@ -50,6 +50,8 @@ function ReportPanel({ selectedDate }) {
             <p className='muted'>
                 Passengers and income for one month. Cancelled bookings are left out. Infants are free. Adults, children and infants include
                 the people on charters, and each charter is also counted once and earns the charter price.
+                Not yet paid is the part of the income on bookings that aren&apos;t marked paid: a card still to be charged,
+                a card that failed, or money you haven&apos;t pressed Mark paid for.
             </p>
             <div className='fieldRow reportPick'>
                 <label htmlFor='reportMonth'>Month</label>
@@ -72,6 +74,13 @@ function ReportPanel({ selectedDate }) {
                     <div><dt>Passengers</dt><dd>{total.adults + total.children + total.infants}</dd></div>
                     <div><dt>Charters</dt><dd>{total.charters}</dd></div>
                     <div><dt>Income</dt><dd>{formatPounds(total.income / 100)}</dd></div>
+                    <div>
+                        <dt>Not yet paid</dt>
+                        <dd>
+                            {formatPounds((total.unpaid || 0) / 100)}
+                            {total.unpaidBookings ? <span className='reportNote'>{total.unpaidBookings} booking{total.unpaidBookings === 1 ? '' : 's'}</span> : null}
+                        </dd>
+                    </div>
                 </dl>
             ) : null}
             {total && (report.vouchers?.sold || report.vouchers?.used) ? (<>

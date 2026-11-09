@@ -11,4 +11,14 @@ const newManageToken = () => crypto.randomBytes(24).toString('base64url'); // 32
 const newReference = () => `SBT-${Array.from(crypto.randomBytes(6), (byte) => REFERENCE_LETTERS[byte % REFERENCE_LETTERS.length]).join('')}`;
 const isManageToken = (value) => typeof value === 'string' && /^[A-Za-z0-9_-]{32}$/.test(value);
 
-module.exports = { newManageToken, newReference, isManageToken };
+// A reference no other booking has. Two bookings drawing the same one is very unlikely (887 million
+// codes), but the owner uses a gift voucher by typing the reference, so it must only ever mean one
+// booking. isTaken(reference) asks the database.
+const unusedReference = async (isTaken) => {
+    for (let attempt = 1; ; attempt++) {
+        const reference = newReference();
+        if (attempt >= 10 || !(await isTaken(reference))) return reference;
+    }
+};
+
+module.exports = { newManageToken, newReference, unusedReference, isManageToken };

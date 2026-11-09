@@ -54,6 +54,7 @@ const describeTrip = (date, timeslot, row) => {
         named: extra ? `${row.name} (${time})` : `${time} trip`, // in a sentence: 'the 3pm trip', 'the Swim trip (4:30pm)'
         startsAt: /^\d{4}-\d{2}-\d{2}$/.test(date || '') ? tripStartsAt(date, timeslot, startTime) : null, // a Date
         timeChanged: !extra && startTime !== usualStart(timeslot),
+        timeMovedAt: row?.timeMovedAt || null, // when the owner last changed its time, if ever (a Date)
         usualTime: extra ? null : timeslot,
         harbour, // { key, name, map }
         harbourChanged: harbourKey !== USUAL_HARBOUR,
@@ -78,13 +79,15 @@ const findTrip = async (date, timeslot) => {
     return isUsual(timeslot) || (trip.extra && !trip.removed) ? trip : null;
 };
 
-// The trips of one day as they are that day: the usual two and any extra ones, in time order
-const getTripsForDay = async (date) => {
-    const rows = await Availability.find({ date });
-    const usual = Object.keys(TIMESLOTS).map((slot) => describeTrip(date, slot, rows.find((r) => r.timeslot === slot)));
+// The trips of one day as they are that day: the usual two and any extra ones, in time order.
+// rows: that day's Availability rows.
+const USUAL_TIMESLOTS = Object.keys(TIMESLOTS);
+const tripsOfDay = (date, rows) => {
+    const usual = USUAL_TIMESLOTS.map((slot) => describeTrip(date, slot, rows.find((r) => r.timeslot === slot)));
     const extras = rows.filter((r) => r.extra && !r.removed).map((r) => describeTrip(date, r.timeslot, r)).filter((t) => t.extra);
     return [...usual, ...extras].sort((a, b) => a.startTime.localeCompare(b.startTime));
 };
+const getTripsForDay = async (date) => tripsOfDay(date, await Availability.find({ date }));
 
 const key = (date, timeslot) => `${date}|${timeslot}`;
 
@@ -111,4 +114,4 @@ const withTrips = async (bookings) => {
 };
 const withTrip = async (booking) => (await withTrips([booking]))[0];
 
-module.exports = { HARBOURS, USUAL_HARBOUR, usualStart, timeLabel, isUsual, isValidStart, newExtraTimeslot, describeTrip, getTrip, findTrip, getTripsForDay, tripsFor, tripOfBooking, withTrips, withTrip };
+module.exports = { HARBOURS, USUAL_HARBOUR, usualStart, timeLabel, isUsual, isValidStart, newExtraTimeslot, describeTrip, getTrip, findTrip, tripsOfDay, USUAL_TIMESLOTS, getTripsForDay, tripsFor, tripOfBooking, withTrips, withTrip };

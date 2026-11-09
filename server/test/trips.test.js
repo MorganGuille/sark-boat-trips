@@ -142,6 +142,10 @@ describe('the emails when a trip moves', () => {
         assert.match(mail.text, /Please be at the Maseline Harbour shortly before 2pm\./);
         assert.doesNotMatch(mail.text, /cancel your booking free of charge/, 'only a time change offers that');
         assert.match(unfold(ics(mail)), /LOCATION:Maseline Harbour\\, Sark/);
+        // the foot of the email names the harbour this trip leaves from, with its own map
+        assert.match(mail.text, /--\nSark Boat Trips, Maseline Harbour, Sark\n\+44/);
+        assert.match(mail.html, /<a href="https:\/\/maps\.app\.goo\.gl\/nLfAgzx3fiaw66z88"[^>]*>Maseline Harbour, Sark<\/a><br>/);
+        assert.doesNotMatch(mail.html, />Creux Harbour, Sark</);
     });
 
     it('time and harbour together are one email', async () => {
@@ -178,6 +182,21 @@ describe('the emails when a trip moves', () => {
 });
 
 describe('everything follows the trip\'s new time and harbour', () => {
+    it('whoever booked before the move can cancel free until it leaves; someone who books the new time has the usual 24 hours', async () => {
+        const { whatCanChange } = require('../utils/manage');
+        const { getTrip } = require('../utils/trips');
+        const early = await card({ firstName: 'Ann' });
+        await change({ startTime: '17:00', notifyCustomers: false });
+        // made a minute from now, so after the move (a booking's id records when it was made)
+        const late = await card({ firstName: 'Bob', _id: require('mongoose').Types.ObjectId.createFromTime(Math.floor(Date.now() / 1000) + 60) });
+        const trip = await getTrip(DAY, '2pm');
+        const anHourBefore = new Date(trip.startsAt.getTime() - 3600000);
+        assert.deepEqual(whatCanChange(await t.findBooking(early), trip, anHourBefore), { canChange: true, why: null });
+        assert.deepEqual(whatCanChange(await t.findBooking(late), trip, anHourBefore), { canChange: false, why: 'deadline' });
+        // a new harbour alone is not a new time: nobody's deadline moves
+        await change({ startTime: '17:00', harbour: 'maseline', notifyCustomers: false });
+        assert.equal(whatCanChange(await t.findBooking(late), await getTrip(DAY, '2pm'), anHourBefore).canChange, false);
+    });
     it('the card is charged at the new time, not the old one', async () => {
         const id = await card({ firstName: 'Ann', email: 'ann@example.test' });
         await change({ startTime: '17:00' });

@@ -128,6 +128,9 @@ test('report: the month\'s totals show on screen and download as a CSV file', as
     const total = page.locator('.reportStats');
     await expect(total.locator('div', { hasText: 'Adults' })).toContainText('5');
     await expect(total.locator('div', { hasText: 'Income' })).toContainText('£200'); // 5 adults at £40
+    // neither is marked paid yet
+    await expect(total.locator('div', { hasText: 'Not yet paid' })).toContainText('£200');
+    await expect(total.locator('div', { hasText: 'Not yet paid' })).toContainText('2 bookings');
 
     const [download] = await Promise.all([page.waitForEvent('download'), page.click('button:has-text("Download CSV")')]);
     expect(download.suggestedFilename()).toMatch(/^sark-boat-trips-\d{4}-\d{2}\.csv$/);
@@ -137,9 +140,9 @@ test('report: the month\'s totals show on screen and download as a CSV file', as
     const d = new Date();
     const today = `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
     expect(lines).toEqual([
-        'Date,Adults,Children,Infants,Passengers,Charters,Income (GBP)',
-        `${today},5,0,0,5,0,200.00`,
-        'Total,5,0,0,5,0,200.00',
+        'Date,Adults,Children,Infants,Passengers,Charters,Income (GBP),Not yet paid (GBP)',
+        `${today},5,0,0,5,0,200.00,200.00`,
+        'Total,5,0,0,5,0,200.00,200.00',
     ]);
 });
 

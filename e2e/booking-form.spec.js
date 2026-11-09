@@ -10,6 +10,33 @@ test.beforeEach(async ({ request, page }) => {
 
 const card = (page, timeslot) => page.locator('.tripCard', { has: page.locator(`input[value="${timeslot}"]`) });
 
+test('tapping another day in the same month asks the server for that day\'s trips once, and not for the whole month again', async ({ page }) => {
+    // two days next to each other in one month, about three weeks from now
+    const first = new Date();
+    first.setDate(first.getDate() + 20);
+    const next = new Date(first);
+    next.setDate(next.getDate() + 1);
+    const [from, to] = next.getMonth() === first.getMonth() ? [20, 21] : [20, 19];
+
+    const asked = [];
+    page.on('request', (request) => {
+        const path = new URL(request.url()).pathname;
+        if (path.startsWith('/bookings/monthAvailability') || path.startsWith('/bookings/trips/')) asked.push(path.replace(/\d{4}-\d{2}-\d{2}$/, 'DAY'));
+    });
+    await page.goto('/bookings');
+    await h.pickDate(page, from);
+    await expect(card(page, '11am')).toContainText('12 spaces left');
+    await page.waitForLoadState('networkidle');
+
+    asked.length = 0;
+    await h.pickDate(page, to);
+    await expect(card(page, '11am')).toContainText('12 spaces left');
+    await page.waitForLoadState('networkidle');
+    expect(asked).toEqual(['/bookings/trips/DAY']);
+    // the calendar still has its colours
+    await expect(page.locator('.react-calendar__tile.available').first()).toBeVisible();
+});
+
 test('the party can only grow to the seats left on the chosen trip, and the total follows', async ({ page, request }) => {
     const day = (() => { const d = new Date(); d.setDate(d.getDate() + 8); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })();
     await request.post('/__test/insert-booking', { data: { date: day, adults: 9 } }); // 3 seats left at 11am

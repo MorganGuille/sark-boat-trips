@@ -12,6 +12,7 @@
 const path = require('path');
 const { safeHtml, trusted } = require('../utils/safeHtml');
 const { settings } = require('../utils/settings');
+const { HARBOURS, USUAL_HARBOUR } = require('../utils/trips');
 
 const BLUE = '#405e77'; // the blue of the old email card and the website
 const INK = '#1f2d3a';
@@ -21,8 +22,6 @@ const FONT = 'Arial, Helvetica, sans-serif';
 
 // Contact details shown at the foot of customer emails (spec P2-11: the phone could become a setting)
 const PHONE = '+44 7911 764 246';
-const MAP_LINK = 'https://maps.app.goo.gl/E2XLJqrGku7eDePZ8';
-const HARBOUR = 'Creux Harbour, Sark';
 
 // The logo travels inside the email (an inline attachment), so it shows even when the email app
 // blocks pictures from other websites
@@ -72,8 +71,13 @@ const blockText = (block) => {
 // preheader: the line email apps show next to the subject in the inbox
 // signoff: for customer emails, e.g. 'Thank you so much,'. Customer emails end with the contact
 // details; the owner's own emails (forOwner) don't need them.
-const renderEmail = ({ heading, preheader = '', blocks, signoff = '', forOwner = false }) => {
+// harbour: where the booking's trip leaves from ({ name, map }, from utils/trips.js), named in the
+// footer. On a day the trip leaves from the Maseline Harbour the footer must not say Creux. An email
+// that isn't about a booking (a gift voucher) shows the usual harbour.
+const renderEmail = ({ heading, preheader = '', blocks, signoff = '', forOwner = false, harbour = HARBOURS[USUAL_HARBOUR] }) => {
     const contact = settings.mail.from;
+    const HARBOUR = `${harbour.name}, Sark`;
+    const MAP_LINK = harbour.map;
     const signoffHtml = signoff ? safeHtml`<p style="margin: 24px 0 0;">${signoff}<br><strong>Sark Boat Trips</strong></p>` : '';
     const footerHtml = forOwner ? '' : safeHtml`<tr><td style="padding: 0 24px 24px;">
             <p style="margin: 0; padding-top: 16px; border-top: 1px solid #dde3e8; font-family: ${FONT}; font-size: 14px; line-height: 1.6; color: ${MUTED}; text-align: center;">
@@ -122,4 +126,4 @@ const renderEmail = ({ heading, preheader = '', blocks, signoff = '', forOwner =
     return { html, text, attachments: [logo] };
 };
 
-module.exports = { renderEmail, PHONE, MAP_LINK, HARBOUR };
+module.exports = { renderEmail, PHONE };

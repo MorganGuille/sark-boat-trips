@@ -288,6 +288,65 @@ describe('vouchers on the dashboard', () => {
     });
 });
 
+describe('a booking with a voucher on it is edited: what the voucher covers is worked out again', () => {
+    const edit = (id, body) => dash('post', `/bookings/update/${id}`, { notifyCustomer: false, ...body });
+    const withCard = (fields) => t.insertBooking({ date: '2030-07-10', adults: 2, prices: PRICES, paymentStatus: 'card_saved', stripeCustomerId: 'cus_a', stripePaymentMethodId: 'pm_a', ...fields });
+    const chargedAtTripTime = async () => { await runDueCharges(new Date('2030-07-10T12:00:00Z')); return mocks.stripe.charges.map((c) => c.params.amount); };
+
+    it('people added to a booking the voucher paid for in full are charged: it goes back to its saved card for the rest', async () => {
+        const id = await withCard({ reference: 'SBT-KKKKKK' });
+        const voucher = await madeByOwner({ adults: '2' });
+        await dash('post', '/vouchers/use', { _id: voucher._id, reference: 'SBT-KKKKKK' });
+        assert.equal((await t.findBooking(id)).paymentStatus, 'voucher');
+
+        const res = await edit(id, { adults: '3', children: '1' });
+        assert.match(res.body.data, new RegExp(`updated successfully.*\\. Gift voucher ${voucher.code} now covers £80: £65 is still to pay, charged to their saved card at the trip time\\.$`));
+        const b = await t.findBooking(id);
+        assert.deepEqual([b.paymentStatus, b.voucher.value], ['card_saved', 8000]);
+        assert.deepEqual(await chargedAtTripTime(), [4000 + 2500]);
+    });
+
+    it('but people the voucher covers are never charged: one for 3 adults used by 2 covers the third when they join', async () => {
+        const id = await withCard({ reference: 'SBT-LLLLLL' });
+        const voucher = await madeByOwner({ adults: '3' });
+        await dash('post', '/vouchers/use', { _id: voucher._id, reference: 'SBT-LLLLLL' });
+        const res = await edit(id, { adults: '3' });
+        assert.match(res.body.data, /now covers £120: nothing more to pay\.$/);
+        const b = await t.findBooking(id);
+        assert.deepEqual([b.paymentStatus, b.voucher.value], ['voucher', 12000]);
+        assert.deepEqual(await chargedAtTripTime(), []);
+    });
+
+    it('people taken off so that the voucher covers everyone: paid with the voucher, and the card is not charged', async () => {
+        const id = await withCard({ adults: 3, reference: 'SBT-MMMMMM' });
+        const voucher = await madeByOwner({ adults: '2' });
+        await dash('post', '/vouchers/use', { _id: voucher._id, reference: 'SBT-MMMMMM' });
+        assert.equal((await t.findBooking(id)).paymentStatus, 'card_saved');
+        await edit(id, { adults: '2' });
+        assert.equal((await t.findBooking(id)).paymentStatus, 'voucher');
+        assert.deepEqual(await chargedAtTripTime(), []);
+    });
+
+    it('a phone booking with no card goes back to unpaid, with the rest to collect', async () => {
+        const id = await t.insertBooking({ date: t.day(10), adults: 2, prices: PRICES, reference: 'SBT-NNNNNN' });
+        const voucher = await madeByOwner({ adults: '2' });
+        await dash('post', '/vouchers/use', { _id: voucher._id, reference: 'SBT-NNNNNN' });
+        const res = await edit(id, { children: '1' });
+        assert.match(res.body.data, /£25 is still to pay\.$/);
+        assert.equal((await t.findBooking(id)).paymentStatus, 'unpaid');
+        const day = await dash('get', `/bookings/${t.day(10)}`);
+        assert.equal(day.body.data.find((x) => x._id === id).amountDue, 2500);
+    });
+
+    it('an edit that changes nobody the voucher covers says nothing about it, and a paid booking is left alone', async () => {
+        const id = await withCard({ reference: 'SBT-PPPPPP' });
+        const voucher = await madeByOwner({ adults: '2' });
+        await dash('post', '/vouchers/use', { _id: voucher._id, reference: 'SBT-PPPPPP' });
+        assert.doesNotMatch((await edit(id, { phone: '07000 111222', infants: '1' })).body.data, /voucher/i);
+        assert.equal((await t.findBooking(id)).paymentStatus, 'voucher');
+    });
+});
+
 describe('a booking with a voucher is cancelled: the voucher stays used until the owner frees it, so everyone is told', () => {
     const decode = (html) => html.replace(/&#39;/g, "'");
     // Ann's voucher pays for all of her booking; Bob's pays for one of his two adults, the rest is on his card
@@ -356,7 +415,7 @@ describe('vouchers in the monthly report', () => {
         assert.equal(res.body.total.income, PRICES.child, 'the adults were paid for by the voucher');
         assert.equal(res.body.total.adults, 2, 'but everyone still counts as a passenger');
         const csv = await t.call(app, 'get', `/bookings/report/${month}?format=csv`, { token });
-        assert.match(csv.text, /\r\nGift vouchers,2,1,,,,80\.00\r\n/);
-        assert.match(csv.text, /\r\nTotal with vouchers,,,,,,105\.00\r\n/);
+        assert.match(csv.text, /\r\nGift vouchers,2,1,,,,80\.00,\r\n/);
+        assert.match(csv.text, /\r\nTotal with vouchers,,,,,,105\.00,\r\n/);
     });
 });

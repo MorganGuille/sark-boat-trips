@@ -56,4 +56,41 @@ describe('starting the real server', () => {
         assert.match(out, /refusing to connect to "Test" outside production/);
         assert.doesNotMatch(out, /listening on port|Connected to/);
     });
+
+    it('if the database is not there yet it says why, keeps the site up, and connects as soon as it can', async () => {
+        // a free port with nothing on it yet
+        const port = await new Promise((resolve) => {
+            const probe = require('node:net').createServer().listen(0, '127.0.0.1', () => { const { port } = probe.address(); probe.close(() => resolve(port)); });
+        });
+        const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'boat-startup-'));
+        fs.writeFileSync(path.join(dir, '.env'), Object.entries({ ...BASE, STRIPETESTKEY: 'sk_test_FAKE', DB_RETRY_SECONDS: '1' }).map(([k, v]) => `${k}=${v}`).join('\n'));
+        const child = spawn(process.execPath, [INDEX], { cwd: dir, env: { PATH: process.env.PATH, PORT: '0', MONGODB_URI: `mongodb://127.0.0.1:${port}/sandbox-startup?serverSelectionTimeoutMS=300` } });
+        let out = '';
+        child.stdout.on('data', (d) => (out += d));
+        child.stderr.on('data', (d) => (out += d));
+        const seen = async (pattern, ms) => {
+            for (const until = Date.now() + ms; Date.now() < until;) {
+                if (pattern.test(out)) return true;
+                await new Promise((resolve) => setTimeout(resolve, 100));
+            }
+            return false;
+        };
+        let database;
+        try {
+            assert.ok(await seen(/ERROR: Could not connect to the database \(connect ECONNREFUSED .+\)\. Nothing can be booked until it connects: trying again in 1 seconds\./, 15000), out);
+            assert.match(out, /listening on port/, 'the pages are still served');
+            assert.equal(child.exitCode, null, 'and it has not given up');
+            assert.doesNotMatch(out, /Connected to|Reminders:/, 'no timers without a database');
+
+            // the database comes up
+            const { MongoMemoryServer } = require('mongodb-memory-server');
+            database = await MongoMemoryServer.create({ instance: { port } });
+            assert.ok(await seen(/Connected to/, 30000), out);
+            assert.ok(await seen(/Reminders: emailed at 6pm/, 5000), 'the timers start once it connects');
+        } finally {
+            child.kill();
+            await database?.stop();
+            fs.rmSync(dir, { recursive: true, force: true });
+        }
+    });
 });

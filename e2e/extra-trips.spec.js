@@ -130,3 +130,28 @@ test('the owner edits an extra trip: fixes its name, adds seats and changes its 
     await expect(box.getByRole('heading', { name: 'Add a trip' })).toBeVisible(); // back to adding
     await expect(page.locator('.calendarDisplay div', { hasText: 'Swimming trip' })).toContainText('10 spaces available');
 });
+
+test('editing a booking on an extra trip keeps it on that trip, even when the day\'s trips can\'t be loaded', async ({ page, request }) => {
+    await h.logIn(page);
+    const day = await h.pickDate(page, 5);
+    await addSwimTrip(page);
+    const timeslot = (await (await request.get(`/bookings/trips/${day}`)).json()).data.find((t) => t.extra).timeslot;
+    await request.post('/__test/insert-booking', { data: { date: day, timeslot, firstName: 'Sam', phone: '0700' } });
+    await tab(page, 'Bookings');
+    await page.reload();
+    await h.pickDate(page, 5);
+    await expect(page.locator('tr:has-text("Sam")')).toBeVisible();
+
+    // from here the day's trips can't be fetched (a dropped connection on the quay)
+    await page.route('**/bookings/trips/**', (route) => route.abort());
+    await page.locator('tr:has-text("Sam") button:has-text("Edit")').click();
+    await expect(page.locator('#timeslot')).toHaveValue(timeslot);
+    await expect(page.locator('#timeslot option:checked')).toHaveText('Swim trip (4:30pm)');
+    await page.fill('#phone', '0999');
+    await page.click('button:has-text("Save changes")');
+    await notice(page, 'updated successfully');
+
+    const [saved] = (await h.savedBookings(request)).filter((b) => b.firstName === 'Sam');
+    expect(saved.phone).toBe('0999');
+    expect(saved.timeslot, 'still on the swim trip, not moved to 11am').toBe(timeslot);
+});
