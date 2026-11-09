@@ -35,6 +35,28 @@ describe('when a trip starts', () => {
     });
 });
 
+describe('what the customer\'s receipt says the charge is for', () => {
+    const post = (path, body) => t.call(app, 'post', path, { body, token });
+    it('an extra trip by its name and time, never its made-up timeslot', async () => {
+        await post('/bookings/add-trip', { date: t.day(1), name: 'Swim trip', startTime: '16:30', hours: 1.5, capacity: 8, adultPrice: '30', childPrice: '20' });
+        const { timeslot } = await db.collection('availabilities').findOne({ extra: true });
+        await saved({ date: t.day(1), timeslot, prices: { adult: 3000, child: 2000, charter: 40000 } });
+        assert.deepEqual(await runDueCharges(at(`${t.day(3)}T00:00:00Z`)), { paid: 1, failed: 0, retry: 0 });
+        assert.equal(mocks.stripe.charges[0].params.description, `Sark Boat Trips Swim trip 4:30pm ${t.shown(t.day(1))}`);
+        assert.doesNotMatch(mocks.stripe.charges[0].params.description, new RegExp(timeslot));
+    });
+    it('a trip the owner moved by the time it really left, and a charter as a charter', async () => {
+        await post('/bookings/change-trip', { date: t.day(1), timeslot: '2pm', startTime: '15:30', harbour: 'creux', notifyCustomers: false });
+        await saved({ date: t.day(1), timeslot: '2pm' });
+        await saved({ date: t.day(2), timeslot: '11am', charter: 'true' });
+        await runDueCharges(at(`${t.day(4)}T00:00:00Z`));
+        assert.deepEqual(mocks.stripe.charges.map((c) => c.params.description).sort(), [
+            `Sark Boat Trips charter 11am ${t.shown(t.day(2))}`,
+            `Sark Boat Trips trip 3:30pm ${t.shown(t.day(1))}`,
+        ]);
+    });
+});
+
 describe('charging at the trip time', () => {
     it('a booking whose trip has started is charged once, off-session, with a receipt, and marked paid', async () => {
         const id = await saved({ adults: 2, children: 1 });

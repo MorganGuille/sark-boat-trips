@@ -1,5 +1,6 @@
 const Admin = require('../models/admin');
 const { dayNumber } = require('./dates');
+const { seatsFor } = require('./party');
 
 // The usual trip start times on a 24 hour clock. The timeslot names are what bookings store: they name
 // the trip, even on a day when the owner has moved it to another time (utils/trips.js).
@@ -122,6 +123,9 @@ const validatePublicBooking = async (body, now = new Date()) => {
 
     const problem = textProblem(body) || partyProblem(body, { adultsRequired: true });
     if (problem) return problem;
+    // Each box allows up to 12, but the boat's limit counts everyone together. A trip is also stopped by
+    // its seats left; a charter has the whole boat, so this is the only check on its size.
+    if (seatsFor(body) > MAX_CAPACITY) return `The boat takes up to ${MAX_CAPACITY} people, infants included. For a bigger group, please contact us.`;
 
     if (!isTimeslot(body.timeslot)) return 'Please choose a valid trip time.';
     if (dayNumber(body.date) === null) return 'Please choose a valid date.';

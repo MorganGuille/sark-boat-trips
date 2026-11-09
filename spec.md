@@ -22,6 +22,8 @@ Written after reading the whole codebase and testing the booking and dashboard f
 
 **Owner's decisions on gift vouchers (2 Nov 2026):** a voucher for more people than come is used up (the owner can put it right in person); customers can't change or cancel a booking with a voucher on it themselves, for now; no header link (footer and home page only).
 
+**Code review (9 Nov 2026):** see "Code review" near the end. R-1 to R-7 are fixed on the `review-fixes` branch (to merge into `version2`); R-8 to R-19 are open.
+
 **Waiting on the owner:** an evening photo for the charters page's evening card (it borrows a coastline shot); a check of the home page photo descriptions (`views/home.jsx`); a try on a real iPhone before go-live. The owner's ngrok address (`strained-raking-acquire.ngrok-free.dev`, port 4041 copy) is how they check changes on their Android.
 
 ## Summary
@@ -65,6 +67,8 @@ Written after reading the whole codebase and testing the booking and dashboard f
 | P3-6 | Owner | Dashboard niceties (undo, in-page dialogs) (**DONE**, on `version2`) | M |
 | P3-7 | Customer | Accessibility pass (**DONE**, on `version2`) | S–M |
 | P3-8 | Docs | README and `.env.example` | S |
+| R-1 to R-7 | Server | Code review, 9 Nov 2026: seven fixes (**DONE** on the `review-fixes` branch) | S each |
+| R-8 to R-19 | All | Code review, 9 Nov 2026: smaller problems and tidy-up (open) | S–M each |
 
 ---
 
@@ -407,6 +411,40 @@ Booking checks availability and then creates the record, which isn't atomic. Two
 - **Video paused out of sight won't resume small `[Customer]`: OPEN** (owner, 5 Nov 2026). Swipe the playing video away and back: pressing play on its control bar doesn't resume it, the tap opens the lightbox instead. Probably Vimeo shows its play button higher up once paused, under the see-through button (`.videoEnlarge`), which stops above the control bar. Not yet looked into.
 - **P3-7 `[Customer]` Accessibility pass: DONE** (3 Nov 2026, on `version2`). axe (`@axe-core/playwright`) now checks every page, the booking steps, the manage page and every dashboard tab at laptop and phone width (`e2e/accessibility.spec.js`). It found one real problem everywhere: white words on the gold and green buttons scored about 2.3 for contrast (4.5 needed). The owner chose option C from a mock-up: dark navy words on the gold (5.6, hover lighter), and a deeper green (`#047857`, 5.5) with white words; blue links and hovers a shade darker. Later the same day the owner chose, from a second mock-up of six colours, **sunny yellow** (`#f5c242`, navy words, score 7.6, hover `#f8d06b`) for the Book buttons in place of the gold; the green pay buttons are unchanged. The gift voucher PDF keeps its thin gold stripe. Also: the phone's sideways reviews row can be reached by keyboard, and calendar days get a clear outline when moved through with the keyboard (they only changed shade). A keyboard walk of the customer pages found every other control already showed its focus. Not changed: each calendar day is its own Tab stop (about 30 presses to pass the calendar; that's the calendar component's own behaviour). Still worth doing before go-live: a quick try with a real phone screen reader (VoiceOver or TalkBack). Original note: Run axe in the Playwright suite, then check calendar tile contrast, focus order and screen-reader announcements.
 - **P3-8 `[Docs]` README and `.env.example`.** **Done** (26 Oct 2026): the README now has setup and environment instructions, and `server/.env.example` lists every setting. Still open: the owner's own `.env` has an unused PostgreSQL block (`DB_*`) that can be deleted.
+
+---
+
+## Code review (9 Nov 2026)
+
+A read-through of all the server code and the main website logic (booking form, calendar, dashboard page), looking for errors and repeated code. Not read: the CSS, the tests, the home page photo and video code, most of the individual dashboard panels. **[verified]** means it was reproduced against a throwaway test database or the running site; the rest come from reading the code.
+
+### Fixed on the `review-fixes` branch (9 Nov 2026, not yet merged or deployed)
+
+Each has a test that fails without the fix (checked by breaking the fix on purpose).
+
+- **R-1 `[Server]` An online charter could be booked for up to 36 people [verified]: DONE.** Each box allowed 12 (adults, children, infants) and nothing checked the total; a trip was stopped by its seats, a charter by nothing. The form already stopped at 12, so it took a request made by hand. Now `validatePublicBooking` refuses any customer booking of more than 12 in all ("The boat takes up to 12 people, infants included. For a bigger group, please contact us."). Test: `checkout.test.js`.
+- **R-2 `[Server]` Stripe receipts named the trip wrongly [verified]: DONE.** The charge's description used the booking's `timeslot`, so an extra trip's receipt read "Sark Boat Trips trip xec7522 10-11-2026" and a moved trip showed its usual time. It now reads as the saved card's description does: "Sark Boat Trips Swim trip 4:30pm 10-11-2026", the time the trip really left, "charter" for a charter (`chargeDescription` in `utils/charges.js`). Test: `charges.test.js`.
+- **R-3 `[Server]` The site was sent uncompressed and never kept by the browser [verified]: DONE.** The main script was 465KB on the wire (149KB compressed) and every photo was asked for again on every visit. Now pages, scripts, styles and API answers are compressed (the `compression` package, a new dependency), and everything in `/assets` (whose names change when the files do) is kept by the browser for a year; pages are still checked every visit, so a release shows at once. Test: `pages.test.js`.
+- **R-4 `[Owner]` A gift voucher stayed "used" when its booking was cancelled, and nobody said so: DONE (the reminder; the voucher is still freed by the owner).** Cancelling on the dashboard now says which voucher to free (in the message and in the owner's email, also when the voucher only paid for part of the booking), "Cancel a whole trip" lists every voucher to free in its message and its summary email, and the customer's email says their voucher hasn't been used up whether it paid for all or part. **Not done, a choice for the owner:** freeing the voucher automatically on cancel (then Undo and Restore would have to take it again). Test: `vouchers.test.js`.
+- **R-5 `[Owner]` Customer data: where they were staying was missed: DONE.** `accommodation` is now in the file sent to the customer and is blanked by Erase. Test: `customers.test.js`.
+- **R-6 `[Server]` A card saved after the trip had left made a booking that was charged at once: DONE.** The one hour cutoff was only checked when the customer started, and Stripe's page stays open for a day. Now such a booking is kept as cancelled ("Not booked: the trip had already left when they saved their card. Nothing was charged."), nothing is charged, and both sides are emailed (`tripFullEmail` and `tripFullOwnerEmail` with `left`). The owner can restore it if they did come. Test: `checkout.test.js`.
+- **R-7 `[Server]` Emails had no time limit: DONE.** The success page and Stripe's webhook wait for the confirmation and the owner's alert; with the mailer's own limits (minutes) a stalled mail server would hang the customer's page. The mailer now gives up after 10 seconds to connect and 20 while sending, and the send counts as failed (reported as any failed email is). Test: `email-settings.test.js`. Not proved: how the real Zoho server behaves when slow.
+- Also removed: two unused imports in `controllers/bookings.js`.
+
+### Open
+
+- **R-8 `[Customer]` Each tap on a calendar day reloads the whole month.** `myCalendar.jsx` asks for the month again whenever the day changes, and the server answers with about 5 database lookups per day (about 150 a tap); the customer pages also fetch the day's trips twice (the calendar's copy isn't shown there). All three share the limit of 60 a minute per internet connection, so about 20 quick taps, or a few guests on one hotel wifi, get "Too many requests". Fix: ask for the month only when the month changes, skip the calendar's trips request when `dayPanel` is off, and read the month in two database lookups. S–M.
+- **R-9 `[Owner]` Editing a booking on an extra trip can move it to 11am.** In `bookingForm.jsx` the time box falls back to the first trip in the list while the day's trips are loading, or if they fail to load; saving then moves the booking, re-prices it and emails the customer. Fix: don't offer Save until the trips have loaded, and keep the booking's own trip in the list. S.
+- **R-10 `[Owner]` A booking paid in full by voucher is never charged for people added later.** It stays `voucher`. Fix: when an edit leaves something to pay, go back to the status the voucher replaced. S.
+- **R-11 `[Server]` Abandoned bookings leave a customer record at Stripe** (name, email, phone), one per attempt, which Erase can't find. Fix: let Stripe's page make the customer when the card is saved. S–M.
+- **R-12 `[Customer]` Two things after a trip is moved.** The footer of every customer email says Creux Harbour, with its map, even for a trip leaving from Maseline. And changing an extra trip's time (Edit on Extra trips) doesn't give its customers the free cancellation the terms promise; moving a usual trip does. S.
+- **R-13 `[Owner]` The login limit counts successful logins**, so five logins in 15 minutes locks the owner out. Fix: only count failures. S.
+- **R-14 `[Server]` A failed database connection at startup** is logged without the reason, and the server carries on with no timers (charges, reminders). Fix: log it and exit, so Heroku restarts it. S.
+- **R-15 `[Server]` The server would accept a dashboard charter on a trip that already has bookings [verified]**, and a dashboard edit can make a charter of more than 12. The dashboard's New booking form never sends a charter, so this is only the server's own check. S.
+- **R-16 `[Server]` Booking references aren't guaranteed unique.** A clash is very unlikely (887 million codes), but using a voucher by reference would take the first match. S.
+- **R-17 `[Owner]` Worth knowing: the monthly report counts what bookings are worth, not what was collected.** A failed card or an unpaid no-show still counts as income. Possibly what the owner wants.
+- **R-18 `[Build]` `npm audit` lists 10 advisories in the server's installed packages** (9 Nov 2026: express, mongoose, nodemailer, axios and packages they use; one marked critical in `proxy-addr`). Not looked into one by one. `npm audit fix` covers all but nodemailer, which needs a major version. Do it as its own change, with the full check. S–M.
+- **R-19 `[Build]` Tidy-up.** Unused packages: `axios` in the root; `cors`, `uuid` and `react-router-dom` in the client. The server code isn't linted (how the unused imports got in). Repeated helpers: pence to pounds in six server files, the email pattern in three, the "download a file" helper in three client files, `escapeRegex`, `forStripe`, `isWhole`, `blank` and the code letters in two each. Leftovers: the old `/bookings/search/<text>` address (only tests use it), `express.static("public")` (no such folder), `express.urlencoded` (nothing posts a form), a `console.log` in `bookingForm.jsx`, "check console for errors" in `checkDate`, the dashboard form's customer wording ("Required fields", "Nothing has been charged"). The phone number is typed in `server/emails/layout.js` and `client/src/utils/contact.js`. The dashboard's code is in the one script every customer downloads: loading it only on `/dashboard` would make that script smaller.
 
 ---
 

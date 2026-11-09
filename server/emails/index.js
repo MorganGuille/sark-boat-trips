@@ -117,24 +117,28 @@ const updatedEmail = (booking, { amount } = {}) => {
     }, [ics]);
 };
 
-// What a cancellation email says about money, from how the booking stood when it was cancelled
-const cancelPaymentLine = (paymentStatus) => {
-    if (paymentStatus === 'card_saved') return "Your card has not been charged, and it won't be charged for this booking.";
-    if (['paid', 'paid_in_person', 'charging'].includes(paymentStatus)) return "If you've already paid, please get in touch and we'll sort out a refund.";
-    if (paymentStatus === 'voucher') return "Your gift voucher hasn't been used up: please get in touch to book another day.";
-    return 'Nothing has been charged.';
+// What a cancellation email says about money, from how the booking stood when it was cancelled. A gift
+// voucher used on it is mentioned whether it paid for all of the booking or only part.
+const VOUCHER_KEPT = "Your gift voucher hasn't been used up: please get in touch to book another day.";
+const cancelPaymentLine = (booking) => {
+    const { paymentStatus } = booking;
+    if (paymentStatus === 'voucher') return VOUCHER_KEPT;
+    const voucher = booking.voucher?.code ? ` ${VOUCHER_KEPT}` : '';
+    if (paymentStatus === 'card_saved') return `Your card has not been charged, and it won't be charged for this booking.${voucher}`;
+    if (['paid', 'paid_in_person', 'charging'].includes(paymentStatus)) return `If you've already paid, please get in touch and we'll sort out a refund.${voucher}`;
+    return `Nothing has been charged.${voucher}`;
 };
 
 // apology: set when the owner cancelled the whole trip (cancelTrip)
 const cancellationEmail = (booking, apology = '') =>
     customerEmail(booking, `Your ${what(booking)} on ${shortDay(booking.date)} at ${at(booking)} has been cancelled`, {
         heading: 'Your booking has been cancelled',
-        preheader: cancelPaymentLine(booking.paymentStatus),
+        preheader: cancelPaymentLine(booking),
         blocks: [
             dear(booking),
             `Your ${what(booking)} on ${longDay(booking.date)} at ${at(booking)} has been cancelled${booking.reference ? ` (booking reference ${booking.reference})` : ''}.`,
             ...(apology ? [apology] : []),
-            cancelPaymentLine(booking.paymentStatus),
+            cancelPaymentLine(booking),
             ...(apology ? [] : ['If this is a mistake, please get in touch.']),
         ],
     });
@@ -211,14 +215,17 @@ const tripMessageEmail = (booking, message) =>
         ],
     });
 
-// The trip filled up while the customer was on Stripe's page (controllers/checkout.js)
-const tripFullEmail = (booking) =>
-    customerEmail(booking, `Sorry, the ${what(booking)} on ${shortDay(booking.date)} at ${at(booking)} is full`, {
-        heading: 'Sorry, that trip filled up',
+// The trip filled up while the customer was on Stripe's page (controllers/checkout.js), or (left) it
+// had already set off by the time they saved their card
+const tripFullEmail = (booking, { left = false } = {}) =>
+    customerEmail(booking, `Sorry, the ${what(booking)} on ${shortDay(booking.date)} at ${at(booking)} ${left ? 'had already left' : 'is full'}`, {
+        heading: left ? 'Sorry, that trip had already left' : 'Sorry, that trip filled up',
         preheader: 'Nothing has been charged.',
         blocks: [
             dear(booking),
-            `While you were entering your card, the last places on the ${at(booking)} ${what(booking)} on ${longDay(booking.date)} were taken, so we couldn't book you.`,
+            left
+                ? `By the time your card was saved, the ${at(booking)} ${what(booking)} on ${longDay(booking.date)} had already left, so we couldn't book you.`
+                : `While you were entering your card, the last places on the ${at(booking)} ${what(booking)} on ${longDay(booking.date)} were taken, so we couldn't book you.`,
             [{ bold: 'Nothing has been charged.' }],
             ['Please choose another trip on ', settings.publicUrl ? { link: settings.publicUrl, text: 'our website' } : 'our website', ", or get in touch and we'll do our best to fit you in."],
         ],
@@ -272,7 +279,16 @@ const updatedOwnerEmail = (booking, { change } = {}) => change
 const PAYMENT_FOR_OWNER = {
     card_saved: 'card saved, it will not be charged', paid: 'PAID ONLINE: refund it in Stripe if needed',
     paid_in_person: 'PAID IN PERSON: refund it yourself if needed', charging: 'a charge was under way: check Stripe',
-    voucher: 'PAID WITH A GIFT VOUCHER: press Undo on the Vouchers tab so it can be used again',
+    voucher: 'PAID WITH A GIFT VOUCHER',
+};
+// A cancelled booking keeps its gift voucher marked as used until the owner frees it
+const FREE_VOUCHER = 'press Undo on the Vouchers tab so it can be used again';
+const paymentForOwner = (booking) => {
+    const payment = PAYMENT_FOR_OWNER[booking.paymentStatus] || 'unpaid, nothing to refund';
+    if (!booking.voucher?.code) return booking.paymentStatus === 'voucher' ? `${payment}: ${FREE_VOUCHER}` : payment;
+    return booking.paymentStatus === 'voucher'
+        ? `${payment} ${booking.voucher.code}: ${FREE_VOUCHER}`
+        : `${payment}. GIFT VOUCHER ${booking.voucher.code} was used for part of it: ${FREE_VOUCHER}`;
 };
 
 // byCustomer: they cancelled it themselves, before the free-cancellation deadline (controllers/manage.js)
@@ -282,17 +298,19 @@ const cancelledOwnerEmail = (booking, { byCustomer = false, customerEmailFailed 
         blocks: [
             ...(byCustomer ? ['They cancelled it themselves from the link in their email, before the free-cancellation deadline. Their seats are free again.'] : []),
             ...(customerEmailFailed ? ['The cancellation email to the customer could not be sent, so please let them know.'] : []),
-            ownerDetails(booking, [['Payment', PAYMENT_FOR_OWNER[booking.paymentStatus] || 'unpaid, nothing to refund']]),
+            ownerDetails(booking, [['Payment', paymentForOwner(booking)]]),
             dashboardButton(),
         ],
     });
 
-const tripFullOwnerEmail = (booking, { customerEmailFailed = false } = {}) =>
-    ownerEmail(`Booking NOT made (trip full): ${nameOf(booking)}, ${people(booking)}, ${when(booking)}${customerEmailFailed ? CUSTOMER_EMAIL_FAILED : ''}`, {
-        heading: 'Booking not made: the trip filled up',
+const tripFullOwnerEmail = (booking, { customerEmailFailed = false, left = false } = {}) =>
+    ownerEmail(`Booking NOT made (trip ${left ? 'had left' : 'full'}): ${nameOf(booking)}, ${people(booking)}, ${when(booking)}${customerEmailFailed ? CUSTOMER_EMAIL_FAILED : ''}`, {
+        heading: left ? 'Booking not made: the trip had already left' : 'Booking not made: the trip filled up',
         blocks: [
-            `A customer saved their card, but by then the ${at(booking)} ${what(booking)} on ${longDay(booking.date)} had no room left, so the booking was not made and nothing was charged.${customerEmailFailed ? '' : ' They have been emailed.'}`,
-            'It is on the dashboard as a cancelled booking (Show cancelled). If room frees up you can restore it, and their card will then be charged at the trip time.',
+            `A customer saved their card, but by then the ${at(booking)} ${what(booking)} on ${longDay(booking.date)} ${left ? 'had already left' : 'had no room left'}, so the booking was not made and nothing was charged.${customerEmailFailed ? '' : ' They have been emailed.'}`,
+            left
+                ? 'It is on the dashboard as a cancelled booking (Show cancelled). If they did come on the trip, restore it there and their card will be charged.'
+                : 'It is on the dashboard as a cancelled booking (Show cancelled). If room frees up you can restore it, and their card will then be charged at the trip time.',
             ownerDetails(booking),
             dashboardButton(),
         ],
@@ -375,7 +393,7 @@ const tripMessageOwnerEmail = ({ trip, message, bookings, notEmailed }) => {
 };
 
 // The owner cancelled a whole trip (controllers/bookings.js cancelTrip)
-const tripCancelledOwnerEmail = ({ date, time, named = `${time} trip`, reasonText, cancelled, notEmailed, toRefund }) => {
+const tripCancelledOwnerEmail = ({ date, time, named = `${time} trip`, reasonText, cancelled, notEmailed, toRefund, withVoucher = [] }) => {
     const count = `${cancelled.length} booking${cancelled.length === 1 ? '' : 's'}`;
     const line = (b) => `${nameOf(b)}, ${partyText(b)}${b.phone ? `, phone ${b.phone}` : ''}`;
     return ownerEmail(`Trip cancelled: ${time} ${shortDay(date)}, ${count}`, {
@@ -386,6 +404,7 @@ const tripCancelledOwnerEmail = ({ date, time, named = `${time} trip`, reasonTex
             ...(cancelled.length ? [{ list: cancelled.map(line) }] : []),
             ...(notEmailed.length ? [[{ bold: 'NOT EMAILED (no address, or the email failed), please contact them:' }], { list: notEmailed.map(line) }] : []),
             ...(toRefund.length ? [[{ bold: 'ALREADY PAID, refund them (online payments in Stripe):' }], { list: toRefund.map(line) }] : []),
+            ...(withVoucher.length ? [[{ bold: 'GIFT VOUCHERS still marked as used (press Undo on the Vouchers tab so they can be used again):' }], { list: withVoucher.map((b) => `${b.voucher.code}: ${line(b)}`) }] : []),
             dashboardButton(),
         ],
     });

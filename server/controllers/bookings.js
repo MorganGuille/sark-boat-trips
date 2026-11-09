@@ -5,12 +5,12 @@ const { sendEmail, trySend } = require('../utils/mailer');
 const { getAvailability, isSlotEmpty, withTripLock, noRoomMessage } = require('../utils/availability');
 const { isDay, showDay } = require('../utils/dates');
 const { readPrices, bookingValue, pricesFor } = require('../utils/prices');
-const { seatsFor, partyText } = require('../utils/party');
+const { seatsFor } = require('../utils/party');
 const emails = require('../emails');
 const { withTrip, withTrips, getTrip, findTrip, getTripsForDay, tripsFor, tripOfBooking } = require('../utils/trips');
 const { isMonth, monthRange, buildReport, toCsv, voucherSummary } = require('../utils/report');
 const { emailsDue, sendCancelEmails } = require('../utils/cancelEmails');
-const { validatePublicBooking, validateAdminBooking, validateAvailabilitySetting, guernseyToday } = require('../utils/validateBooking');
+const { validateAdminBooking, validateAvailabilitySetting, guernseyToday } = require('../utils/validateBooking');
 
 
 const updateAvailability = async (req, res) => {
@@ -127,7 +127,9 @@ const cancelBooking = async (req, res) => {
         }
 
         const told = cancelledBooking.email ? 'The customer will be emailed in about a minute.' : 'There is no email address, so the customer won\'t be told.';
-        res.send({ ok: true, data: `Booking for ${bookingName(cancelledBooking)} on ${showDay(cancelledBooking.date)} at ${await labelOf(cancelledBooking)} cancelled. ${told}` });
+        // The voucher stays marked as used until the owner frees it (a restore would need it again)
+        const voucher = cancelledBooking.voucher?.code ? ` Gift voucher ${cancelledBooking.voucher.code} was used on it: press Undo on the Vouchers tab so it can be used again.` : '';
+        res.send({ ok: true, data: `Booking for ${bookingName(cancelledBooking)} on ${showDay(cancelledBooking.date)} at ${await labelOf(cancelledBooking)} cancelled. ${told}${voucher}` });
 
     } catch (error) {
         console.error("Error cancelling booking:", error);
@@ -536,15 +538,17 @@ const cancelTrip = async (req, res) => {
         else notEmailed.push(booking);
     }
     const toRefund = cancelled.filter((b) => ['paid', 'paid_in_person', 'charging'].includes(b.paymentStatus));
+    // Their gift vouchers stay marked as used until the owner presses Undo on each
+    const withVoucher = cancelled.filter((b) => b.voucher?.code);
 
     const trip = `the ${tripNow.named} on ${showDay(date)}`;
-    await trySend(emails.tripCancelledOwnerEmail({ date, time: tripNow.label, named: tripNow.named, reasonText: TRIP_REASONS[reason], cancelled, notEmailed, toRefund }));
+    await trySend(emails.tripCancelledOwnerEmail({ date, time: tripNow.label, named: tripNow.named, reasonText: TRIP_REASONS[reason], cancelled, notEmailed, toRefund, withVoucher }));
 
     const parts = [`${cancelled.length} booking${cancelled.length === 1 ? '' : 's'} cancelled`, `${emailed} customer${emailed === 1 ? '' : 's'} emailed`];
     if (notEmailed.length) parts.push(`${notEmailed.length} not emailed (see your email)`);
     res.send({
         ok: true,
-        data: `${trip.replace(/^the/, 'The')} is cancelled and closed to new bookings: ${parts.join(', ')}. Nobody will be charged.${toRefund.length ? ` ${toRefund.length} had already paid: refund them (see your email).` : ''}`,
+        data: `${trip.replace(/^the/, 'The')} is cancelled and closed to new bookings: ${parts.join(', ')}. Nobody will be charged.${toRefund.length ? ` ${toRefund.length} had already paid: refund them (see your email).` : ''}${withVoucher.length ? ` ${withVoucher.length} used a gift voucher: press Undo on the Vouchers tab so ${withVoucher.length === 1 ? 'it' : 'they'} can be used again (see your email).` : ''}`,
     });
 };
 

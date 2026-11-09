@@ -3,6 +3,7 @@
 // Whoever loads this file must have set the environment first: settings are read when it loads.
 const express = require("express");
 const path = require("path");
+const compression = require("compression");
 const { securityHeaders, permissionsPolicy, corsFor } = require("./middleware/security");
 
 const app = express();
@@ -17,6 +18,10 @@ app.set("trust proxy", Number.isInteger(proxyHops) && proxyHops >= 0 ? proxyHops
 // Security headers (HSTS, Content Security Policy and friends), see middleware/security.js
 app.use(securityHeaders());
 app.use(permissionsPolicy);
+
+// Pages, scripts, styles and API answers are sent compressed (about a third of the size), which matters
+// on a phone's data. Photos are already compressed, so they are left as they are.
+app.use(compression());
 
 // Force HTTPS (production only, so local http://localhost works)
 app.use((req, res, next) => {
@@ -42,8 +47,18 @@ if (corsMiddleware) app.use(corsMiddleware);
 const pages = require("./routes/pages")(clientDist);
 app.get(["/robots.txt", "/sitemap.xml"], pages);
 
-// Serve client build (index: false, so "/" goes to the pages router like every other page)
-app.use(express.static(clientDist, { index: false }));
+// Serve client build (index: false, so "/" goes to the pages router like every other page).
+// Everything the build puts in /assets (scripts, styles, photos) has a fingerprint in its name that
+// changes whenever the file does, so a browser can keep it for a year without asking again. Pages and
+// anything else are still checked on every visit, so a new release shows up straight away.
+app.use(express.static(clientDist, {
+  index: false,
+  setHeaders: (res, file) => {
+    if (path.relative(clientDist, file).split(path.sep)[0] === "assets") {
+      res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+    }
+  },
+}));
 
 // API routes
 app.use("/bookings", require("./routes/bookings"));

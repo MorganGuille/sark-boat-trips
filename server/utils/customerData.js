@@ -1,8 +1,9 @@
 // Customer data tools (spec P2-13, owner's choices 3 Nov 2026): everything held for one email address,
 // to show the owner, download for the customer, or erase on request.
-// Erasing blanks the person's details but keeps each booking's date, party and money, so past reports
-// and income stay right; their saved card is removed at Stripe too. It is refused while they have a
-// booking today or later (cancel it first), or a gift voucher still waiting to be emailed to them.
+// Erasing blanks the person's details (name, email, phone, where they were staying, their message) but
+// keeps each booking's date, party and money, so past reports and income stay right; their saved card is
+// removed at Stripe too. It is refused while they have a booking today or later (cancel it first), or a
+// gift voucher still waiting to be emailed to them.
 const Bookings = require('../models/bookings');
 const Vouchers = require('../models/vouchers');
 const stripe = require('./stripe');
@@ -50,7 +51,8 @@ const summary = async ({ bookings, vouchers }) => {
             madeAt: madeAt(b),
             date: b.date,
             trip: b.charter === 'true' ? `Private charter (${tripOfBooking(trips, b)?.label || b.timeslot})` : (tripOfBooking(trips, b)?.label || b.timeslot),
-            firstName: b.firstName, lastName: b.lastName, email: b.email, phone: b.phone, message: b.message,
+            firstName: b.firstName, lastName: b.lastName, email: b.email, phone: b.phone,
+            accommodation: b.accommodation, message: b.message,
             adults: b.adults, children: b.children, infants: b.infants,
             status: b.status || 'active', cancelledAt: b.cancelledAt,
             paymentStatus: b.paymentStatus || 'unpaid', amountPaid: b.amountPaid, card: b.cardLabel,
@@ -87,7 +89,7 @@ const erase = async (email, found) => {
     const erasedAt = new Date();
     for (const booking of found.bookings) {
         await Bookings.updateOne({ _id: booking._id }, {
-            $set: { firstName: 'Erased', lastName: '', email: '', phone: '', message: '', manageToken: newManageToken(), erasedAt },
+            $set: { firstName: 'Erased', lastName: '', email: '', phone: '', accommodation: '', message: '', manageToken: newManageToken(), erasedAt },
             $unset: { stripeCustomerId: '', stripePaymentMethodId: '', cardLabel: '' },
         });
     }

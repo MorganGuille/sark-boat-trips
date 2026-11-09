@@ -53,8 +53,17 @@ const claim = (booking, now) => Bookings.findOneAndUpdate(
     { new: true }
 );
 
-// Charges one claimed booking. Returns { outcome: 'paid' | 'failed' | 'retry', booking, amount, reason }
-const chargeOne = async (booking, prices) => {
+// What the charge is for, as the customer's Stripe receipt shows it: the trip's own time that day (the
+// owner may have moved it) and an extra trip's name, never the booking's timeslot ('x3fa9c1' means nothing
+// to a customer). The same words as the saved card's description (controllers/checkout.js).
+const chargeDescription = (booking, trip) => {
+    const what = booking.charter === 'true' ? 'charter' : trip?.extra ? trip.name : 'trip';
+    return `Sark Boat Trips ${what} ${trip?.time || booking.timeslot} ${showDay(booking.date)}`;
+};
+
+// Charges one claimed booking. trip: its trip that day (utils/trips.js).
+// Returns { outcome: 'paid' | 'failed' | 'retry', booking, amount, reason }
+const chargeOne = async (booking, prices, trip) => {
     const amount = bookingValue(booking, prices);
     if (amount === null) {
         await markUnpaid(booking, 'No prices were set, so the amount was unknown and it was not charged.');
@@ -81,7 +90,7 @@ const chargeOne = async (booking, prices) => {
                 off_session: true, // the customer agreed when saving the card, and isn't here now
                 confirm: true,
                 receipt_email: booking.email || undefined,
-                description: `Sark Boat Trips ${booking.charter === 'true' ? 'charter' : 'trip'} ${booking.timeslot} ${showDay(booking.date)}`,
+                description: chargeDescription(booking, trip),
                 metadata: { bookingId: String(booking._id) },
             }, { idempotencyKey: `charge_booking_${booking._id}` });
 
@@ -133,7 +142,7 @@ const runDueCharges = async (now = new Date()) => {
     const results = [];
     for (const candidate of due) {
         const booking = await claim(candidate, now);
-        if (booking) results.push(await chargeOne(booking, prices));
+        if (booking) results.push(await chargeOne(booking, prices, tripOfBooking(trips, candidate)));
     }
 
     const failures = results.filter((r) => r.outcome === 'failed');

@@ -288,6 +288,60 @@ describe('vouchers on the dashboard', () => {
     });
 });
 
+describe('a booking with a voucher is cancelled: the voucher stays used until the owner frees it, so everyone is told', () => {
+    const decode = (html) => html.replace(/&#39;/g, "'");
+    // Ann's voucher pays for all of her booking; Bob's pays for one of his two adults, the rest is on his card
+    const two = async () => {
+        const ann = await t.insertBooking({ date: t.day(10), firstName: 'Ann', email: 'ann@example.test', adults: 2, prices: PRICES, reference: 'SBT-ANN222' });
+        const bob = await t.insertBooking({ date: t.day(10), firstName: 'Bob', email: 'bob@example.test', adults: 2, prices: PRICES, reference: 'SBT-BBB222', paymentStatus: 'card_saved', stripeCustomerId: 'cus_b', stripePaymentMethodId: 'pm_b' });
+        const whole = await madeByOwner({ adults: '2' });
+        const part = await madeByOwner({ adults: '1' });
+        await dash('post', '/vouchers/use', { _id: whole._id, reference: 'SBT-ANN222' });
+        await dash('post', '/vouchers/use', { _id: part._id, reference: 'SBT-BBB222' });
+        mocks.reset();
+        return { ann, bob, whole, part };
+    };
+
+    it('cancelling one on the dashboard says which voucher to free, in the message and in the owner\'s email, and tells the customer it is still theirs', async () => {
+        const { bob, part } = await two();
+        const res = await dash('post', '/bookings/cancel', { _id: bob });
+        assert.match(res.body.data, new RegExp(`Gift voucher ${part.code} was used on it: press Undo on the Vouchers tab so it can be used again\\.$`));
+        await t.sendCancelEmails();
+        const toBob = decode(mocks.sent('bob@example.test')[0].html);
+        assert.match(toBob, /Your card has not been charged, and it won't be charged for this booking\. Your gift voucher hasn't been used up: please get in touch to book another day\./);
+        const toOwner = mocks.sent(t.OWNER)[0].text;
+        assert.match(toOwner, new RegExp(`Payment: card saved, it will not be charged\\. GIFT VOUCHER ${part.code} was used for part of it: press Undo on the Vouchers tab so it can be used again`));
+        assert.equal((await vouchers()).find((v) => v.code === part.code).status, 'used', 'it is the owner who frees it');
+    });
+
+    it('a booking without a voucher says nothing about one', async () => {
+        const id = await t.insertBooking({ date: t.day(10), firstName: 'Cat', email: 'cat@example.test', adults: 1, prices: PRICES });
+        assert.doesNotMatch((await dash('post', '/bookings/cancel', { _id: id })).body.data, /voucher/i);
+        await t.sendCancelEmails();
+        assert.doesNotMatch(mocks.mails.map((m) => m.text).join(' '), /voucher/i);
+    });
+
+    it('cancelling the whole trip lists every voucher to free, whether it paid for all of a booking or part', async () => {
+        const { whole, part } = await two();
+        const res = await dash('post', '/bookings/cancel-trip', { date: t.day(10), timeslot: '11am', reason: 'weather' });
+        assert.match(res.body.data, /2 used a gift voucher: press Undo on the Vouchers tab so they can be used again \(see your email\)\./);
+        const summary = mocks.sent(t.OWNER).find((m) => /^Trip cancelled/.test(m.subject)).text;
+        assert.match(summary, /GIFT VOUCHERS still marked as used \(press Undo on the Vouchers tab so they can be used again\):/);
+        assert.match(summary, new RegExp(`- ${whole.code}: Ann`));
+        assert.match(summary, new RegExp(`- ${part.code}: Bob`));
+        for (const to of ['ann@example.test', 'bob@example.test']) {
+            assert.match(decode(mocks.sent(to)[0].html), /Your gift voucher hasn't been used up/, to);
+        }
+    });
+
+    it('a trip with no vouchers on it mentions none', async () => {
+        await t.insertBooking({ date: t.day(10), firstName: 'Cat', email: 'cat@example.test', adults: 1, prices: PRICES });
+        const res = await dash('post', '/bookings/cancel-trip', { date: t.day(10), timeslot: '11am', reason: 'weather' });
+        assert.doesNotMatch(res.body.data, /voucher/i);
+        assert.doesNotMatch(mocks.sent(t.OWNER)[0].text, /voucher/i);
+    });
+});
+
 describe('vouchers in the monthly report', () => {
     it('counts vouchers sold (and their money) and used, and a voucher booking only counts what was left to pay', async () => {
         const month = new Date().toISOString().slice(0, 7);

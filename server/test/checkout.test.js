@@ -64,6 +64,17 @@ describe('starting a checkout', () => {
         assert.equal(metadata.message2.length, 400);
         assert.equal(booking.message, message);
     });
+    it('the boat takes 12 people in all: a bigger party is refused, for a charter too (it has no seat count to stop it)', async () => {
+        for (const party of [{ adults: '12', children: '12', infants: '12' }, { adults: '6', children: '6', infants: '1' }]) {
+            for (const checkout of [charterCheckout, tripCheckout]) {
+                const res = await checkout(party);
+                assert.equal(res.status, 400, JSON.stringify(party));
+                assert.equal(res.body.data, 'The boat takes up to 12 people, infants included. For a bigger group, please contact us.');
+            }
+        }
+        assert.equal(mocks.stripe.created.length, 0);
+        assert.ok((await charterCheckout({ adults: '6', children: '4', infants: '2' })).body.url, 'a charter of exactly 12 is fine');
+    });
     it('applies the booking rules, and never reaches Stripe when it refuses', async () => {
         const refused = [{ email: 'nope' }, { adults: '13' }, { date: t.day(-1) }, { date: t.day(250) }, { phone: '' }, { timeslot: '3pm' }];
         for (const override of refused) {
@@ -203,6 +214,26 @@ describe('the trip fills up while the customer is entering their card', () => {
         const [b] = await bookingsFor('cs_test_clash');
         assert.equal(b.status, 'cancelled');
         assert.equal((await t.seatsLeft(app, t.day(12)))['11am'], 11);
+    });
+    it('a card saved after the trip has left makes no booking to charge: kept as cancelled, and both sides are told why', async () => {
+        // Stripe's page stays open for a day; the one hour cutoff was only checked when they started
+        const session = t.cardSession('cs_test_left', { kind: 'trip', date: t.day(-1) }); // yesterday's 11am
+        await t.webhook(app, session);
+        const [b] = await bookingsFor('cs_test_left');
+        assert.equal(b.status, 'cancelled');
+        assert.match(b.paymentNote, /had already left .* Nothing was charged/);
+        const { runDueCharges } = require('../utils/charges');
+        assert.deepEqual(await runDueCharges(), { paid: 0, failed: 0, retry: 0 });
+        assert.equal(mocks.stripe.charges.length, 0, 'nothing is charged for a trip they were not on');
+        const [toCustomer] = mocks.sent(session.metadata.email);
+        assert.match(toCustomer.subject, /^Sorry, the boat trip on .* had already left$/);
+        assert.match(toCustomer.html, /had already left, so we couldn&#39;t book you/);
+        assert.match(toCustomer.html, /Nothing has been charged/);
+        assert.match(mocks.sent(t.OWNER)[0].subject, /^Booking NOT made \(trip had left\)/);
+        mocks.stripe.sessions.cs_test_left = session;
+        const page = await verify('cs_test_left');
+        assert.equal(page.body.ok, false);
+        assert.match(page.body.message, /had already left/);
     });
     it('the success page says it was not booked', async () => {
         await t.insertBooking({ date: t.day(12), adults: 1 });

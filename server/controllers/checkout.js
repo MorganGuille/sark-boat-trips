@@ -17,6 +17,7 @@ const stripe = require('../utils/stripe');
 
 const UNAVAILABLE = "Online booking isn't available right now. Please call or email us to book.";
 const FULL_NOTE = 'Not booked: the trip filled up while they were entering their card. Nothing was charged.';
+const LEFT_NOTE = 'Not booked: the trip had already left when they saved their card. Nothing was charged.';
 const FIELDS = ['date', 'timeslot', 'firstName', 'lastName', 'phone', 'email', 'adults', 'children', 'infants', 'accommodation', 'message'];
 
 const pounds = (pence) => `£${(pence / 100).toFixed(2).replace(/\.00$/, '')}`;
@@ -124,7 +125,7 @@ const startCheckout = (kind) => async (req, res) => {
 // /success page can all arrive for the same session, in any order, so this is safe to call
 // repeatedly: the booking is keyed on the Stripe session id, and only the call that actually
 // creates it sends the emails.
-const fulfillCheckoutSession = async (session) => {
+const fulfillCheckoutSession = async (session, now = new Date()) => {
     const existing = await Bookings.findOne({ stripeSessionId: session.id });
     if (existing) return { booking: existing, created: false };
 
@@ -136,11 +137,15 @@ const fulfillCheckoutSession = async (session) => {
     // saving theirs at this very moment (hence the lock). Nothing has been charged, so the trip is
     // never overbooked: the booking is kept as cancelled, with the reason, so the owner can see it
     // and restore it if room frees up. An extra trip the owner deleted meanwhile has no room either.
-    let booking, room, prices;
+    // Stripe's page stays open for a day, so the trip may also have left by now (the one hour cutoff was
+    // only checked when they started): that booking is kept as cancelled too, or its card would be
+    // charged within a minute for a trip they weren't on.
+    let booking, room, prices, left;
     try {
         await withTripLock(details.date, details.timeslot, async () => {
             const trip = await findTrip(details.date, details.timeslot);
-            room = Boolean(trip) && await hasRoom(details);
+            left = Boolean(trip?.startsAt) && trip.startsAt.getTime() <= now.getTime();
+            room = Boolean(trip) && !left && await hasRoom(details);
             prices = pricesFor(trip, await readPrices());
             booking = await Bookings.create({
                 ...details,
@@ -150,7 +155,7 @@ const fulfillCheckoutSession = async (session) => {
                 cardLabel: describeCard(card),
                 paymentStatus: 'card_saved',
                 prices: prices || undefined,
-                ...(!room && { status: 'cancelled', cancelledAt: new Date(), paymentNote: FULL_NOTE }),
+                ...(!room && { status: 'cancelled', cancelledAt: now, paymentNote: left ? LEFT_NOTE : FULL_NOTE }),
             });
         });
     } catch (error) {
@@ -169,8 +174,8 @@ const fulfillCheckoutSession = async (session) => {
         await trySend(emails.newBookingOwnerEmail(forEmail, { amount, customerEmailFailed }));
     } else {
         const forEmail = await withTrip(booking);
-        const customerEmailFailed = !(await trySend(emails.tripFullEmail(forEmail)));
-        await trySend(emails.tripFullOwnerEmail(forEmail, { customerEmailFailed }));
+        const customerEmailFailed = !(await trySend(emails.tripFullEmail(forEmail, { left })));
+        await trySend(emails.tripFullOwnerEmail(forEmail, { customerEmailFailed, left }));
     }
 
     return { booking, created: true };

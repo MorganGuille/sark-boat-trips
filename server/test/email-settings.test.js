@@ -13,6 +13,8 @@ const path = require('node:path');
 
 const OLD_ADDRESS = 'sarkboattrips' + '@gmail.com'; // split so this file doesn't trip its own check
 const SENDER = `Sark Boat Trips <${t.MAIL_FROM}>`;
+// How long the mailer waits for the mail server before a send counts as failed (milliseconds)
+const PATIENCE = { connectionTimeout: 10000, greetingTimeout: 10000, socketTimeout: 20000 };
 
 let token;
 before(async () => { await t.startDb(); token = await t.login(app); });
@@ -20,22 +22,27 @@ after(() => t.stopDb());
 beforeEach(async () => { await t.resetDb(); await t.seedSeason(); mocks.reset(); });
 
 describe('the email settings', () => {
+    it('the mailer is told to give up after seconds, not minutes, so a stalled mail server can\'t hang a customer\'s page', () => {
+        for (const key of ['connectionTimeout', 'greetingTimeout', 'socketTimeout']) {
+            assert.ok(mocks.transport[key] >= 5000 && mocks.transport[key] <= 30000, `${key}: ${mocks.transport[key]}`);
+        }
+    });
     it('send through SMTP_HOST as MAIL_FROM, port 465 encrypted from the start', () => {
         const { mail } = readSettings({ MAIL_FROM: 'info@example.test', SMTP_HOST: 'smtp.zoho.eu', SMTP_PASSWORD: 'pw' });
-        assert.deepEqual(mail.transport, { host: 'smtp.zoho.eu', port: 465, secure: true, auth: { user: 'info@example.test', pass: 'pw' } });
+        assert.deepEqual(mail.transport, { host: 'smtp.zoho.eu', port: 465, secure: true, auth: { user: 'info@example.test', pass: 'pw' }, ...PATIENCE });
         assert.equal(mail.sender, 'Sark Boat Trips <info@example.test>');
         assert.equal(mail.owner, 'info@example.test', 'owner alerts go to MAIL_FROM unless OWNER_EMAIL is set');
     });
 
     it('port 587 switches to encryption after connecting, and SMTP_USER and OWNER_EMAIL override', () => {
         const { mail } = readSettings({ MAIL_FROM: 'info@example.test', OWNER_EMAIL: 'me@example.test', SMTP_HOST: 'smtp.example.test', SMTP_PORT: '587', SMTP_USER: 'login@example.test', SMTP_PASSWORD: 'pw' });
-        assert.deepEqual(mail.transport, { host: 'smtp.example.test', port: 587, secure: false, auth: { user: 'login@example.test', pass: 'pw' } });
+        assert.deepEqual(mail.transport, { host: 'smtp.example.test', port: 587, secure: false, auth: { user: 'login@example.test', pass: 'pw' }, ...PATIENCE });
         assert.equal(mail.owner, 'me@example.test');
     });
 
     it('without SMTP_HOST it still sends through Gmail with the old settings (production until it is switched)', () => {
         const { mail, warnings } = readSettings({ gmail_address: 'old@gmail.example', gmail_password: 'pw' });
-        assert.deepEqual(mail.transport, { service: 'gmail', auth: { user: 'old@gmail.example', pass: 'pw' } });
+        assert.deepEqual(mail.transport, { service: 'gmail', auth: { user: 'old@gmail.example', pass: 'pw' }, ...PATIENCE });
         assert.equal(mail.from, 'old@gmail.example');
         assert.equal(mail.owner, 'old@gmail.example');
         assert.ok(!warnings.some((w) => /MAIL_FROM|SMTP/.test(w)));
@@ -47,7 +54,7 @@ describe('the email settings', () => {
     });
 
     it('the mailer uses them (and not the Gmail settings that are also set here)', () => {
-        assert.deepEqual(mocks.transport, { host: 'smtp.example.test', port: 465, secure: true, auth: { user: t.MAIL_FROM, pass: 'unused' } });
+        assert.deepEqual(mocks.transport, { host: 'smtp.example.test', port: 465, secure: true, auth: { user: t.MAIL_FROM, pass: 'unused' }, ...PATIENCE });
     });
 });
 

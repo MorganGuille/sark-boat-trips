@@ -19,7 +19,7 @@ const fromToday = (n) => {
     date.setUTCDate(date.getUTCDate() + n);
     return date.toISOString().slice(0, 10);
 };
-const ANN = { firstName: 'Ann', lastName: 'Le Page', email: 'Ann.LP@Example.test', phone: '07700 900123', message: 'My son uses a wheelchair' };
+const ANN = { firstName: 'Ann', lastName: 'Le Page', email: 'Ann.LP@Example.test', phone: '07700 900123', accommodation: 'Hotel Petit Champ, room 4', message: 'My son uses a wheelchair' };
 const past = (fields = {}) => t.insertBooking({ ...ANN, date: fromToday(-30), reference: 'SBT-PAST01', manageToken: 'a'.repeat(32), paymentStatus: 'paid', amountPaid: 8000, prices: { adult: 4000, child: 2500, charter: 40000 }, stripeCustomerId: 'cus_ann', stripePaymentMethodId: 'pm_ann', cardLabel: 'Visa •••• 4242', ...fields });
 const voucher = (fields) => db().collection('vouchers').insertOne({ code: 'GIFT-AAAA-AA', kind: 'trip', adults: 2, children: 0, expiresOn: fromToday(300), status: 'unused', paidBy: 'online', amountPaid: 8000, ...fields });
 const show = (email) => t.call(app, 'get', `/customers?email=${encodeURIComponent(email)}`, { token });
@@ -64,6 +64,7 @@ describe('finding a customer', () => {
         const data = JSON.parse(res.text);
         assert.equal(data.email, 'ann.lp@example.test');
         assert.equal(data.bookings[0].message, 'My son uses a wheelchair');
+        assert.equal(data.bookings[0].accommodation, 'Hotel Petit Champ, room 4', 'where they were staying is theirs too');
         assert.equal(data.bookings[0].card, 'Visa •••• 4242');
     });
 });
@@ -78,7 +79,8 @@ describe('erasing a customer', () => {
         assert.deepEqual(mocks.stripe.deleted, ['cus_ann']);
 
         const b = await t.findBooking(id);
-        assert.deepEqual([b.firstName, b.lastName, b.email, b.phone, b.message], ['Erased', '', '', '', '']);
+        assert.deepEqual([b.firstName, b.lastName, b.email, b.phone, b.accommodation, b.message], ['Erased', '', '', '', '', '']);
+        assert.equal(JSON.stringify(b).includes('Petit Champ'), false);
         assert.deepEqual([b.stripeCustomerId, b.stripePaymentMethodId, b.cardLabel], [undefined, undefined, undefined]);
         assert.deepEqual([b.date, b.adults, b.amountPaid, b.paymentStatus, b.reference], [fromToday(-30), 2, 8000, 'paid', 'SBT-PAST01']);
         assert.ok(b.erasedAt);

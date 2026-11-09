@@ -12,6 +12,12 @@ write('index.html', 'PAGE home');
 write('app.html', 'PAGE app');
 for (const page of ['bookings', 'charters', 'terms', 'privacy']) write(`pages/${page}.html`, `PAGE ${page}`);
 write('pages/gift-vouchers.html', 'PAGE gift');
+// What the build makes: a script and a photo with a fingerprint in their names, and a plain file
+fs.mkdirSync(path.join(dist, 'assets'));
+fs.mkdirSync(path.join(dist, 'seo'));
+fs.writeFileSync(path.join(dist, 'assets', 'index-AbC123.js'), `console.log("${'boat '.repeat(2000)}")`);
+fs.writeFileSync(path.join(dist, 'assets', 'photo-AbC123.webp'), Buffer.alloc(5000, 1));
+fs.writeFileSync(path.join(dist, 'seo', 'card.png'), Buffer.alloc(5000, 1));
 
 t.setEnv({ PUBLIC_URL: 'https://boats.example.test', CLIENT_DIST: dist });
 t.installMocks();
@@ -87,5 +93,25 @@ describe('robots.txt and sitemap.xml', () => {
         assert.match(res.headers['content-type'], /xml/);
         const urls = [...res.text.matchAll(/<loc>(.*?)<\/loc>/g)].map((m) => m[1]);
         assert.deepEqual(urls, ['/', '/bookings', '/charters', '/gift-vouchers', '/terms', '/privacy'].map((page) => `https://boats.example.test${page}`));
+    });
+});
+
+describe('sent small, and kept by the browser (most customers are on a phone)', () => {
+    it('scripts and pages are compressed for browsers that ask, photos are left alone', async () => {
+        const script = await get('/assets/index-AbC123.js');
+        assert.equal(script.headers['content-encoding'], 'gzip');
+        assert.equal(script.text.length, 10000 + 15, 'and it unpacks to the whole file');
+        assert.equal((await get('/assets/photo-AbC123.webp')).headers['content-encoding'], undefined, 'already compressed');
+        const page = await require('supertest')(app).get('/').set('Accept-Encoding', 'identity');
+        assert.equal(page.headers['content-encoding'], undefined, 'not for a browser that didn\'t ask');
+    });
+
+    it('files with a fingerprint in their name are kept for a year; pages and everything else are checked every visit', async () => {
+        for (const url of ['/assets/index-AbC123.js', '/assets/photo-AbC123.webp']) {
+            assert.equal((await get(url)).headers['cache-control'], 'public, max-age=31536000, immutable', url);
+        }
+        for (const url of ['/', '/bookings', '/dashboard', '/seo/card.png', '/robots.txt']) {
+            assert.doesNotMatch((await get(url)).headers['cache-control'] || '', /immutable|max-age=[1-9]/, url);
+        }
     });
 });

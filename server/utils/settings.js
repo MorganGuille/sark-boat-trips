@@ -35,10 +35,14 @@ const readSettings = (env = process.env) => {
     const mailFrom = String(env.MAIL_FROM || env.gmail_address || '').trim();
     const smtpHost = String(env.SMTP_HOST || '').trim();
     const smtpPort = Number(env.SMTP_PORT) || 465;
+    // How long to wait for the mail server before giving up (milliseconds): to connect, to say hello, and
+    // while sending. Without these the mailer waits for minutes, and a customer's success page (which
+    // sends the confirmation before it answers) would hang with it. A send that gives up counts as failed.
+    const patience = { connectionTimeout: 10000, greetingTimeout: 10000, socketTimeout: 20000 };
     const transport = smtpHost
         // 465 starts encrypted; 587 starts plain and switches to encryption (STARTTLS)
-        ? { host: smtpHost, port: smtpPort, secure: smtpPort === 465, auth: { user: String(env.SMTP_USER || mailFrom).trim(), pass: env.SMTP_PASSWORD } }
-        : { service: 'gmail', auth: { user: env.gmail_address, pass: env.gmail_password } };
+        ? { host: smtpHost, port: smtpPort, secure: smtpPort === 465, auth: { user: String(env.SMTP_USER || mailFrom).trim(), pass: env.SMTP_PASSWORD }, ...patience }
+        : { service: 'gmail', auth: { user: env.gmail_address, pass: env.gmail_password }, ...patience };
     if (!mailFrom) warnings.push('MAIL_FROM is not set, so no email can be sent');
     if (smtpHost && !env.SMTP_PASSWORD) warnings.push('SMTP_HOST is set but SMTP_PASSWORD is not, so no email can be sent');
 
