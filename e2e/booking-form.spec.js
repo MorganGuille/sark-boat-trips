@@ -10,6 +10,15 @@ test.beforeEach(async ({ request, page }) => {
 
 const card = (page, timeslot) => page.locator('.tripCard', { has: page.locator(`input[value="${timeslot}"]`) });
 
+test('a day can be picked even when the calendar is slow to appear (the tests\' own helper once skipped a month on GitHub)', async ({ page }) => {
+    await page.route('**/admin/getSeasonDates', async (route) => { await new Promise((resolve) => setTimeout(resolve, 1500)); await route.continue(); });
+    await page.goto('/bookings');
+    const day = await h.pickDate(page, 9);
+    // the day asked for, not the same date a month later
+    const [year, month, date] = day.split('-').map(Number);
+    await expect(page.locator('.chosenDay')).toContainText(new Date(year, month - 1, date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }));
+});
+
 test('tapping another day in the same month asks the server for that day\'s trips once, and not for the whole month again', async ({ page }) => {
     // two days next to each other in one month, about three weeks from now
     const first = new Date();

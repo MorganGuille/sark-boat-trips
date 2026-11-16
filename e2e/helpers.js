@@ -34,6 +34,10 @@ const pickDate = async (page, daysFromToday) => {
     target.setDate(target.getDate() + daysFromToday);
     const label = target.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
     const tile = page.locator(`abbr[aria-label="${label}"]`);
+    // Wait for the calendar itself first: the page shows "Loading calendar…" until the season dates
+    // arrive, and on a slow machine (GitHub's) the day used to be looked for before the calendar was
+    // there, so it went a month too far ahead and never found the day.
+    await expect(page.locator('.react-calendar__month-view')).toBeVisible();
     for (let i = 0; i < 4 && (await tile.count()) === 0; i++) await page.locator('.react-calendar__navigation__next-button').click();
     await tile.click();
     // the day as it is stored (YYYY-MM-DD)
